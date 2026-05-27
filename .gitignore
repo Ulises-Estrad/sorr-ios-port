@@ -1,0 +1,55 @@
+# Local build output
+build/
+build-*/
+cmake-build-*/
+DerivedData/
+*.xcresult
+*.app/
+*.dSYM/
+*.ipa
+*.exe
+*.dll
+*.log
+*.csv
+*.png
+*.pdf
+*.dia
+*.pyc
+__pycache__/
+
+# Local portable toolchains and dependencies
+portable-tools/
+portable-deps/
+
+# Local game data and redistributed assets
+SorR.dat
+**/SorR.dat
+data/
+palettes/
+savegame/
+*.fpg
+*.wav
+*.ogg
+*.smk
+*.sor
+
+# Known extracted/generated asset folders
+out/
+out/fpg-preview/
+out/stage-first-previews/
+out/sorr2-ios-slice/
+out/*-launch-data/
+out/timing-*-data/
+out/stage-contact-sheet.png
+reports/*.log
+reports/*.csv
+reports/*.png
+reports/*.txt
+reports/*.json
+reports/*.cmd
+reports/*backup*/
+
+# Archives copied in during local experiments
+*.zip
+*.7z
+*.rar
