@@ -49,6 +49,7 @@ This proves:
 Next proof now wired in CI:
 
 - boot an available iPhone simulator,
+- print app bundle metadata,
 - ad-hoc sign the built simulator app for local `simctl` launch,
 - install `SorrIOSShell.app`,
 - launch it,
@@ -180,6 +181,7 @@ The GitHub Actions workflow now adds `Launch iOS shell in simulator` after the b
 - lists available simulator devices,
 - selects the first available iPhone simulator,
 - boots and waits for the simulator,
+- prints `Info.plist`, bundle id, and launch storyboard diagnostics,
 - applies a local simulator-only ad-hoc signature with `codesign -`,
 - installs the built app,
 - launches the bundle id from the app `Info.plist`,
@@ -218,6 +220,19 @@ Current fix:
 - verify the signature before `simctl install`.
 
 This is simulator-local signing only. It does not start device signing, IPA export, TestFlight, or App Store work.
+
+Follow-up result:
+
+- Ad-hoc signing succeeded and verified.
+- `simctl launch` still failed with the same `SBMainWorkspace` denial.
+
+Second fix:
+
+- add a minimal `LaunchScreen.storyboard`,
+- set `UILaunchStoryboardName` to `LaunchScreen`,
+- include the storyboard in the simulator app bundle,
+- print `Info.plist` diagnostics in CI,
+- continue collecting simulator logs even if `simctl launch` fails.
 
 ## Expected First Success Log
 

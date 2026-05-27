@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.22)
 project(sorr_ios_shell C)
 
 get_filename_component(SORR_ROOT "${CMAKE_CURRENT_LIST_DIR}/../.." ABSOLUTE)
+set(SORR_IOS_LAUNCH_STORYBOARD "${CMAKE_CURRENT_LIST_DIR}/LaunchScreen.storyboard")
 
 set(SORR_IOS_BUNDLE_IDENTIFIER "dev.local.sorr.iosshell" CACHE STRING "Bundle identifier for the iOS shell app")
 set(SORR_IOS_SDL2_ROOT "" CACHE PATH "Path to an SDL2 iOS install prefix containing include/SDL2 and lib")
@@ -17,9 +18,13 @@ endif()
 
 add_executable(SorrIOSShell MACOSX_BUNDLE
   src/sorr_ios_shell_main.c
+  ${SORR_IOS_LAUNCH_STORYBOARD}
   ${SORR_ROOT}/core/bgdrtm/src/fmath.c
   ${SORR_ROOT}/core/bgdrtm/src/misc.c
   ${SORR_ROOT}/core/bgdrtm/src/strings.c)
+
+set_source_files_properties("${SORR_IOS_LAUNCH_STORYBOARD}" PROPERTIES
+  MACOSX_PACKAGE_LOCATION Resources)
 
 set_target_properties(SorrIOSShell PROPERTIES
   MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_LIST_DIR}/Info.plist.in"
@@ -27,7 +32,7 @@ set_target_properties(SorrIOSShell PROPERTIES
   XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY "1,2"
   XCODE_ATTRIBUTE_SUPPORTED_PLATFORMS "iphoneos iphonesimulator"
   XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_APPICON_NAME ""
-  XCODE_ATTRIBUTE_INFOPLIST_KEY_UILaunchStoryboardName ""
+  XCODE_ATTRIBUTE_INFOPLIST_KEY_UILaunchStoryboardName "LaunchScreen"
   XCODE_ATTRIBUTE_INFOPLIST_KEY_UIRequiresFullScreen "YES"
   XCODE_ATTRIBUTE_INFOPLIST_KEY_UISupportedInterfaceOrientations "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight")
 

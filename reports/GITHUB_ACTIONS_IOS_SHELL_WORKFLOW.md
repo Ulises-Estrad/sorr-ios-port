@@ -133,6 +133,13 @@ codesign --verify --deep --strict --verbose=2 "$APP_PATH"
 
 This does not use provisioning profiles, device signing, IPA export, TestFlight, or App Store signing. It only makes the CI-built simulator `.app` acceptable to SpringBoard for `simctl launch`.
 
+The launch step also prints key bundle metadata before install:
+
+- full `Info.plist` via `plutil -p`,
+- bundle identifier,
+- `UILaunchStoryboardName`,
+- installed app container path when available.
+
 ## Required Repo Exclusions
 
 The repo should not contain game data or large local extraction outputs.
@@ -222,13 +229,14 @@ After the simulator `.app` build succeeds, the workflow now:
 
 1. Selects the first available iPhone simulator from `xcrun simctl list devices available --json`.
 2. Boots it and waits for `simctl bootstatus`.
-3. Applies a simulator-only ad-hoc signature to `SorrIOSShell.app`.
-4. Installs `SorrIOSShell.app`.
-5. Launches the bundle.
-6. Captures app stdout/stderr and simulator logs for 20 seconds.
-7. Terminates the shell.
-8. Combines `simctl launch`, app stdout/stderr, `log stream`, and `log show` output.
-9. Fails the job if required startup markers are missing.
+3. Prints `Info.plist` diagnostics.
+4. Applies a simulator-only ad-hoc signature to `SorrIOSShell.app`.
+5. Installs `SorrIOSShell.app`.
+6. Launches the bundle.
+7. Captures app stdout/stderr and simulator logs for 20 seconds.
+8. Terminates the shell.
+9. Combines `simctl launch`, app stdout/stderr, `log stream`, and `log show` output.
+10. Fails the job if `simctl launch` fails or if required startup markers are missing.
 
 Required markers:
 
@@ -563,6 +571,18 @@ Fix applied:
 - Keep Xcode build signing disabled to avoid device/provisioning paths.
 - Add a local simulator-only ad-hoc `codesign -` pass before `simctl install`.
 - Verify and display the ad-hoc signature before boot/install/launch continues.
+
+Follow-up result:
+
+- Ad-hoc signing succeeded and verified.
+- The app still failed at `simctl launch` with the same `SBMainWorkspace` denial.
+
+Second fix applied:
+
+- Add a minimal `LaunchScreen.storyboard` resource to the app bundle.
+- Set `UILaunchStoryboardName` to `LaunchScreen` instead of leaving the generated Info.plist launch storyboard key empty.
+- Print bundle metadata before install to verify the launch storyboard and bundle id in CI.
+- Capture `simctl launch` failures without aborting immediately, so `log show` and combined simulator logs are still uploaded.
 
 Expected next run result:
 
