@@ -102,8 +102,11 @@ jobs:
         run: |
           set -euo pipefail
           set -o pipefail
-          SDL2_PREFIX="$RUNNER_TEMP/sdl2-ios-sim"
+          SDL2_PREFIX="$GITHUB_WORKSPACE/_deps/sdl2-ios-sim"
           {
+            mkdir -p "$GITHUB_WORKSPACE/_deps"
+            echo "SDL2_IOS_PREFIX=$SDL2_PREFIX" >> "$GITHUB_ENV"
+            echo "Installing SDL2 to $SDL2_PREFIX"
             cmake -S "$RUNNER_TEMP/sdl2-src" \
               -B "$RUNNER_TEMP/sdl2-build-sim" \
               -G Xcode \
@@ -129,7 +132,7 @@ jobs:
               CODE_SIGNING_ALLOWED=NO
             cmake --install "$RUNNER_TEMP/sdl2-build-sim" --config Release
             echo "Installed SDL2 prefix:"
-            find "$RUNNER_TEMP/sdl2-ios-sim" -maxdepth 3 -type f | sort
+            find "$SDL2_IOS_PREFIX" -maxdepth 5 -print | sort
           } 2>&1 | tee "$ARTIFACT_DIR/logs/sdl2-build-install.log"
 
       - name: Configure iOS shell
@@ -137,15 +140,20 @@ jobs:
         run: |
           set -euo pipefail
           set -o pipefail
-          SDL2_PREFIX="$RUNNER_TEMP/sdl2-ios-sim"
           {
+            echo "SDL2_IOS_PREFIX=$SDL2_IOS_PREFIX"
+            echo "SDL2 discovery debug:"
+            find "$GITHUB_WORKSPACE/_deps" -maxdepth 5 \
+              \( -name "SDL2.framework" -o -name "libSDL2*.a" -o -name "SDL.h" \) \
+              -print | sort
             cmake -S sorr-vita-master/cmake/ios \
               -B "$IOS_SHELL_BUILD_DIR" \
               -G Xcode \
               -DCMAKE_SYSTEM_NAME=iOS \
               -DCMAKE_OSX_SYSROOT=iphonesimulator \
               -DCMAKE_OSX_ARCHITECTURES="$IOS_SIM_ARCH" \
-              -DCMAKE_PREFIX_PATH="$SDL2_PREFIX" \
+              -DCMAKE_PREFIX_PATH="$SDL2_IOS_PREFIX" \
+              -DSORR_IOS_SDL2_ROOT="$SDL2_IOS_PREFIX" \
               -DSORR_IOS_BUNDLE_IDENTIFIER="dev.local.sorr.iosshell.ci"
           } 2>&1 | tee "$ARTIFACT_DIR/logs/ios-shell-configure.log"
 

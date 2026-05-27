@@ -71,11 +71,24 @@ cmake -S sorr-vita-master/cmake/ios \
   -DCMAKE_SYSTEM_NAME=iOS \
   -DCMAKE_OSX_SYSROOT=iphonesimulator \
   -DCMAKE_OSX_ARCHITECTURES=arm64 \
-  -DCMAKE_PREFIX_PATH="$RUNNER_TEMP/sdl2-ios-sim" \
+  -DCMAKE_PREFIX_PATH="$SDL2_IOS_PREFIX" \
+  -DSORR_IOS_SDL2_ROOT="$SDL2_IOS_PREFIX" \
   -DSORR_IOS_BUNDLE_IDENTIFIER="dev.local.sorr.iosshell.ci"
 ```
 
-The workflow uses SDL2's installed CMake package through `CMAKE_PREFIX_PATH` so the SDL2 target can carry any iOS static-library framework requirements.
+The workflow installs SDL2 into:
+
+```text
+$GITHUB_WORKSPACE/_deps/sdl2-ios-sim
+```
+
+It exports that path for later steps:
+
+```bash
+echo "SDL2_IOS_PREFIX=$GITHUB_WORKSPACE/_deps/sdl2-ios-sim" >> "$GITHUB_ENV"
+```
+
+The shell configure step passes both `CMAKE_PREFIX_PATH` and `SORR_IOS_SDL2_ROOT` so it can use either SDL2's installed CMake package or the shell target's explicit root lookup.
 
 Build destination:
 
@@ -322,6 +335,40 @@ Fix:
 - inspect `sdl2-build-install.log` for the installed file list,
 - adjust `CMAKE_PREFIX_PATH` or fall back to `SORR_IOS_SDL2_ROOT`,
 - or switch to an SDL2 framework build path later.
+
+### First CI failure: shell configure cannot find SDL2
+
+Observed failure:
+
+```text
+SDL2 for iOS was not found.
+Set SORR_IOS_SDL2_FRAMEWORK to SDL2.framework
+or SORR_IOS_SDL2_ROOT to an SDL2 iOS install prefix.
+```
+
+Cause:
+
+- The workflow built and installed SDL2, but the install prefix was only reconstructed locally in the shell configure step.
+- The iOS shell CMake target has an explicit `SORR_IOS_SDL2_ROOT`/`SORR_IOS_SDL2_FRAMEWORK` path, and the workflow was only passing `CMAKE_PREFIX_PATH`.
+
+Fix applied:
+
+- SDL2 now installs into a stable workspace path: `$GITHUB_WORKSPACE/_deps/sdl2-ios-sim`.
+- The SDL2 configure/install step writes `SDL2_IOS_PREFIX` to `$GITHUB_ENV`.
+- The iOS shell configure step passes `-DSORR_IOS_SDL2_ROOT="$SDL2_IOS_PREFIX"`.
+- The configure step now logs a discovery probe before CMake:
+
+```bash
+find "$GITHUB_WORKSPACE/_deps" -maxdepth 5 \
+  \( -name "SDL2.framework" -o -name "libSDL2*.a" -o -name "SDL.h" \) \
+  -print | sort
+```
+
+Expected next run result:
+
+- `ios-shell-configure.log` should show `SDL2_IOS_PREFIX` and at least one installed SDL2 header/library path.
+- The shell configure should advance past SDL2 discovery.
+- The next possible blocker is expected to be a simulator link/build issue, not SDL2 prefix discovery.
 
 ### iOS shell configure fails on ZLIB
 
