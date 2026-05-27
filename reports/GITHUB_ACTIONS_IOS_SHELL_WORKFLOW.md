@@ -93,6 +93,9 @@ Device job result: success
 Artifact: ios-shell-device-unsigned-arm64
 Artifact size: 456283 bytes
 IPA inside artifact: build-products/SorrIOSShell-device-adhoc.ipa
+Physical install route: Windows + Sideloadly
+Physical iPhone result: app launches to shell-only dark idle screen
+Game data/assets: not bundled
 ```
 
 ## Workflow Summary
@@ -967,4 +970,15 @@ Artifact size: 456283 bytes
 IPA inside artifact: build-products/SorrIOSShell-device-adhoc.ipa
 ```
 
-This completes the GitHub-side D1 artifact repair. The remaining D1 work is to download the new artifact on Windows and retry Sideloadly with `SorrIOSShell-device-adhoc.ipa`.
+Physical D1 follow-up result:
+
+```text
+Install route: Windows + Sideloadly
+Artifact: ios-shell-device-unsigned-arm64
+IPA: build-products/SorrIOSShell-device-adhoc.ipa
+Result: installed on physical iPhone after enabling Developer Mode and trusting the developer profile
+Launch result: SorrIOSShell opens to the expected shell-only dark/blank idle screen and remains open
+Game data/assets: not bundled
+```
+
+This completes D1. Do not proceed to D2 until explicitly requested.

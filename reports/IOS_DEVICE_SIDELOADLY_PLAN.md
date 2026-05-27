@@ -10,7 +10,7 @@ The IPA is intended for Windows download and Sideloadly signing/install.
 
 ## Result
 
-Status: D1 GitHub Actions ad-hoc-signed device IPA artifact proof complete, physical Sideloadly retest pending.
+Status: D1 physical iPhone Sideloadly install proof complete.
 
 Proof run:
 
@@ -59,7 +59,19 @@ Artifact size: 456283 bytes
 IPA inside artifact: build-products/SorrIOSShell-device-adhoc.ipa
 ```
 
-The same workflow run also kept the simulator shell/data-layout proof green. The GitHub-side D1 artifact has been rebuilt with an ad-hoc app signature; the remaining D1 check is the manual Sideloadly install/open test on the physical iPhone.
+The same workflow run also kept the simulator shell/data-layout proof green. The GitHub-side D1 artifact was rebuilt with an ad-hoc app signature.
+
+Physical iPhone proof:
+
+```text
+Physical install route: Windows + Sideloadly
+IPA: build-products/SorrIOSShell-device-adhoc.ipa
+Result: installed after enabling Developer Mode and trusting the developer profile
+iPhone behavior: SorrIOSShell opens to a dark/blank shell-only idle screen and remains open
+Game data/assets: not bundled
+```
+
+The dark/blank screen is expected for D1 because this artifact intentionally contains only the iOS shell. It does not bundle `SorR.dat`, game data, assets, touch controls, or the game render path.
 
 ## Guardrails
 
@@ -163,7 +175,7 @@ Expected app behavior:
 - [x] IPA inspection confirms no game data/assets.
 - [x] User downloads the first IPA on Windows for Sideloadly signing/install.
 - [x] GitHub Actions packages an ad-hoc-signed `SorrIOSShell-device-adhoc.ipa`.
-- [ ] User downloads the ad-hoc-signed IPA on Windows for Sideloadly signing/install.
-- [ ] User confirms the installed app opens on the physical iPhone and reaches the shell idle loop.
+- [x] User downloads the ad-hoc-signed IPA on Windows for Sideloadly signing/install.
+- [x] User confirms the installed app opens on the physical iPhone and reaches the shell-only dark idle screen.
 
-Physical-device launch is the manual final check for D1 because CI does not have the user's iPhone.
+Physical-device launch is complete. D1 stops here; D2 must be started explicitly before any game data, touch controls, audio, or render-path work begins.

@@ -203,7 +203,7 @@ This is the first milestone that should exercise the game data on iOS.
 
 D1 now adds a shell-only physical-device artifact before any private data bundle/render proof.
 
-D1 status: GitHub Actions ad-hoc-signed device IPA artifact proof complete, physical Sideloadly retest pending.
+D1 status: physical iPhone Sideloadly install proof complete.
 
 ```text
 Commit: 3909ccc
@@ -236,6 +236,15 @@ IPA inside artifact: build-products/SorrIOSShell-device-adhoc.ipa
 Result: success
 ```
 
+Physical iPhone follow-up result:
+
+```text
+Physical install route: Windows + Sideloadly
+Result: installed after enabling Developer Mode and trusting the developer profile
+iPhone behavior: SorrIOSShell opens to a dark/blank shell-only idle screen and remains open
+Game data/assets: not bundled
+```
+
 Goal:
 
 - build `SorrIOSShell.app` for `iphoneos` `arm64`,
@@ -246,13 +255,12 @@ Goal:
 
 Recommended order:
 
-1. Download and install the shell-only IPA with Sideloadly on Windows.
-2. Confirm the app opens and reaches the shell idle loop on the physical iPhone.
-3. Then decide how to provide prepared game data without committing it.
-4. Add a private/local data bundle input or workflow artifact strategy.
-5. Add a path shim so read-only bundle assets and writable support-root files can coexist.
-6. Lift x64-safe runtime guards from `_WIN64` to a portable 64-bit macro before full game execution on iOS.
-7. Attempt first private title/city render proof.
+1. Stop at D1 unless D2 is explicitly requested.
+2. Then decide how to provide prepared game data without committing it.
+3. Add a private/local data bundle input or workflow artifact strategy.
+4. Add a path shim so read-only bundle assets and writable support-root files can coexist.
+5. Lift x64-safe runtime guards from `_WIN64` to a portable 64-bit macro before full game execution on iOS.
+6. Attempt first private title/city render proof.
 
 ## Out Of Scope For This Plan
 
