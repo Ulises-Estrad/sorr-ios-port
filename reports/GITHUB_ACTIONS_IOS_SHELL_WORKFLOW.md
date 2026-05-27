@@ -1052,4 +1052,17 @@ Manual import route after Sideloadly install:
 
 The shell treats `Documents/SORR_IMPORT` as an import inbox only. It copies direct or one-folder-nested prepared data into the canonical `Library/Application Support/SORR` root, writes `logs/ios_d2_data_import_probe.txt`, and skips Bennu runtime execution.
 
-Previous GitHub-side D2 artifact proof completed on run `26541978819` with the older `Documents/SORR` inbox. The updated `SORR_IMPORT` artifact proof is pending. Do not proceed to D3 until the updated physical iPhone import/storage test is reported.
+Previous GitHub-side D2 artifact proof completed on run `26541978819` with the older `Documents/SORR` inbox.
+
+Updated D2 `SORR_IMPORT` artifact proof:
+
+```text
+Commit: 7b395b3
+Run: https://github.com/Ulises-Estrad/sorr-ios-port/actions/runs/26543157389
+Artifact: ios-shell-d2-sorr-import-device-arm64
+Artifact size: 461067 bytes
+IPA: build-products/SorrIOSShell-d2-sorr-import-adhoc.ipa
+Result: success
+```
+
+Do not proceed to D3 until the updated physical iPhone import/storage test is reported.

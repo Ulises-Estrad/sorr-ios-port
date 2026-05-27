@@ -266,6 +266,17 @@ Artifact: ios-shell-d2-sorr-import-device-arm64
 IPA inside artifact: build-products/SorrIOSShell-d2-sorr-import-adhoc.ipa
 ```
 
+Updated D2 artifact proof:
+
+```text
+Commit: 7b395b3
+Run: https://github.com/Ulises-Estrad/sorr-ios-port/actions/runs/26543157389
+Artifact: ios-shell-d2-sorr-import-device-arm64
+Artifact size: 461067 bytes
+IPA inside artifact: build-products/SorrIOSShell-d2-sorr-import-adhoc.ipa
+Result: success
+```
+
 Goal:
 
 - build `SorrIOSShell.app` for `iphoneos` `arm64`,

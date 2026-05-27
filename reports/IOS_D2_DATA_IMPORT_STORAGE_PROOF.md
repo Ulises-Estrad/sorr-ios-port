@@ -10,7 +10,7 @@ This phase remains probe-only. It does not load or execute the Bennu runtime, re
 
 ## Status
 
-Status: D2 `SORR_IMPORT` inbox update implemented locally; GitHub Actions device artifact proof pending.
+Status: D2 `SORR_IMPORT` inbox GitHub Actions device IPA artifact proof complete; physical iPhone import/storage test pending.
 
 D1 remains complete at commit `dc13aaf50bc31afe9945c6b9410178642ed69e55`.
 
@@ -35,6 +35,18 @@ Current update:
 - treat `Library/Application Support/SORR` as the canonical app data root,
 - accept direct and one-folder-nested import layouts,
 - show import layout and staging result on the visible status screen.
+
+Updated D2 artifact proof:
+
+```text
+Commit: 7b395b3
+Run: https://github.com/Ulises-Estrad/sorr-ios-port/actions/runs/26543157389
+Device job: Build iOS shell unsigned IPA for device arm64
+Device job result: success
+Artifact: ios-shell-d2-sorr-import-device-arm64
+Artifact size: 461067 bytes
+IPA inside artifact: build-products/SorrIOSShell-d2-sorr-import-adhoc.ipa
+```
 
 ## Chosen Import Route
 
