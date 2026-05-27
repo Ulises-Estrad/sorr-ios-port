@@ -21,6 +21,10 @@ on:
       - "sorr-vita-master/core/bgdrtm/include/**"
       - "sorr-vita-master/core/include/**"
 
+concurrency:
+  group: ios-shell-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   ios-shell-simulator:
     name: Build iOS shell for simulator arm64
@@ -173,6 +177,7 @@ jobs:
           } 2>&1 | tee "$ARTIFACT_DIR/logs/ios-shell-build.log"
 
       - name: Launch iOS shell in simulator
+        timeout-minutes: 15
         shell: bash
         run: |
           set -euo pipefail
@@ -237,10 +242,11 @@ jobs:
             SYSTEM_LOG_SHOW="$ARTIFACT_DIR/logs/simulator/sorr-ios-shell-system-log-show.log"
             HOST_LOG_SHOW="$ARTIFACT_DIR/logs/simulator/sorr-ios-shell-host-coresimulator-log-show.log"
             LAUNCH_LOG="$ARTIFACT_DIR/logs/simulator/simctl-launch.log"
+            LAUNCH_CMD_LOG="$ARTIFACT_DIR/logs/simulator/simctl-launch-command.log"
             STDOUT_LOG="$ARTIFACT_DIR/logs/simulator/sorr-ios-shell-stdout.log"
             STDERR_LOG="$ARTIFACT_DIR/logs/simulator/sorr-ios-shell-stderr.log"
             COMBINED_LOG="$ARTIFACT_DIR/logs/simulator/sorr-ios-shell-combined.log"
-            touch "$STDOUT_LOG" "$STDERR_LOG" "$LAUNCH_LOG"
+            touch "$STDOUT_LOG" "$STDERR_LOG" "$LAUNCH_LOG" "$LAUNCH_CMD_LOG"
 
             xcrun simctl spawn "$DEVICE_UDID" log stream \
               --style compact \
@@ -256,14 +262,31 @@ jobs:
               echo "simctl launch attempt $attempt/$LAUNCH_ATTEMPTS" | tee -a "$LAUNCH_LOG"
               : > "$STDOUT_LOG"
               : > "$STDERR_LOG"
+              : > "$LAUNCH_CMD_LOG"
               set +e
               xcrun simctl launch \
                 --terminate-running-process \
                 --stdout="$STDOUT_LOG" \
                 --stderr="$STDERR_LOG" \
                 "$DEVICE_UDID" \
-                "$BUNDLE_ID" 2>&1 | tee -a "$LAUNCH_LOG"
-              LAUNCH_EXIT="${PIPESTATUS[0]}"
+                "$BUNDLE_ID" > "$LAUNCH_CMD_LOG" 2>&1 &
+              SIMCTL_LAUNCH_PID="$!"
+              LAUNCH_EXIT=""
+              for launch_wait in $(seq 1 20); do
+                if ! kill -0 "$SIMCTL_LAUNCH_PID" 2>/dev/null; then
+                  wait "$SIMCTL_LAUNCH_PID"
+                  LAUNCH_EXIT="$?"
+                  break
+                fi
+                sleep 1
+              done
+              if [[ -z "$LAUNCH_EXIT" ]]; then
+                echo "simctl launch still running after 20s; stopping attached launch command and continuing to marker checks" | tee -a "$LAUNCH_LOG"
+                kill "$SIMCTL_LAUNCH_PID" 2>/dev/null || true
+                wait "$SIMCTL_LAUNCH_PID" 2>/dev/null || true
+                LAUNCH_EXIT=0
+              fi
+              cat "$LAUNCH_CMD_LOG" | tee -a "$LAUNCH_LOG"
               set -e
               echo "simctl launch attempt $attempt exit code: $LAUNCH_EXIT" | tee -a "$LAUNCH_LOG"
               if [[ "$LAUNCH_EXIT" -eq 0 ]]; then

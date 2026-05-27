@@ -711,6 +711,32 @@ Expected next run result:
 - If SpringBoard rejected the post-hoc signed bundle, `simctl launch` should now start the shell and emit the required startup markers.
 - If launch is still denied, the next artifact should preserve the Xcode-produced code-signing details for a deeper process-launch diagnosis.
 
+### Sixth follow-up: launch step can run too long
+
+Observed progress:
+
+- SDL2 still configured, built, and installed.
+- `SorrIOSShell` still configured and built successfully.
+- The job reached `Launch iOS shell in simulator`.
+
+Observed failure mode:
+
+- The launch step stayed `in_progress` longer than the previous bounded failure runs.
+- That can happen if `simctl launch` remains attached to a successfully started foreground app, or if a simulator launch command hangs before returning a useful exit code.
+
+Fix applied:
+
+- Add a 15-minute timeout to the launch/test step.
+- Run each `simctl launch` attempt as a bounded background command.
+- If `simctl launch` is still running after 20 seconds, stop that launch command and continue to the existing log-marker checks.
+- Preserve the command output in `simulator/simctl-launch-command.log` and the combined launch log.
+- Add workflow concurrency so later repair-loop pushes cancel older in-progress iOS shell runs for the same branch.
+
+Expected next run result:
+
+- A successful foreground app launch should no longer hang the workflow; the required shell markers should decide pass/fail.
+- A stuck pre-entry launch should fail quickly with uploaded logs rather than waiting for the full job timeout.
+
 ## Next Step After A Successful Shell Build
 
 After the workflow produces `SorrIOSShell.app` for simulator:

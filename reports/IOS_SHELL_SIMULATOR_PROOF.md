@@ -312,6 +312,20 @@ CODE_SIGN_IDENTITY="-"
 
 This remains simulator-only. It does not use provisioning profiles, create an IPA, install on a device, or start TestFlight/App Store signing.
 
+Sixth follow-up:
+
+- The signed shell build still completed and the job reached the simulator launch step.
+- The launch step then remained active longer than the previous failure runs.
+- This suggests either a stuck `simctl launch` command or a successful foreground launch where `simctl launch` stays attached instead of returning promptly.
+
+Seventh fix:
+
+- Add a 15-minute timeout to the launch/test step.
+- Bound each `simctl launch` attempt to 20 seconds.
+- If the launch command remains attached after that window, stop the launch command and continue to the existing simulator log-marker checks.
+- Add `simulator/simctl-launch-command.log` to preserve the raw command output from the bounded launch attempt.
+- Add workflow concurrency so a newer repair-loop push cancels any older in-progress iOS shell run on the same branch.
+
 ## Expected First Success Log
 
 When run from a real macOS/Xcode+iOS simulator environment, the target should still be validated against:
