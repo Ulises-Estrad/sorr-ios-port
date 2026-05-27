@@ -226,3 +226,21 @@ Artifact size: 461067 bytes
 IPA: build-products/SorrIOSShell-d2-sorr-import-adhoc.ipa
 Result: success
 ```
+
+D2 physical iPhone proof:
+
+```text
+Passing Actions run: 26543157389
+Artifact: ios-shell-d2-sorr-import-device-arm64
+IPA: build-products/SorrIOSShell-d2-sorr-import-adhoc.ipa
+Install route: Windows + Sideloadly
+Local-only import package: out/local-only/SORR_IMPORT.zip
+Local package source: sorr-vita-master/data
+Local package SHA256: B2E2F3901C65BE0FA3D739D3716C74C37AE13FB9BDF7535ADC487D9A3D22C72A
+Physical result: direct layout detected, staging copied, SorR.dat opened, mod/system.txt found, savegame/xbox/logs writable, probe log OK
+Game execution: no
+Game rendering: no
+Game data/assets committed or bundled in IPA: no
+```
+
+D2 is complete. Do not proceed to D3/rendering until explicitly instructed.

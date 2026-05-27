@@ -100,13 +100,18 @@ Physical iPhone result: app launches to shell-only dark idle screen
 Game data/assets: not bundled
 ```
 
-Current D2 artifact target:
+Current D2 physical proof:
 
 ```text
+Passing Actions run: 26543157389
 Artifact: ios-shell-d2-sorr-import-device-arm64
 IPA inside artifact: build-products/SorrIOSShell-d2-sorr-import-adhoc.ipa
 Import route: iOS Files app / file sharing via Documents/SORR_IMPORT
+Local-only import package: out/local-only/SORR_IMPORT.zip
+ZIP SHA256: B2E2F3901C65BE0FA3D739D3716C74C37AE13FB9BDF7535ADC487D9A3D22C72A
+Physical result: direct layout detected, staging copied, SorR.dat opened, mod/system.txt found, savegame/xbox/logs writable, probe log OK
 Runtime/game execution: intentionally skipped
+Game rendering: intentionally skipped
 Game data/assets in IPA: not bundled
 ```
 
@@ -120,10 +125,10 @@ Device job result: success
 Artifact: ios-shell-d2-data-import-device-arm64
 Artifact size: 459831 bytes
 IPA inside artifact: build-products/SorrIOSShell-d2-data-import-adhoc.ipa
-Physical import/storage result: pending user test
+Physical import/storage result: superseded by completed SORR_IMPORT proof
 ```
 
-Updated D2 `SORR_IMPORT` artifact proof is pending.
+Updated D2 `SORR_IMPORT` physical proof is complete.
 
 ## Workflow Summary
 
@@ -1065,4 +1070,17 @@ IPA: build-products/SorrIOSShell-d2-sorr-import-adhoc.ipa
 Result: success
 ```
 
-Do not proceed to D3 until the updated physical iPhone import/storage test is reported.
+Physical iPhone D2 result:
+
+```text
+Install route: Windows + Sideloadly
+Local-only package: out/local-only/SORR_IMPORT.zip
+Package source: sorr-vita-master/data
+Package SHA256: B2E2F3901C65BE0FA3D739D3716C74C37AE13FB9BDF7535ADC487D9A3D22C72A
+Observed status: LAYOUT DIRECT, STAGING COPIED, SORR.DAT FOUND OPENED, MOD/SYSTEM.TXT FOUND, PROBE LOG OK, SAVEGAME WRITABLE, XBOX WRITABLE, LOGS WRITABLE
+Game execution: no
+Game rendering: no
+Game data/assets committed or bundled in IPA: no
+```
+
+Do not proceed to D3 until explicitly instructed.

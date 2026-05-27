@@ -245,7 +245,7 @@ iPhone behavior: SorrIOSShell opens to a dark/blank shell-only idle screen and r
 Game data/assets: not bundled
 ```
 
-D2 status: explicit `SORR_IMPORT` inbox update in progress; new GitHub Actions device IPA artifact proof pending.
+D2 status: physical iPhone `SORR_IMPORT` data import/storage proof complete.
 
 D2 does not bundle game data. It enables iOS file sharing so the user can copy prepared data into `Documents/SORR_IMPORT`; the app treats that folder as an import inbox, stages direct or one-folder-nested data into `Library/Application Support/SORR`, and verifies `SorR.dat`, `mod/system.txt`, and writable `savegame`, `xbox`, and `logs` paths.
 
@@ -277,7 +277,23 @@ IPA inside artifact: build-products/SorrIOSShell-d2-sorr-import-adhoc.ipa
 Result: success
 ```
 
-Goal:
+Physical iPhone D2 proof:
+
+```text
+Passing Actions run: 26543157389
+Artifact: ios-shell-d2-sorr-import-device-arm64
+IPA: build-products/SorrIOSShell-d2-sorr-import-adhoc.ipa
+Install route: Windows + Sideloadly
+Local-only import package: out/local-only/SORR_IMPORT.zip
+Local package source: sorr-vita-master/data
+Local package SHA256: B2E2F3901C65BE0FA3D739D3716C74C37AE13FB9BDF7535ADC487D9A3D22C72A
+Physical result: iPhone D2 probe screen confirmed direct layout, staging copied, SorR.dat opened, mod/system.txt found, savegame/xbox/logs writable, probe log OK
+Game execution: no
+Game rendering: no
+Game data/assets committed or bundled in IPA: no
+```
+
+Completed D2 outcome:
 
 - build `SorrIOSShell.app` for `iphoneos` `arm64`,
 - package it as `Payload/SorrIOSShell.app` inside `SorrIOSShell-d2-sorr-import-adhoc.ipa`,
@@ -285,14 +301,14 @@ Goal:
 - let Sideloadly handle local signing/install on the user's iPhone,
 - keep the IPA free of `SorR.dat`, `data/`, and game assets.
 
-Recommended order:
+Completed D2 sequence:
 
-1. Produce the D2 `SORR_IMPORT` file-sharing probe IPA.
-2. Manually install with Sideloadly.
-3. Transfer a prepared `SORR_IMPORT` folder or zip from Windows through iCloud Drive, iCloud.com, OneDrive, Google Drive, or another Files-visible provider.
-4. Copy the prepared data contents, or one extracted top-level folder, through Files -> `SorrIOSShell` -> `SORR_IMPORT`.
-5. Confirm the app finds/opens `SorR.dat` and `mod/system.txt` and writes `logs/ios_d2_data_import_probe.txt`.
-6. Stop until the physical D2 result is reported.
+1. Produced the D2 `SORR_IMPORT` file-sharing probe IPA.
+2. Installed it manually with Sideloadly.
+3. Transferred the prepared `SORR_IMPORT.zip` from Windows.
+4. Extracted and copied the prepared data through Files -> `SorrIOSShell` -> `SORR_IMPORT`.
+5. Confirmed the app finds/opens `SorR.dat` and `mod/system.txt` and writes `logs/ios_d2_data_import_probe.txt`.
+6. D2 is complete; stop until D3 is explicitly requested.
 7. Then decide how to move into D3 without committing or uploading private game data.
 
 ## Out Of Scope For This Plan

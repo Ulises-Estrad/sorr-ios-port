@@ -10,7 +10,7 @@ This phase remains probe-only. It does not load or execute the Bennu runtime, re
 
 ## Status
 
-Status: D2 `SORR_IMPORT` inbox GitHub Actions device IPA artifact proof complete; physical iPhone import/storage test pending.
+Status: D2 physical iPhone data import/storage proof complete.
 
 D1 remains complete at commit `dc13aaf50bc31afe9945c6b9410178642ed69e55`.
 
@@ -46,6 +46,22 @@ Device job result: success
 Artifact: ios-shell-d2-sorr-import-device-arm64
 Artifact size: 461067 bytes
 IPA inside artifact: build-products/SorrIOSShell-d2-sorr-import-adhoc.ipa
+```
+
+Physical iPhone D2 proof:
+
+```text
+Passing Actions run: 26543157389
+Artifact: ios-shell-d2-sorr-import-device-arm64
+IPA: build-products/SorrIOSShell-d2-sorr-import-adhoc.ipa
+Install route: Windows + Sideloadly
+Local-only import package: out/local-only/SORR_IMPORT.zip
+Local package source: sorr-vita-master/data
+Local package SHA256: B2E2F3901C65BE0FA3D739D3716C74C37AE13FB9BDF7535ADC487D9A3D22C72A
+Physical result: iPhone D2 probe screen confirmed direct layout, staging copied, SorR.dat opened, mod/system.txt found, savegame/xbox/logs writable, probe log OK
+Game execution: no
+Game rendering: no
+Game data/assets committed or bundled in IPA: no
 ```
 
 ## Chosen Import Route
@@ -198,6 +214,24 @@ This zip is local-only. Do not commit it, upload it, attach it to GitHub Actions
 
 ## Expected Visible Status
 
+Observed physical iPhone D2 status:
+
+```text
+D2 SORR DATA PROBE
+INBOX DOCUMENTS/SORR_IMPORT
+DATA APP SUPPORT/SORR
+LAYOUT DIRECT
+STAGING COPIED
+SORR.DAT FOUND OPENED
+MOD/SYSTEM.TXT FOUND
+PROBE LOG OK
+SAVEGAME WRITABLE
+XBOX WRITABLE
+LOGS WRITABLE
+NO GAME EXECUTION
+NO GAME RENDERING
+```
+
 Before data is copied:
 
 ```text
@@ -276,6 +310,6 @@ build: success
 
 ## Stop Line
 
-Stop after the updated D2 `SORR_IMPORT` IPA artifact is produced and the manual import steps are documented.
+Stop after the completed physical iPhone D2 import/storage proof is documented.
 
-Do not proceed to D3/rendering until the physical iPhone D2 import/storage probe is manually tested and reported.
+Do not proceed to D3/rendering until explicitly instructed.
