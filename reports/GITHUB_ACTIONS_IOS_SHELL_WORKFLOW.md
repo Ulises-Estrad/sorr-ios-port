@@ -118,20 +118,28 @@ Build destination:
 generic/platform=iOS Simulator
 ```
 
-Code signing is disabled for simulator build steps:
+The SDL2 build keeps code signing disabled because it only builds static SDL2 libraries:
 
 ```text
 CODE_SIGNING_ALLOWED=NO
 ```
 
-Before simulator install, the workflow applies a local simulator-only ad-hoc signature:
+The shell app build lets Xcode create a simulator-local ad-hoc signature:
 
 ```bash
-codesign --force --deep --sign - --timestamp=none "$APP_PATH"
-codesign --verify --deep --strict --verbose=2 "$APP_PATH"
+CODE_SIGNING_ALLOWED=YES
+CODE_SIGNING_REQUIRED=NO
+CODE_SIGN_IDENTITY="-"
 ```
 
-This does not use provisioning profiles, device signing, IPA export, TestFlight, or App Store signing. It only makes the CI-built simulator `.app` acceptable to SpringBoard for `simctl launch`.
+Before simulator install, the workflow verifies and displays that signature:
+
+```bash
+codesign --verify --deep --strict --verbose=2 "$APP_PATH"
+codesign --display --verbose=4 "$APP_PATH"
+```
+
+This does not use provisioning profiles, device signing, IPA export, TestFlight, or App Store signing. It only gives the CI-built simulator `.app` the local signature SpringBoard sees during `simctl launch`.
 
 The launch step also prints key bundle metadata before install:
 
@@ -237,7 +245,7 @@ After the simulator `.app` build succeeds, the workflow now:
 2. Shuts down and erases that simulator to clear stale install placeholders.
 3. Boots it and waits for `simctl bootstatus`.
 4. Prints `Info.plist` diagnostics.
-5. Applies a simulator-only ad-hoc signature to `SorrIOSShell.app`.
+5. Verifies the Xcode-produced simulator app signature.
 6. Uninstalls any stale copy of the same bundle id.
 7. Installs `SorrIOSShell.app`.
 8. Launches the bundle with retries.
@@ -273,10 +281,9 @@ The app installed and appeared in `simctl listapps`, but no shell logs appeared.
 
 Current fix:
 
-- erase the selected simulator before boot,
-- uninstall the bundle id before install,
-- keep launch retries,
-- set `CFBundleDisplayName` to `SorrIOSShell` so the visible placeholder name matches the bundle/executable name.
+- let Xcode produce the simulator-local ad-hoc app signature,
+- verify that signature before install,
+- stop post-build manual deep signing of the app bundle.
 
 ## Local Preflight Results
 
@@ -660,6 +667,49 @@ Expected next run result:
 
 - If the denial was launch-screen or transient app-registration related, one of the retry attempts should start the shell and emit the required markers.
 - If launch is still denied before process start, the host CoreSimulator log should provide the lower-level launch reason.
+
+### Fifth simulator launch failure: placeholder cleared but process launch still denied
+
+Observed progress:
+
+- The selected simulator was erased before boot.
+- Any stale bundle registration was uninstalled before install.
+- `CFBundleDisplayName` matched `SorrIOSShell`.
+- The app installed and `simctl listapps` reported `isPlaceholder=0`-style final metadata for the real app.
+- LaunchServices registration succeeded for `dev.local.sorr.iosshell.ci`.
+
+Observed failure:
+
+```text
+FBSOpenApplicationServiceErrorDomain code=1
+The request was denied by service delegate (SBMainWorkspace).
+FBProcessExit Code=64 "The process failed to launch."
+RBSRequestErrorDomain Code=5 "Launch failed."
+```
+
+Cause under test:
+
+- The failure is still pre-entry, so the shell code is not running yet.
+- The placeholder/app-registration issue appears cleared.
+- The remaining launch denial may be caused by building the `.app` with `CODE_SIGNING_ALLOWED=NO` and applying a manual deep ad-hoc signature afterward.
+
+Fix applied:
+
+- Let Xcode produce the simulator-local ad-hoc signature during the app build:
+
+```text
+CODE_SIGNING_ALLOWED=YES
+CODE_SIGNING_REQUIRED=NO
+CODE_SIGN_IDENTITY="-"
+```
+
+- Stop post-build manual deep signing.
+- Keep `codesign --verify` and `codesign --display --verbose=4` before install.
+
+Expected next run result:
+
+- If SpringBoard rejected the post-hoc signed bundle, `simctl launch` should now start the shell and emit the required startup markers.
+- If launch is still denied, the next artifact should preserve the Xcode-produced code-signing details for a deeper process-launch diagnosis.
 
 ## Next Step After A Successful Shell Build
 

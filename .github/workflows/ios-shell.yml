@@ -167,7 +167,9 @@ jobs:
               --config Debug \
               -- \
               -destination 'generic/platform=iOS Simulator' \
-              CODE_SIGNING_ALLOWED=NO
+              CODE_SIGNING_ALLOWED=YES \
+              CODE_SIGNING_REQUIRED=NO \
+              CODE_SIGN_IDENTITY="-"
           } 2>&1 | tee "$ARTIFACT_DIR/logs/ios-shell-build.log"
 
       - name: Launch iOS shell in simulator
@@ -213,10 +215,9 @@ jobs:
             echo "Bundle id: $BUNDLE_ID"
             echo "Launch screen dictionary: $(/usr/libexec/PlistBuddy -c 'Print :UILaunchScreen' "$APP_PATH/Info.plist" 2>/dev/null || echo '(missing)')"
             echo "Supported orientations: $(/usr/libexec/PlistBuddy -c 'Print :UISupportedInterfaceOrientations' "$APP_PATH/Info.plist" 2>/dev/null || echo '(missing)')"
-            echo "Ad-hoc signing simulator app bundle for local simctl launch"
-            /usr/bin/codesign --force --deep --sign - --timestamp=none "$APP_PATH"
+            echo "Verifying Xcode-produced simulator app signature"
             /usr/bin/codesign --verify --deep --strict --verbose=2 "$APP_PATH"
-            /usr/bin/codesign --display --verbose=2 "$APP_PATH" 2>&1 || true
+            /usr/bin/codesign --display --verbose=4 "$APP_PATH" 2>&1 || true
 
             xcrun simctl boot "$DEVICE_UDID" || true
             xcrun simctl bootstatus "$DEVICE_UDID" -b

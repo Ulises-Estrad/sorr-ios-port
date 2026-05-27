@@ -284,6 +284,34 @@ Fifth fix:
 - keep the launch retries and host-side CoreSimulator diagnostics,
 - make `CFBundleDisplayName` match `SorrIOSShell` to avoid a spaced placeholder app name during install coordination.
 
+Fifth follow-up result:
+
+- The erased simulator removed the stale placeholder symptom.
+- LaunchServices registered the real app and `simctl listapps` showed final metadata for `dev.local.sorr.iosshell.ci`.
+- `simctl launch` still failed before app entry.
+- Host-side logs narrowed the failure to a process-launch denial:
+
+```text
+FBSOpenApplicationServiceErrorDomain code=1
+FBProcessExit Code=64 "The process failed to launch."
+RBSRequestErrorDomain Code=5 "Launch failed."
+```
+
+Sixth fix:
+
+- Build the simulator `.app` with Xcode's local ad-hoc signing path:
+
+```text
+CODE_SIGNING_ALLOWED=YES
+CODE_SIGNING_REQUIRED=NO
+CODE_SIGN_IDENTITY="-"
+```
+
+- Stop manually deep-signing the app bundle after the Xcode build.
+- Verify and print the Xcode-produced signature before simulator install.
+
+This remains simulator-only. It does not use provisioning profiles, create an IPA, install on a device, or start TestFlight/App Store signing.
+
 ## Expected First Success Log
 
 When run from a real macOS/Xcode+iOS simulator environment, the target should still be validated against:
