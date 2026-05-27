@@ -370,6 +370,37 @@ Expected next run result:
 - The shell configure should advance past SDL2 discovery.
 - The next possible blocker is expected to be a simulator link/build issue, not SDL2 prefix discovery.
 
+### Second CI failure: SDL2 installed but `find_path` misses `SDL.h`
+
+Observed log:
+
+```text
+SDL2_IOS_PREFIX=/Users/runner/work/sorr-ios-port/sorr-ios-port/_deps/sdl2-ios-sim
+SDL2 discovery debug:
+.../_deps/sdl2-ios-sim/include/SDL2/SDL.h
+.../_deps/sdl2-ios-sim/lib/libSDL2.a
+.../_deps/sdl2-ios-sim/lib/libSDL2main.a
+CMake Error at CMakeLists.txt:67 (find_path):
+  Could not find SDL2_INCLUDE_DIR using the following files: SDL.h
+```
+
+Cause:
+
+- SDL2 was installed correctly, and the debug probe proved the header and libraries existed.
+- During iOS cross-configuration, CMake's normal `find_path`/`find_library` behavior can apply SDK/root-path search rules that do not accept the workspace install prefix as intended.
+
+Fix applied:
+
+- The `SORR_IOS_SDL2_ROOT` branch now uses `PATHS` with `NO_DEFAULT_PATH` and `NO_CMAKE_FIND_ROOT_PATH` for SDL2 header/library lookup.
+- The same explicit-root branch now discovers and links `libSDL2main.a` when `SORR_IOS_SHELL_USE_SDL_MAIN_HANDLED` is off.
+- The configure log now prints the selected SDL2 include directory, SDL2 library, and SDL2main library.
+
+Expected next run result:
+
+- `ios-shell-configure.log` should print `Using SDL2 include directory`, `Using SDL2 library`, and `Using SDL2main library`.
+- Configure should advance past SDL2 include/library resolution.
+- The next blocker, if any, should be in Xcode generation or simulator linking.
+
 ### iOS shell configure fails on ZLIB
 
 Symptom:

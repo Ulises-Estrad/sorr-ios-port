@@ -66,18 +66,38 @@ if(SORR_IOS_SDL2_FRAMEWORK)
 elseif(SORR_IOS_SDL2_ROOT)
   find_path(SDL2_INCLUDE_DIR
     NAMES SDL.h
-    HINTS
+    PATHS
       "${SORR_IOS_SDL2_ROOT}/include/SDL2"
       "${SORR_IOS_SDL2_ROOT}/include"
+    NO_DEFAULT_PATH
+    NO_CMAKE_FIND_ROOT_PATH
     REQUIRED)
   find_library(SDL2_LIBRARY
     NAMES SDL2 SDL2-static
-    HINTS
+    PATHS
       "${SORR_IOS_SDL2_ROOT}/lib"
       "${SORR_IOS_SDL2_ROOT}"
+    NO_DEFAULT_PATH
+    NO_CMAKE_FIND_ROOT_PATH
     REQUIRED)
+  find_library(SDL2MAIN_LIBRARY
+    NAMES SDL2main
+    PATHS
+      "${SORR_IOS_SDL2_ROOT}/lib"
+      "${SORR_IOS_SDL2_ROOT}"
+    NO_DEFAULT_PATH
+    NO_CMAKE_FIND_ROOT_PATH)
+
+  message(STATUS "Using SDL2 include directory: ${SDL2_INCLUDE_DIR}")
+  message(STATUS "Using SDL2 library: ${SDL2_LIBRARY}")
+  if(SDL2MAIN_LIBRARY)
+    message(STATUS "Using SDL2main library: ${SDL2MAIN_LIBRARY}")
+  endif()
 
   target_include_directories(SorrIOSShell PRIVATE "${SDL2_INCLUDE_DIR}")
+  if(NOT SORR_IOS_SHELL_USE_SDL_MAIN_HANDLED AND SDL2MAIN_LIBRARY)
+    target_link_libraries(SorrIOSShell PRIVATE "${SDL2MAIN_LIBRARY}")
+  endif()
   target_link_libraries(SorrIOSShell PRIVATE "${SDL2_LIBRARY}")
 else()
   find_package(SDL2 CONFIG QUIET)
