@@ -20,7 +20,12 @@ The workflow proves:
 Current CI status:
 
 ```text
-Build iOS shell for simulator arm64: succeeded in 4m 22s
+Simplify iOS simulator launch diagnostics #13
+Commit: 66dcbc9
+Status: Success
+Total duration: 10m 39s
+Job: Build iOS shell for simulator arm64, 10m 35s
+Artifact: ios-shell-simulator-arm64, 2.43 MB
 ```
 
 The successful run completed:
@@ -34,6 +39,8 @@ The successful run completed:
 - SDL2 build/install,
 - iOS shell configure,
 - iOS shell build,
+- simulator boot/install/launch,
+- required shell startup marker validation,
 - app artifact packaging,
 - log/artifact upload.
 
@@ -46,6 +53,17 @@ It intentionally does not:
 - create an IPA,
 - touch TestFlight/App Store paths,
 - modify desktop or x64 known-good snapshots.
+
+The successful run proves the shell:
+
+- launches in an iOS Simulator,
+- reaches app entry,
+- initializes SDL,
+- initializes SDL video/events/timer,
+- creates an SDL window and renderer,
+- reaches and returns from the Bennu runtime handoff probe,
+- explicitly does not load `SorR.dat`,
+- enters the responsive idle loop.
 
 ## Workflow Summary
 
@@ -249,7 +267,7 @@ After the simulator `.app` build succeeds, the workflow now:
 6. Uninstalls any stale copy of the same bundle id.
 7. Installs `SorrIOSShell.app`.
 8. Launches the bundle with retries.
-9. Captures app stdout/stderr and simulator logs for 20 seconds.
+9. Captures simulator logs for 20 seconds.
 10. Terminates the shell.
 11. Combines `simctl launch`, app stdout/stderr, `log stream`, and `log show` output.
 12. Fails the job if `simctl launch` fails or if required startup markers are missing.
@@ -760,20 +778,38 @@ Expected next run result:
 - If stdout/stderr attachment or a purely headless SpringBoard state caused the denial, the shell should start and emit the required markers.
 - If launch is still denied, the public Actions annotations should include the specific SpringBoard/RunningBoard reason for the next patch.
 
+### Eighth follow-up: simulator launch proof passed
+
+Observed result:
+
+```text
+Simplify iOS simulator launch diagnostics #13
+Commit: 66dcbc9
+Status: Success
+Total duration: 10m 39s
+Artifact: ios-shell-simulator-arm64
+```
+
+Because the workflow checks all required startup markers before passing, the successful run proves the shell-only app launches and idles in the simulator.
+
+Working launch shape:
+
+- Xcode builds the simulator app with local ad-hoc signing.
+- The selected simulator is booted and foregrounded with `Simulator.app`.
+- The app is installed with `simctl install`.
+- The app is launched through plain `simctl launch --terminate-running-process` without stdout/stderr file attachment.
+- Runtime evidence is captured through simulator unified logging.
+
+No game data was bundled or loaded.
+
 ## Next Step After A Successful Shell Build
 
-After the workflow produces `SorrIOSShell.app` for simulator:
+After the workflow produces and launches `SorrIOSShell.app` for simulator:
 
-1. Add a simulator run job or a manual Mac/cloud-Mac launch step.
-2. Capture runtime logs proving:
-   - app entry reached,
-   - `SDL_Init` begin/end,
-   - SDL video/events/timer init,
-   - SDL window/renderer created,
-   - `bgdrtm_entry` reached,
-   - idle loop running.
-3. Generalize the x64-safe runtime fixes from `_WIN64` to a portable 64-bit guard.
-4. Build the shell with the x64-safe runtime path still not loading `SorR.dat`.
-5. Only then start the iOS data layout shim.
+1. Generalize the x64-safe runtime fixes from `_WIN64` to a portable 64-bit guard.
+2. Build the iOS shell with the x64-safe runtime path still not loading `SorR.dat`.
+3. Add the iOS data layout shim.
+4. Add the touch keyboard bridge.
+5. Only then bundle prepared data and attempt title/city render.
 
-Do not bundle or load game data until the shell build and launch are proven.
+Do not bundle or load game data until a later phase explicitly asks for it.

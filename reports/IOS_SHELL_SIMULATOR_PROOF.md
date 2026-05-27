@@ -15,12 +15,17 @@ Guardrails honored:
 
 ## Result
 
-Status: CI build proof successful; simulator launch proof still pending.
+Status: CI build proof and simulator launch proof successful.
 
 GitHub Actions result:
 
 ```text
-Build iOS shell for simulator arm64: succeeded in 4m 22s
+Simplify iOS simulator launch diagnostics #13
+Commit: 66dcbc9
+Status: Success
+Total duration: 10m 39s
+Job: Build iOS shell for simulator arm64, 10m 35s
+Artifact: ios-shell-simulator-arm64, 2.43 MB
 ```
 
 The successful macOS CI run completed:
@@ -34,6 +39,8 @@ The successful macOS CI run completed:
 - SDL2 build/install,
 - iOS shell configure,
 - iOS shell build,
+- simulator boot/install/launch,
+- required shell marker validation,
 - app artifact packaging,
 - log/artifact upload.
 
@@ -44,24 +51,21 @@ This proves:
 - SDL2 2.30.12 can be built and installed for `iphonesimulator` `arm64`,
 - `SorrIOSShell` configures against the SDL2 iOS install,
 - static SDL2's required Apple framework closure is linked,
-- simulator `.app` build and artifact upload succeed.
+- simulator `.app` build and artifact upload succeed,
+- the shell installs and launches in an iOS Simulator,
+- the shell emits the required SDL/runtime/idle-loop markers.
 
-Next proof now wired in CI:
+The successful launch proof validates:
 
 - boot an available iPhone simulator,
 - print app bundle metadata,
-- ad-hoc sign the built simulator app for local `simctl` launch,
+- use Xcode's simulator-local ad-hoc app signature,
 - install `SorrIOSShell.app`,
 - launch it,
 - capture app stdout/stderr, app logs, and broader system launch logs,
 - fail the job if required shell startup markers are missing.
 
-Still pending until the updated workflow run completes:
-
-- installing/running the `.app` in an actual simulator,
-- runtime log capture from app launch,
-- SDL window/renderer creation at runtime,
-- responsive idle loop on simulator.
+No `SorR.dat` or game data was bundled or loaded.
 
 ## Earlier Local Blocker
 
@@ -174,7 +178,7 @@ build-products/SorrIOSShell-iphonesimulator-arm64.zip
 
 ## Simulator Launch
 
-Workflow step added; run pending.
+Successful in GitHub Actions.
 
 The GitHub Actions workflow now adds `Launch iOS shell in simulator` after the build step and before artifact packaging. It:
 
@@ -183,14 +187,15 @@ The GitHub Actions workflow now adds `Launch iOS shell in simulator` after the b
 - boots and waits for the simulator,
 - prints `Info.plist`, bundle id, and launch storyboard diagnostics,
 - prints supported orientations and bundle file diagnostics,
-- applies a local simulator-only ad-hoc signature with `codesign -`,
+- verifies the Xcode-produced simulator-local app signature,
 - installs the built app,
 - launches the bundle id from the app `Info.plist`,
 - redirects app stdout/stderr to artifact logs,
 - streams logs while the shell runs,
 - also captures a `log show --last 2m` fallback,
 - captures broader SpringBoard/FrontBoard/RunningBoard/LaunchServices logs,
-- combines launch/log output into `simulator/sorr-ios-shell-combined.log`.
+- combines launch/log output into `simulator/sorr-ios-shell-combined.log`,
+- checks all required shell startup markers before passing.
 
 ## Runtime Log Checklist
 
@@ -339,6 +344,20 @@ Eighth fix:
 - Add `simulator/launch-failure-summary.log`.
 - Emit a compact GitHub `::error` annotation containing launch-log and filtered SpringBoard/RunningBoard/CoreSimulator failure tails for future no-auth inspection.
 
+Eighth follow-up result:
+
+- The workflow completed successfully on commit `66dcbc9`.
+- The job status was `Success`.
+- The run produced the `ios-shell-simulator-arm64` artifact.
+- Since the workflow fails if any required shell marker is missing, the successful run proves:
+  - app entry was reached,
+  - `SDL_Init` succeeded,
+  - SDL video/events/timer initialization succeeded,
+  - SDL window and renderer were created,
+  - the Bennu runtime handoff probe was reached and returned,
+  - `SorR.dat` was intentionally not loaded,
+  - the responsive idle loop was entered.
+
 ## Expected First Success Log
 
 When run from a real macOS/Xcode+iOS simulator environment, the target should still be validated against:
@@ -357,22 +376,10 @@ SORR iOS shell: entering responsive idle loop
 
 ## Next Required Action
 
-Run the updated GitHub Actions workflow. The launch step should capture logs until the shell reaches:
+The shell-only simulator proof is complete. The next phase can start from this proven baseline:
 
 ```text
-SORR iOS shell: entering responsive idle loop
+iOS shell builds, installs, launches, creates SDL window/renderer, reaches the runtime handoff probe, and idles in the simulator.
 ```
 
-Expected uploaded launch logs:
-
-```text
-ci-artifacts/ios-shell/logs/ios-shell-simulator-launch.log
-ci-artifacts/ios-shell/logs/simulator/simctl-launch.log
-ci-artifacts/ios-shell/logs/simulator/sorr-ios-shell-stdout.log
-ci-artifacts/ios-shell/logs/simulator/sorr-ios-shell-stderr.log
-ci-artifacts/ios-shell/logs/simulator/sorr-ios-shell-log-stream.log
-ci-artifacts/ios-shell/logs/simulator/sorr-ios-shell-log-show.log
-ci-artifacts/ios-shell/logs/simulator/sorr-ios-shell-system-log-show.log
-ci-artifacts/ios-shell/logs/simulator/sorr-ios-shell-host-coresimulator-log-show.log
-ci-artifacts/ios-shell/logs/simulator/sorr-ios-shell-combined.log
-```
+Still do not bundle or load game data until the next phase explicitly asks for it.
