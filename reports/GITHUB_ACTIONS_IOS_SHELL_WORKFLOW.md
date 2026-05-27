@@ -13,7 +13,9 @@ The workflow proves:
 - CMake is available,
 - SDL2 can be fetched and built for `iphonesimulator` `arm64`,
 - the isolated `SorrIOSShell` CMake target can configure,
-- the shell app can build as a simulator `.app`.
+- the shell app can build as a simulator `.app`,
+- the built app can be installed and launched in an available iOS Simulator,
+- shell startup logs can be captured from the simulator.
 
 Current CI status:
 
@@ -167,6 +169,13 @@ Expected log files:
 - `sdl2-build-install.log`
 - `ios-shell-configure.log`
 - `ios-shell-build.log`
+- `ios-shell-simulator-launch.log`
+- `simulator/simctl-launch.log`
+- `simulator/sorr-ios-shell-stdout.log`
+- `simulator/sorr-ios-shell-stderr.log`
+- `simulator/sorr-ios-shell-log-stream.log`
+- `simulator/sorr-ios-shell-log-show.log`
+- `simulator/sorr-ios-shell-combined.log`
 - `package-artifacts.log`
 
 The tool-version log should include:
@@ -197,6 +206,33 @@ SorrIOSShell.app
 ```
 
 No game data should appear in the uploaded artifact.
+
+## Simulator Launch Proof
+
+After the simulator `.app` build succeeds, the workflow now:
+
+1. Selects the first available iPhone simulator from `xcrun simctl list devices available --json`.
+2. Boots it and waits for `simctl bootstatus`.
+3. Installs `SorrIOSShell.app`.
+4. Launches the bundle.
+5. Captures app stdout/stderr and simulator logs for 20 seconds.
+6. Terminates the shell.
+7. Combines `simctl launch`, app stdout/stderr, `log stream`, and `log show` output.
+8. Fails the job if required startup markers are missing.
+
+Required markers:
+
+```text
+SORR iOS shell: app entry
+SORR iOS shell: SDL_Init ok
+SORR iOS shell: SDL video/events/timer init ok
+SORR iOS shell: reached Bennu runtime handoff probe
+SORR iOS shell: bgdrtm_entry returned
+SORR iOS shell: SorR.dat intentionally not loaded in milestone 1
+SORR iOS shell: entering responsive idle loop
+```
+
+The shell source currently does not emit separate success lines for `SDL_CreateWindow` or `SDL_CreateRenderer`; `entering responsive idle loop` is emitted only after both calls succeed, so it is the current shell-only proof marker for window/renderer creation.
 
 ## Local Preflight Results
 

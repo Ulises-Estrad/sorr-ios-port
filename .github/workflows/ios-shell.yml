@@ -170,6 +170,118 @@ jobs:
               CODE_SIGNING_ALLOWED=NO
           } 2>&1 | tee "$ARTIFACT_DIR/logs/ios-shell-build.log"
 
+      - name: Launch iOS shell in simulator
+        shell: bash
+        run: |
+          set -euo pipefail
+          set -o pipefail
+          mkdir -p "$ARTIFACT_DIR/logs/simulator"
+          LOG_STREAM_PID=""
+          cleanup() {
+            if [[ -n "$LOG_STREAM_PID" ]] && kill -0 "$LOG_STREAM_PID" 2>/dev/null; then
+              kill "$LOG_STREAM_PID" 2>/dev/null || true
+              wait "$LOG_STREAM_PID" 2>/dev/null || true
+            fi
+          }
+          trap cleanup EXIT
+          {
+            echo "Available simulator devices:"
+            xcrun simctl list devices available
+
+            DEVICE_UDID="$(xcrun simctl list devices available --json | python3 -c 'import json, sys; data=json.load(sys.stdin); candidates=[device.get("udid", "") for runtime, devices in data.get("devices", {}).items() if "iOS" in runtime for device in devices if device.get("isAvailable") and device.get("name", "").startswith("iPhone")]; print(candidates[0] if candidates else "")')"
+            if [[ -z "$DEVICE_UDID" ]]; then
+              echo "::error::No available iPhone simulator was found."
+              exit 1
+            fi
+            echo "Selected simulator UDID: $DEVICE_UDID"
+
+            APP_PATH="$(find "$IOS_SHELL_BUILD_DIR" -name 'SorrIOSShell.app' -type d | head -n 1 || true)"
+            if [[ -z "$APP_PATH" ]]; then
+              echo "::error::SorrIOSShell.app was not produced."
+              exit 1
+            fi
+            echo "App path: $APP_PATH"
+
+            BUNDLE_ID="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$APP_PATH/Info.plist")"
+            echo "Bundle id: $BUNDLE_ID"
+
+            xcrun simctl boot "$DEVICE_UDID" || true
+            xcrun simctl bootstatus "$DEVICE_UDID" -b
+
+            xcrun simctl install "$DEVICE_UDID" "$APP_PATH"
+
+            LOG_STREAM="$ARTIFACT_DIR/logs/simulator/sorr-ios-shell-log-stream.log"
+            LOG_SHOW="$ARTIFACT_DIR/logs/simulator/sorr-ios-shell-log-show.log"
+            LAUNCH_LOG="$ARTIFACT_DIR/logs/simulator/simctl-launch.log"
+            STDOUT_LOG="$ARTIFACT_DIR/logs/simulator/sorr-ios-shell-stdout.log"
+            STDERR_LOG="$ARTIFACT_DIR/logs/simulator/sorr-ios-shell-stderr.log"
+            COMBINED_LOG="$ARTIFACT_DIR/logs/simulator/sorr-ios-shell-combined.log"
+
+            xcrun simctl spawn "$DEVICE_UDID" log stream \
+              --style compact \
+              --level debug \
+              --predicate 'process == "SorrIOSShell" OR eventMessage CONTAINS "SORR iOS shell"' \
+              > "$LOG_STREAM" 2>&1 &
+            LOG_STREAM_PID="$!"
+            sleep 2
+
+            xcrun simctl launch \
+              --stdout="$STDOUT_LOG" \
+              --stderr="$STDERR_LOG" \
+              "$DEVICE_UDID" \
+              "$BUNDLE_ID" 2>&1 | tee "$LAUNCH_LOG"
+            sleep 20
+
+            xcrun simctl terminate "$DEVICE_UDID" "$BUNDLE_ID" || true
+            sleep 2
+            cleanup
+            LOG_STREAM_PID=""
+
+            xcrun simctl spawn "$DEVICE_UDID" log show \
+              --last 2m \
+              --style compact \
+              --predicate 'process == "SorrIOSShell" OR eventMessage CONTAINS "SORR iOS shell"' \
+              > "$LOG_SHOW" 2>&1 || true
+
+            {
+              echo "===== simctl launch ====="
+              cat "$LAUNCH_LOG" || true
+              echo
+              echo "===== app stdout ====="
+              cat "$STDOUT_LOG" || true
+              echo
+              echo "===== app stderr ====="
+              cat "$STDERR_LOG" || true
+              echo
+              echo "===== log stream ====="
+              cat "$LOG_STREAM" || true
+              echo
+              echo "===== log show ====="
+              cat "$LOG_SHOW" || true
+            } > "$COMBINED_LOG"
+
+            echo "Combined simulator log:"
+            cat "$COMBINED_LOG"
+
+            required_markers=(
+              "SORR iOS shell: app entry"
+              "SORR iOS shell: SDL_Init ok"
+              "SORR iOS shell: SDL video/events/timer init ok"
+              "SORR iOS shell: reached Bennu runtime handoff probe"
+              "SORR iOS shell: bgdrtm_entry returned"
+              "SORR iOS shell: SorR.dat intentionally not loaded in milestone 1"
+              "SORR iOS shell: entering responsive idle loop"
+            )
+            for marker in "${required_markers[@]}"; do
+              if ! grep -Fq "$marker" "$COMBINED_LOG"; then
+                echo "::error::Missing simulator log marker: $marker"
+                exit 1
+              fi
+            done
+
+            echo "iOS shell simulator launch proof passed."
+          } 2>&1 | tee "$ARTIFACT_DIR/logs/ios-shell-simulator-launch.log"
+
       - name: Package iOS shell artifacts
         if: always()
         shell: bash

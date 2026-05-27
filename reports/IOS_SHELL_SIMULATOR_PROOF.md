@@ -46,7 +46,15 @@ This proves:
 - static SDL2's required Apple framework closure is linked,
 - simulator `.app` build and artifact upload succeed.
 
-Still not proven:
+Next proof now wired in CI:
+
+- boot an available iPhone simulator,
+- install `SorrIOSShell.app`,
+- launch it,
+- capture app stdout/stderr and simulator logs for 20 seconds,
+- fail the job if required shell startup markers are missing.
+
+Still pending until the updated workflow run completes:
 
 - installing/running the `.app` in an actual simulator,
 - runtime log capture from app launch,
@@ -164,21 +172,31 @@ build-products/SorrIOSShell-iphonesimulator-arm64.zip
 
 ## Simulator Launch
 
-Not run.
+Workflow step added; run pending.
 
-The workflow currently stops at build/package/upload. A follow-up CI/manual Mac step is needed to install and launch the `.app` in a simulator and capture runtime logs.
+The GitHub Actions workflow now adds `Launch iOS shell in simulator` after the build step and before artifact packaging. It:
+
+- lists available simulator devices,
+- selects the first available iPhone simulator,
+- boots and waits for the simulator,
+- installs the built app,
+- launches the bundle id from the app `Info.plist`,
+- redirects app stdout/stderr to artifact logs,
+- streams logs while the shell runs,
+- also captures a `log show --last 2m` fallback,
+- combines launch/log output into `simulator/sorr-ios-shell-combined.log`.
 
 ## Runtime Log Checklist
 
 - [x] iOS simulator `.app` built: proven by GitHub Actions
 - [x] artifact packaging/upload: proven by GitHub Actions
-- [ ] app entry reached: not proven at runtime
-- [ ] `SDL_Init` begin/end: not proven at runtime
-- [ ] SDL video init: not proven at runtime
-- [ ] `SDL_CreateWindow` success: not proven at runtime
-- [ ] `SDL_CreateRenderer` success: not proven at runtime
-- [ ] `bgdrtm_entry` reached: not proven at runtime
-- [ ] idle loop running: not proven
+- [ ] app entry reached: workflow check added, pending run
+- [ ] `SDL_Init` begin/end: workflow check added, pending run
+- [ ] SDL video init: workflow check added, pending run
+- [ ] `SDL_CreateWindow` success: inferred from idle-loop marker, pending run
+- [ ] `SDL_CreateRenderer` success: inferred from idle-loop marker, pending run
+- [ ] `bgdrtm_entry` reached: workflow check added, pending run
+- [ ] idle loop running: workflow check added, pending run
 - [ ] clean quit: not proven
 
 ## Expected First Success Log
@@ -197,8 +215,20 @@ SORR iOS shell: entering responsive idle loop
 
 ## Next Required Action
 
-Add a CI or manual Mac simulator launch step that installs and runs the uploaded `SorrIOSShell.app`, then captures logs until the shell reaches:
+Run the updated GitHub Actions workflow. The launch step should capture logs until the shell reaches:
 
 ```text
 SORR iOS shell: entering responsive idle loop
+```
+
+Expected uploaded launch logs:
+
+```text
+ci-artifacts/ios-shell/logs/ios-shell-simulator-launch.log
+ci-artifacts/ios-shell/logs/simulator/simctl-launch.log
+ci-artifacts/ios-shell/logs/simulator/sorr-ios-shell-stdout.log
+ci-artifacts/ios-shell/logs/simulator/sorr-ios-shell-stderr.log
+ci-artifacts/ios-shell/logs/simulator/sorr-ios-shell-log-stream.log
+ci-artifacts/ios-shell/logs/simulator/sorr-ios-shell-log-show.log
+ci-artifacts/ios-shell/logs/simulator/sorr-ios-shell-combined.log
 ```
