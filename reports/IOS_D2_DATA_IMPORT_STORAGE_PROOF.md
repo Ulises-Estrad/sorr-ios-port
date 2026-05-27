@@ -10,9 +10,23 @@ This phase remains probe-only. It does not load or execute the Bennu runtime, re
 
 ## Status
 
-Status: D2 file-sharing import/storage probe implemented locally; GitHub Actions device artifact proof pending.
+Status: D2 GitHub Actions device IPA artifact proof complete; physical iPhone import/storage test pending.
 
 D1 remains complete at commit `dc13aaf50bc31afe9945c6b9410178642ed69e55`.
+
+Proof run:
+
+```text
+Commit: 5d9036f
+Run: https://github.com/Ulises-Estrad/sorr-ios-port/actions/runs/26541978819
+Device job: Build iOS shell unsigned IPA for device arm64
+Device job result: success
+Artifact: ios-shell-d2-data-import-device-arm64
+Artifact size: 459831 bytes
+IPA inside artifact: build-products/SorrIOSShell-d2-data-import-adhoc.ipa
+```
+
+The same workflow run kept the simulator shell/data-layout proof green.
 
 ## Chosen Import Route
 

@@ -110,6 +110,19 @@ Runtime/game execution: intentionally skipped
 Game data/assets in IPA: not bundled
 ```
 
+Latest D2 result:
+
+```text
+Commit: 5d9036f
+Run: https://github.com/Ulises-Estrad/sorr-ios-port/actions/runs/26541978819
+Device job: Build iOS shell unsigned IPA for device arm64
+Device job result: success
+Artifact: ios-shell-d2-data-import-device-arm64
+Artifact size: 459831 bytes
+IPA inside artifact: build-products/SorrIOSShell-d2-data-import-adhoc.ipa
+Physical import/storage result: pending user test
+```
+
 ## Workflow Summary
 
 Runner:
@@ -1030,3 +1043,5 @@ Manual import route after Sideloadly install:
 5. Confirm the status screen reports `SORR.DAT FOUND OPENED`, `MOD/SYSTEM.TXT FOUND`, and `SAVEGAME XBOX LOGS WRITABLE`.
 
 The shell copies detected data from `Documents/SORR` into `Library/Application Support/SORR`, writes `logs/ios_d2_data_import_probe.txt`, and skips Bennu runtime execution.
+
+GitHub-side D2 artifact proof completed on run `26541978819`. The next step is the manual physical iPhone import/storage test; do not proceed to D3 until that result is reported.

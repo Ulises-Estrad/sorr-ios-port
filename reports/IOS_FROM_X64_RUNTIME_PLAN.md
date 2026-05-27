@@ -245,9 +245,19 @@ iPhone behavior: SorrIOSShell opens to a dark/blank shell-only idle screen and r
 Game data/assets: not bundled
 ```
 
-D2 status: file-sharing import/storage probe implemented; GitHub Actions device IPA proof pending.
+D2 status: GitHub Actions device IPA artifact proof complete; physical iPhone import/storage test pending.
 
 D2 does not bundle game data. It enables iOS file sharing so the user can copy prepared data into `Documents/SORR`; the app then stages detected data into `Library/Application Support/SORR` and verifies `SorR.dat`, `mod/system.txt`, and writable `savegame`, `xbox`, and `logs` paths.
+
+D2 artifact proof:
+
+```text
+Commit: 5d9036f
+Run: https://github.com/Ulises-Estrad/sorr-ios-port/actions/runs/26541978819
+Artifact: ios-shell-d2-data-import-device-arm64
+IPA inside artifact: build-products/SorrIOSShell-d2-data-import-adhoc.ipa
+Result: success
+```
 
 Goal:
 

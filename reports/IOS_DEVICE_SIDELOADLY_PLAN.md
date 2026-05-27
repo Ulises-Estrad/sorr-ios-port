@@ -190,3 +190,13 @@ build-products/SorrIOSShell-d2-data-import-adhoc.ipa
 ```
 
 It still must not bundle `SorR.dat`, `data/`, or game assets. D2 uses iOS file sharing so prepared data can be copied privately through the Files app into `Documents/SORR` after Sideloadly installation.
+
+D2 GitHub-side artifact proof:
+
+```text
+Commit: 5d9036f
+Run: https://github.com/Ulises-Estrad/sorr-ios-port/actions/runs/26541978819
+Artifact: ios-shell-d2-data-import-device-arm64
+IPA: build-products/SorrIOSShell-d2-data-import-adhoc.ipa
+Result: success
+```
