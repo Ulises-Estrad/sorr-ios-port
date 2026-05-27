@@ -137,7 +137,7 @@ The launch step also prints key bundle metadata before install:
 
 - full `Info.plist` via `plutil -p`,
 - bundle identifier,
-- `UILaunchStoryboardName`,
+- `UILaunchScreen`,
 - supported orientations,
 - bundle file list,
 - installed app container path when available.
@@ -194,6 +194,7 @@ Expected log files:
 - `simulator/sorr-ios-shell-log-stream.log`
 - `simulator/sorr-ios-shell-log-show.log`
 - `simulator/sorr-ios-shell-system-log-show.log`
+- `simulator/sorr-ios-shell-host-coresimulator-log-show.log`
 - `simulator/sorr-ios-shell-combined.log`
 - `package-artifacts.log`
 
@@ -247,13 +248,15 @@ Required markers:
 SORR iOS shell: app entry
 SORR iOS shell: SDL_Init ok
 SORR iOS shell: SDL video/events/timer init ok
+SORR iOS shell: SDL_CreateWindow success
+SORR iOS shell: SDL_CreateRenderer success
 SORR iOS shell: reached Bennu runtime handoff probe
 SORR iOS shell: bgdrtm_entry returned
 SORR iOS shell: SorR.dat intentionally not loaded in milestone 1
 SORR iOS shell: entering responsive idle loop
 ```
 
-The shell source currently does not emit separate success lines for `SDL_CreateWindow` or `SDL_CreateRenderer`; `entering responsive idle loop` is emitted only after both calls succeed, so it is the current shell-only proof marker for window/renderer creation.
+The shell source now emits separate success lines for `SDL_CreateWindow` and `SDL_CreateRenderer`. `entering responsive idle loop` remains the final shell-only liveness marker.
 
 ## Local Preflight Results
 
@@ -608,6 +611,35 @@ Expected next run result:
 
 - `simctl launch` should advance past the SpringBoard denial.
 - If launch is still denied, the uploaded system log should include the deeper FrontBoard/SpringBoard reason.
+
+### Fourth simulator launch failure: app still denied before process start
+
+Observed progress:
+
+- `LaunchScreen.storyboardc` was present in the `.app`.
+- `Info.plist` had `UILaunchStoryboardName=LaunchScreen`, `UIDeviceFamily=1`, `CFBundleDisplayName`, and portrait plus landscape orientations.
+- The app installed and `simctl listapps` returned the bundle metadata.
+- `simctl launch` still failed before app entry with `FBSOpenApplicationServiceErrorDomain code=1` and `SBMainWorkspace`.
+
+Cause under test:
+
+- The failure is still pre-entry, so the shell code is not running yet.
+- The compiled storyboard launch screen is not missing, but it is still one more launch-time dependency in a minimal CI shell.
+- The failed launch may also be a transient SpringBoard/LaunchServices state immediately after install.
+
+Fix applied:
+
+- Replace `UILaunchStoryboardName=LaunchScreen` with an empty `UILaunchScreen` dictionary.
+- Remove the storyboard resource from the CMake app target.
+- Print the full app bundle tree with `find "$APP_PATH" -maxdepth 3 -print`.
+- Retry `simctl launch` up to four times with short backoff.
+- Capture host-side CoreSimulator logs to `simulator/sorr-ios-shell-host-coresimulator-log-show.log`.
+- Add explicit shell markers for `SDL_CreateWindow success` and `SDL_CreateRenderer success`.
+
+Expected next run result:
+
+- If the denial was launch-screen or transient app-registration related, one of the retry attempts should start the shell and emit the required markers.
+- If launch is still denied before process start, the host CoreSimulator log should provide the lower-level launch reason.
 
 ## Next Step After A Successful Shell Build
 

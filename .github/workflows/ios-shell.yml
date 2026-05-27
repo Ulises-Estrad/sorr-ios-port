@@ -203,12 +203,12 @@ jobs:
             echo "App path: $APP_PATH"
             echo "Info.plist:"
             plutil -p "$APP_PATH/Info.plist"
-            echo "App bundle files:"
-            find "$APP_PATH" -maxdepth 3 -type f | sort
+            echo "App bundle tree:"
+            find "$APP_PATH" -maxdepth 3 -print | sort
 
             BUNDLE_ID="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$APP_PATH/Info.plist")"
             echo "Bundle id: $BUNDLE_ID"
-            echo "Launch storyboard: $(/usr/libexec/PlistBuddy -c 'Print :UILaunchStoryboardName' "$APP_PATH/Info.plist" 2>/dev/null || echo '(missing)')"
+            echo "Launch screen dictionary: $(/usr/libexec/PlistBuddy -c 'Print :UILaunchScreen' "$APP_PATH/Info.plist" 2>/dev/null || echo '(missing)')"
             echo "Supported orientations: $(/usr/libexec/PlistBuddy -c 'Print :UISupportedInterfaceOrientations' "$APP_PATH/Info.plist" 2>/dev/null || echo '(missing)')"
             echo "Ad-hoc signing simulator app bundle for local simctl launch"
             /usr/bin/codesign --force --deep --sign - --timestamp=none "$APP_PATH"
@@ -223,15 +223,18 @@ jobs:
             xcrun simctl get_app_container "$DEVICE_UDID" "$BUNDLE_ID" app || true
             echo "Installed app metadata:"
             xcrun simctl listapps "$DEVICE_UDID" | grep -A 40 "$BUNDLE_ID" || true
+            echo "Waiting for SpringBoard/LaunchServices app registration to settle..."
+            sleep 10
 
             LOG_STREAM="$ARTIFACT_DIR/logs/simulator/sorr-ios-shell-log-stream.log"
             LOG_SHOW="$ARTIFACT_DIR/logs/simulator/sorr-ios-shell-log-show.log"
             SYSTEM_LOG_SHOW="$ARTIFACT_DIR/logs/simulator/sorr-ios-shell-system-log-show.log"
+            HOST_LOG_SHOW="$ARTIFACT_DIR/logs/simulator/sorr-ios-shell-host-coresimulator-log-show.log"
             LAUNCH_LOG="$ARTIFACT_DIR/logs/simulator/simctl-launch.log"
             STDOUT_LOG="$ARTIFACT_DIR/logs/simulator/sorr-ios-shell-stdout.log"
             STDERR_LOG="$ARTIFACT_DIR/logs/simulator/sorr-ios-shell-stderr.log"
             COMBINED_LOG="$ARTIFACT_DIR/logs/simulator/sorr-ios-shell-combined.log"
-            touch "$STDOUT_LOG" "$STDERR_LOG"
+            touch "$STDOUT_LOG" "$STDERR_LOG" "$LAUNCH_LOG"
 
             xcrun simctl spawn "$DEVICE_UDID" log stream \
               --style compact \
@@ -241,15 +244,32 @@ jobs:
             LOG_STREAM_PID="$!"
             sleep 2
 
-            set +e
-            xcrun simctl launch \
-              --stdout="$STDOUT_LOG" \
-              --stderr="$STDERR_LOG" \
-              "$DEVICE_UDID" \
-              "$BUNDLE_ID" 2>&1 | tee "$LAUNCH_LOG"
-            LAUNCH_EXIT="${PIPESTATUS[0]}"
-            set -e
-            echo "simctl launch exit code: $LAUNCH_EXIT" | tee -a "$LAUNCH_LOG"
+            LAUNCH_EXIT=1
+            LAUNCH_ATTEMPTS=4
+            for attempt in $(seq 1 "$LAUNCH_ATTEMPTS"); do
+              echo "simctl launch attempt $attempt/$LAUNCH_ATTEMPTS" | tee -a "$LAUNCH_LOG"
+              : > "$STDOUT_LOG"
+              : > "$STDERR_LOG"
+              set +e
+              xcrun simctl launch \
+                --terminate-running-process \
+                --stdout="$STDOUT_LOG" \
+                --stderr="$STDERR_LOG" \
+                "$DEVICE_UDID" \
+                "$BUNDLE_ID" 2>&1 | tee -a "$LAUNCH_LOG"
+              LAUNCH_EXIT="${PIPESTATUS[0]}"
+              set -e
+              echo "simctl launch attempt $attempt exit code: $LAUNCH_EXIT" | tee -a "$LAUNCH_LOG"
+              if [[ "$LAUNCH_EXIT" -eq 0 ]]; then
+                break
+              fi
+              if [[ "$attempt" -lt "$LAUNCH_ATTEMPTS" ]]; then
+                xcrun simctl terminate "$DEVICE_UDID" "$BUNDLE_ID" || true
+                echo "Installed app metadata after failed attempt $attempt:"
+                xcrun simctl listapps "$DEVICE_UDID" | grep -A 40 "$BUNDLE_ID" || true
+                sleep $((attempt * 10))
+              fi
+            done
             sleep 20
 
             xcrun simctl terminate "$DEVICE_UDID" "$BUNDLE_ID" || true
@@ -267,6 +287,12 @@ jobs:
               --style compact \
               --predicate 'process IN {"SpringBoard", "runningboardd", "launchservicesd", "installd", "backboardd"} OR subsystem CONTAINS "FrontBoard" OR subsystem CONTAINS "RunningBoard" OR subsystem CONTAINS "LaunchServices" OR eventMessage CONTAINS "dev.local.sorr.iosshell.ci" OR composedMessage CONTAINS "dev.local.sorr.iosshell.ci" OR eventMessage CONTAINS "SorrIOSShell" OR composedMessage CONTAINS "SorrIOSShell"' \
               > "$SYSTEM_LOG_SHOW" 2>&1 || true
+            HOST_LOG_PREDICATE="process == \"CoreSimulatorService\" OR subsystem CONTAINS \"CoreSimulator\" OR eventMessage CONTAINS \"$BUNDLE_ID\" OR composedMessage CONTAINS \"$BUNDLE_ID\" OR eventMessage CONTAINS \"SBMainWorkspace\" OR composedMessage CONTAINS \"SBMainWorkspace\" OR eventMessage CONTAINS \"FBSOpenApplication\" OR composedMessage CONTAINS \"FBSOpenApplication\" OR eventMessage CONTAINS \"SorrIOSShell\" OR composedMessage CONTAINS \"SorrIOSShell\""
+            log show \
+              --last 5m \
+              --style compact \
+              --predicate "$HOST_LOG_PREDICATE" \
+              > "$HOST_LOG_SHOW" 2>&1 || true
 
             {
               echo "===== simctl launch ====="
@@ -286,6 +312,9 @@ jobs:
               echo
               echo "===== system log show ====="
               cat "$SYSTEM_LOG_SHOW" || true
+              echo
+              echo "===== host CoreSimulator log show ====="
+              cat "$HOST_LOG_SHOW" || true
             } > "$COMBINED_LOG"
 
             echo "Combined simulator log:"
@@ -300,6 +329,8 @@ jobs:
               "SORR iOS shell: app entry"
               "SORR iOS shell: SDL_Init ok"
               "SORR iOS shell: SDL video/events/timer init ok"
+              "SORR iOS shell: SDL_CreateWindow success"
+              "SORR iOS shell: SDL_CreateRenderer success"
               "SORR iOS shell: reached Bennu runtime handoff probe"
               "SORR iOS shell: bgdrtm_entry returned"
               "SORR iOS shell: SorR.dat intentionally not loaded in milestone 1"

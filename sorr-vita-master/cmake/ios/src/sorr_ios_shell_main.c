@@ -82,6 +82,7 @@ int main(int argc, char *argv[])
         SDL_Quit();
         return 1;
     }
+    SDL_Log("SORR iOS shell: SDL_CreateWindow success");
 
     SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
     if (!renderer)
@@ -91,6 +92,7 @@ int main(int argc, char *argv[])
         SDL_Quit();
         return 1;
     }
+    SDL_Log("SORR iOS shell: SDL_CreateRenderer success");
 
     if (sorr_ios_runtime_entry_probe(argc, argv) != 0)
     {

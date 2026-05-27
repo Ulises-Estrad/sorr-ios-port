@@ -199,8 +199,8 @@ The GitHub Actions workflow now adds `Launch iOS shell in simulator` after the b
 - [ ] app entry reached: workflow check added, pending run
 - [ ] `SDL_Init` begin/end: workflow check added, pending run
 - [ ] SDL video init: workflow check added, pending run
-- [ ] `SDL_CreateWindow` success: inferred from idle-loop marker, pending run
-- [ ] `SDL_CreateRenderer` success: inferred from idle-loop marker, pending run
+- [ ] `SDL_CreateWindow` success: workflow check added, pending run
+- [ ] `SDL_CreateRenderer` success: workflow check added, pending run
 - [ ] `bgdrtm_entry` reached: workflow check added, pending run
 - [ ] idle loop running: workflow check added, pending run
 - [ ] clean quit: not proven
@@ -252,6 +252,23 @@ Third fix:
 - hide the status bar,
 - capture broader SpringBoard/FrontBoard/RunningBoard/LaunchServices diagnostics.
 
+Third follow-up result:
+
+- `LaunchScreen.storyboardc` was present in `SorrIOSShell.app`.
+- `Info.plist` had `UIDeviceFamily=1`, `CFBundleDisplayName`, portrait plus landscape orientations, and `UILaunchStoryboardName=LaunchScreen`.
+- The app installed and `simctl listapps` returned the bundle metadata.
+- `simctl launch` still failed before app entry with `FBSOpenApplicationServiceErrorDomain code=1` and `SBMainWorkspace`.
+- No shell process logs appeared, confirming the failure is still pre-entry.
+
+Fourth fix:
+
+- remove the storyboard launch-screen dependency from the bundle target,
+- replace `UILaunchStoryboardName=LaunchScreen` with an empty `UILaunchScreen` dictionary,
+- print the full app bundle tree in CI,
+- add explicit `SDL_CreateWindow success` and `SDL_CreateRenderer success` shell log markers,
+- retry `simctl launch` up to four times with short backoff after install,
+- capture host-side CoreSimulator logs in addition to in-simulator SpringBoard/FrontBoard logs.
+
 ## Expected First Success Log
 
 When run from a real macOS/Xcode+iOS simulator environment, the target should still be validated against:
@@ -260,6 +277,8 @@ When run from a real macOS/Xcode+iOS simulator environment, the target should st
 SORR iOS shell: app entry
 SORR iOS shell: SDL_Init ok
 SORR iOS shell: SDL video/events/timer init ok
+SORR iOS shell: SDL_CreateWindow success
+SORR iOS shell: SDL_CreateRenderer success
 SORR iOS shell: reached Bennu runtime handoff probe argc=...
 SORR iOS shell: bgdrtm_entry returned
 SORR iOS shell: SorR.dat intentionally not loaded in milestone 1
@@ -284,5 +303,6 @@ ci-artifacts/ios-shell/logs/simulator/sorr-ios-shell-stderr.log
 ci-artifacts/ios-shell/logs/simulator/sorr-ios-shell-log-stream.log
 ci-artifacts/ios-shell/logs/simulator/sorr-ios-shell-log-show.log
 ci-artifacts/ios-shell/logs/simulator/sorr-ios-shell-system-log-show.log
+ci-artifacts/ios-shell/logs/simulator/sorr-ios-shell-host-coresimulator-log-show.log
 ci-artifacts/ios-shell/logs/simulator/sorr-ios-shell-combined.log
 ```
