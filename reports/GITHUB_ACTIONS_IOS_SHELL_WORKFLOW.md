@@ -138,6 +138,8 @@ The launch step also prints key bundle metadata before install:
 - full `Info.plist` via `plutil -p`,
 - bundle identifier,
 - `UILaunchStoryboardName`,
+- supported orientations,
+- bundle file list,
 - installed app container path when available.
 
 ## Required Repo Exclusions
@@ -191,6 +193,7 @@ Expected log files:
 - `simulator/sorr-ios-shell-stderr.log`
 - `simulator/sorr-ios-shell-log-stream.log`
 - `simulator/sorr-ios-shell-log-show.log`
+- `simulator/sorr-ios-shell-system-log-show.log`
 - `simulator/sorr-ios-shell-combined.log`
 - `package-artifacts.log`
 
@@ -584,10 +587,27 @@ Second fix applied:
 - Print bundle metadata before install to verify the launch storyboard and bundle id in CI.
 - Capture `simctl launch` failures without aborting immediately, so `log show` and combined simulator logs are still uploaded.
 
+Second follow-up result:
+
+- `Info.plist` showed `UILaunchStoryboardName=LaunchScreen`.
+- The ad-hoc signature remained valid.
+- The app installed and `simctl get_app_container` returned the installed `.app` path.
+- `simctl launch` was still denied by `SBMainWorkspace`.
+- The narrow app log filter did not expose the underlying SpringBoard/FrontBoard reason.
+
+Third fix applied:
+
+- Make the shell bundle iPhone-only for this simulator proof (`UIDeviceFamily=1`) instead of universal iPhone/iPad.
+- Add `CFBundleDisplayName`.
+- Add portrait to the shell's supported orientations so launch is not blocked by the simulator's initial portrait orientation.
+- Add `UIApplicationSupportsIndirectInputEvents` and hide the status bar for a more conventional SDL iOS shell plist.
+- Capture broader SpringBoard, FrontBoard, RunningBoard, LaunchServices, install, and bundle-id logs into `simulator/sorr-ios-shell-system-log-show.log`.
+- Touch stdout/stderr log files before launch so artifact collation is quiet even when the process never starts.
+
 Expected next run result:
 
 - `simctl launch` should advance past the SpringBoard denial.
-- The next blocker, if any, should be missing runtime log markers or an actual shell process crash.
+- If launch is still denied, the uploaded system log should include the deeper FrontBoard/SpringBoard reason.
 
 ## Next Step After A Successful Shell Build
 

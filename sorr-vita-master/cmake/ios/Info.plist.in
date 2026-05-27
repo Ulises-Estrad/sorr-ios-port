@@ -12,6 +12,8 @@
   <string>6.0</string>
   <key>CFBundleName</key>
   <string>SorrIOSShell</string>
+  <key>CFBundleDisplayName</key>
+  <string>SorR Shell</string>
   <key>CFBundlePackageType</key>
   <string>APPL</string>
   <key>CFBundleShortVersionString</key>
@@ -24,8 +26,13 @@
   <string>LaunchScreen</string>
   <key>UIRequiresFullScreen</key>
   <true/>
+  <key>UIApplicationSupportsIndirectInputEvents</key>
+  <true/>
+  <key>UIStatusBarHidden</key>
+  <true/>
   <key>UISupportedInterfaceOrientations</key>
   <array>
+    <string>UIInterfaceOrientationPortrait</string>
     <string>UIInterfaceOrientationLandscapeLeft</string>
     <string>UIInterfaceOrientationLandscapeRight</string>
   </array>

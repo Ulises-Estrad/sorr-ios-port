@@ -53,7 +53,7 @@ Next proof now wired in CI:
 - ad-hoc sign the built simulator app for local `simctl` launch,
 - install `SorrIOSShell.app`,
 - launch it,
-- capture app stdout/stderr and simulator logs for 20 seconds,
+- capture app stdout/stderr, app logs, and broader system launch logs,
 - fail the job if required shell startup markers are missing.
 
 Still pending until the updated workflow run completes:
@@ -182,12 +182,14 @@ The GitHub Actions workflow now adds `Launch iOS shell in simulator` after the b
 - selects the first available iPhone simulator,
 - boots and waits for the simulator,
 - prints `Info.plist`, bundle id, and launch storyboard diagnostics,
+- prints supported orientations and bundle file diagnostics,
 - applies a local simulator-only ad-hoc signature with `codesign -`,
 - installs the built app,
 - launches the bundle id from the app `Info.plist`,
 - redirects app stdout/stderr to artifact logs,
 - streams logs while the shell runs,
 - also captures a `log show --last 2m` fallback,
+- captures broader SpringBoard/FrontBoard/RunningBoard/LaunchServices logs,
 - combines launch/log output into `simulator/sorr-ios-shell-combined.log`.
 
 ## Runtime Log Checklist
@@ -234,6 +236,22 @@ Second fix:
 - print `Info.plist` diagnostics in CI,
 - continue collecting simulator logs even if `simctl launch` fails.
 
+Second follow-up result:
+
+- `UILaunchStoryboardName=LaunchScreen` was present.
+- The simulator app installed and had a valid ad-hoc signature.
+- `simctl launch` still failed before the process started.
+- The narrow app log filter did not reveal the lower-level reason.
+
+Third fix:
+
+- make the shell app iPhone-only for the simulator proof,
+- add `CFBundleDisplayName`,
+- include portrait plus landscape orientations,
+- add `UIApplicationSupportsIndirectInputEvents`,
+- hide the status bar,
+- capture broader SpringBoard/FrontBoard/RunningBoard/LaunchServices diagnostics.
+
 ## Expected First Success Log
 
 When run from a real macOS/Xcode+iOS simulator environment, the target should still be validated against:
@@ -265,5 +283,6 @@ ci-artifacts/ios-shell/logs/simulator/sorr-ios-shell-stdout.log
 ci-artifacts/ios-shell/logs/simulator/sorr-ios-shell-stderr.log
 ci-artifacts/ios-shell/logs/simulator/sorr-ios-shell-log-stream.log
 ci-artifacts/ios-shell/logs/simulator/sorr-ios-shell-log-show.log
+ci-artifacts/ios-shell/logs/simulator/sorr-ios-shell-system-log-show.log
 ci-artifacts/ios-shell/logs/simulator/sorr-ios-shell-combined.log
 ```

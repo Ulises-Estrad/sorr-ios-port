@@ -203,10 +203,13 @@ jobs:
             echo "App path: $APP_PATH"
             echo "Info.plist:"
             plutil -p "$APP_PATH/Info.plist"
+            echo "App bundle files:"
+            find "$APP_PATH" -maxdepth 3 -type f | sort
 
             BUNDLE_ID="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$APP_PATH/Info.plist")"
             echo "Bundle id: $BUNDLE_ID"
             echo "Launch storyboard: $(/usr/libexec/PlistBuddy -c 'Print :UILaunchStoryboardName' "$APP_PATH/Info.plist" 2>/dev/null || echo '(missing)')"
+            echo "Supported orientations: $(/usr/libexec/PlistBuddy -c 'Print :UISupportedInterfaceOrientations' "$APP_PATH/Info.plist" 2>/dev/null || echo '(missing)')"
             echo "Ad-hoc signing simulator app bundle for local simctl launch"
             /usr/bin/codesign --force --deep --sign - --timestamp=none "$APP_PATH"
             /usr/bin/codesign --verify --deep --strict --verbose=2 "$APP_PATH"
@@ -218,13 +221,17 @@ jobs:
             xcrun simctl install "$DEVICE_UDID" "$APP_PATH"
             echo "Installed app container:"
             xcrun simctl get_app_container "$DEVICE_UDID" "$BUNDLE_ID" app || true
+            echo "Installed app metadata:"
+            xcrun simctl listapps "$DEVICE_UDID" | grep -A 40 "$BUNDLE_ID" || true
 
             LOG_STREAM="$ARTIFACT_DIR/logs/simulator/sorr-ios-shell-log-stream.log"
             LOG_SHOW="$ARTIFACT_DIR/logs/simulator/sorr-ios-shell-log-show.log"
+            SYSTEM_LOG_SHOW="$ARTIFACT_DIR/logs/simulator/sorr-ios-shell-system-log-show.log"
             LAUNCH_LOG="$ARTIFACT_DIR/logs/simulator/simctl-launch.log"
             STDOUT_LOG="$ARTIFACT_DIR/logs/simulator/sorr-ios-shell-stdout.log"
             STDERR_LOG="$ARTIFACT_DIR/logs/simulator/sorr-ios-shell-stderr.log"
             COMBINED_LOG="$ARTIFACT_DIR/logs/simulator/sorr-ios-shell-combined.log"
+            touch "$STDOUT_LOG" "$STDERR_LOG"
 
             xcrun simctl spawn "$DEVICE_UDID" log stream \
               --style compact \
@@ -255,6 +262,11 @@ jobs:
               --style compact \
               --predicate 'process == "SorrIOSShell" OR eventMessage CONTAINS "SORR iOS shell"' \
               > "$LOG_SHOW" 2>&1 || true
+            xcrun simctl spawn "$DEVICE_UDID" log show \
+              --last 3m \
+              --style compact \
+              --predicate 'process IN {"SpringBoard", "runningboardd", "launchservicesd", "installd", "backboardd"} OR subsystem CONTAINS "FrontBoard" OR subsystem CONTAINS "RunningBoard" OR subsystem CONTAINS "LaunchServices" OR eventMessage CONTAINS "dev.local.sorr.iosshell.ci" OR composedMessage CONTAINS "dev.local.sorr.iosshell.ci" OR eventMessage CONTAINS "SorrIOSShell" OR composedMessage CONTAINS "SorrIOSShell"' \
+              > "$SYSTEM_LOG_SHOW" 2>&1 || true
 
             {
               echo "===== simctl launch ====="
@@ -271,6 +283,9 @@ jobs:
               echo
               echo "===== log show ====="
               cat "$LOG_SHOW" || true
+              echo
+              echo "===== system log show ====="
+              cat "$SYSTEM_LOG_SHOW" || true
             } > "$COMBINED_LOG"
 
             echo "Combined simulator log:"

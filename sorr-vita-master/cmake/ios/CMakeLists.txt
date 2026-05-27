@@ -29,12 +29,12 @@ set_source_files_properties("${SORR_IOS_LAUNCH_STORYBOARD}" PROPERTIES
 set_target_properties(SorrIOSShell PROPERTIES
   MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_LIST_DIR}/Info.plist.in"
   XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "${SORR_IOS_BUNDLE_IDENTIFIER}"
-  XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY "1,2"
+  XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY "1"
   XCODE_ATTRIBUTE_SUPPORTED_PLATFORMS "iphoneos iphonesimulator"
   XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_APPICON_NAME ""
   XCODE_ATTRIBUTE_INFOPLIST_KEY_UILaunchStoryboardName "LaunchScreen"
   XCODE_ATTRIBUTE_INFOPLIST_KEY_UIRequiresFullScreen "YES"
-  XCODE_ATTRIBUTE_INFOPLIST_KEY_UISupportedInterfaceOrientations "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight")
+  XCODE_ATTRIBUTE_INFOPLIST_KEY_UISupportedInterfaceOrientations "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight")
 
 target_compile_definitions(SorrIOSShell PRIVATE
   __BGDRTM__
