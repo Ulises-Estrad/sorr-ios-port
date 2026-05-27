@@ -13,7 +13,7 @@
   <key>CFBundleName</key>
   <string>SorrIOSShell</string>
   <key>CFBundleDisplayName</key>
-  <string>SorR Shell</string>
+  <string>SorrIOSShell</string>
   <key>CFBundlePackageType</key>
   <string>APPL</string>
   <key>CFBundleShortVersionString</key>

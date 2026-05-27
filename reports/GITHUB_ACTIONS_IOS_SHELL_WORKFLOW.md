@@ -141,6 +141,8 @@ The launch step also prints key bundle metadata before install:
 - supported orientations,
 - bundle file list,
 - installed app container path when available.
+- installed app metadata from `simctl listapps`,
+- host-side CoreSimulator/LaunchServices diagnostics when launch fails.
 
 ## Required Repo Exclusions
 
@@ -232,15 +234,17 @@ No game data should appear in the uploaded artifact.
 After the simulator `.app` build succeeds, the workflow now:
 
 1. Selects the first available iPhone simulator from `xcrun simctl list devices available --json`.
-2. Boots it and waits for `simctl bootstatus`.
-3. Prints `Info.plist` diagnostics.
-4. Applies a simulator-only ad-hoc signature to `SorrIOSShell.app`.
-5. Installs `SorrIOSShell.app`.
-6. Launches the bundle.
-7. Captures app stdout/stderr and simulator logs for 20 seconds.
-8. Terminates the shell.
-9. Combines `simctl launch`, app stdout/stderr, `log stream`, and `log show` output.
-10. Fails the job if `simctl launch` fails or if required startup markers are missing.
+2. Shuts down and erases that simulator to clear stale install placeholders.
+3. Boots it and waits for `simctl bootstatus`.
+4. Prints `Info.plist` diagnostics.
+5. Applies a simulator-only ad-hoc signature to `SorrIOSShell.app`.
+6. Uninstalls any stale copy of the same bundle id.
+7. Installs `SorrIOSShell.app`.
+8. Launches the bundle with retries.
+9. Captures app stdout/stderr and simulator logs for 20 seconds.
+10. Terminates the shell.
+11. Combines `simctl launch`, app stdout/stderr, `log stream`, and `log show` output.
+12. Fails the job if `simctl launch` fails or if required startup markers are missing.
 
 Required markers:
 
@@ -257,6 +261,22 @@ SORR iOS shell: entering responsive idle loop
 ```
 
 The shell source now emits separate success lines for `SDL_CreateWindow` and `SDL_CreateRenderer`. `entering responsive idle loop` remains the final shell-only liveness marker.
+
+Latest launch failure:
+
+```text
+FBSOpenApplicationServiceErrorDomain code=1
+The request was denied by service delegate (SBMainWorkspace).
+```
+
+The app installed and appeared in `simctl listapps`, but no shell logs appeared. Host-side diagnostics showed install coordination briefly describing the bundle as invalid and applying a prevent-launch limitation before process entry.
+
+Current fix:
+
+- erase the selected simulator before boot,
+- uninstall the bundle id before install,
+- keep launch retries,
+- set `CFBundleDisplayName` to `SorrIOSShell` so the visible placeholder name matches the bundle/executable name.
 
 ## Local Preflight Results
 

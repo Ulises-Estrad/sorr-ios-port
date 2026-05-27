@@ -269,6 +269,21 @@ Fourth fix:
 - retry `simctl launch` up to four times with short backoff after install,
 - capture host-side CoreSimulator logs in addition to in-simulator SpringBoard/FrontBoard logs.
 
+Fourth follow-up result:
+
+- `SorrIOSShell.app` contained only the executable, `Info.plist`, and `PkgInfo`; no missing `LaunchScreen.storyboardc` remained.
+- `Info.plist` contained `UILaunchScreen = {}`.
+- The app installed and `simctl listapps` reported the final bundle path.
+- `simctl launch` still failed before app entry with `FBSOpenApplicationServiceErrorDomain code=1` and `SBMainWorkspace`.
+- Host-side logs showed LaunchServices/RunningBoard treating the app identity as invalid during install coordination and applying a prevent-launch limitation before the shell process started.
+
+Fifth fix:
+
+- reset the selected simulator with `simctl shutdown` plus `simctl erase` before boot,
+- explicitly uninstall the bundle id before each install attempt,
+- keep the launch retries and host-side CoreSimulator diagnostics,
+- make `CFBundleDisplayName` match `SorrIOSShell` to avoid a spaced placeholder app name during install coordination.
+
 ## Expected First Success Log
 
 When run from a real macOS/Xcode+iOS simulator environment, the target should still be validated against:
