@@ -8,6 +8,23 @@ Produce a physical-device `iphoneos` `arm64` IPA from GitHub Actions that contai
 
 The IPA is intended for Windows download and Sideloadly signing/install.
 
+## Result
+
+Status: D1 GitHub Actions device IPA artifact proof complete.
+
+Proof run:
+
+```text
+Commit: 3909ccc
+Run: https://github.com/Ulises-Estrad/sorr-ios-port/actions/runs/26537919700
+Device job: Build iOS shell unsigned IPA for device arm64
+Device job result: success
+Artifact: ios-shell-device-unsigned-arm64
+Artifact size: 445153 bytes
+```
+
+The same workflow run also kept the simulator shell/data-layout proof green.
+
 ## Guardrails
 
 This phase does not:
@@ -103,10 +120,11 @@ Expected app behavior:
 
 ## Definition Of Done
 
-- GitHub Actions builds an `iphoneos` `arm64` `SorrIOSShell.app`.
-- GitHub Actions packages `Payload/SorrIOSShell.app` into `SorrIOSShell-device-unsigned.ipa`.
-- IPA artifact uploads successfully.
-- IPA inspection confirms no game data/assets.
-- User can download the IPA on Windows for Sideloadly signing/install.
+- [x] GitHub Actions builds an `iphoneos` `arm64` `SorrIOSShell.app`.
+- [x] GitHub Actions packages `Payload/SorrIOSShell.app` into `SorrIOSShell-device-unsigned.ipa`.
+- [x] IPA artifact uploads successfully.
+- [x] IPA inspection confirms no game data/assets.
+- [ ] User downloads the IPA on Windows for Sideloadly signing/install.
+- [ ] User confirms the installed app opens on the physical iPhone and reaches the shell idle loop.
 
 Physical-device launch is the manual final check for D1 because CI does not have the user's iPhone.

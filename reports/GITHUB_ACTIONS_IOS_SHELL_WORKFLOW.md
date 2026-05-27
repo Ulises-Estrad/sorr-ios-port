@@ -83,6 +83,17 @@ Build iOS shell unsigned IPA for device arm64
 
 That job builds an `iphoneos` `arm64` shell app, packages `Payload/SorrIOSShell.app`, uploads `SorrIOSShell-device-unsigned.ipa`, and verifies the IPA contains no game data.
 
+Latest D1 result:
+
+```text
+Commit: 3909ccc
+Run: https://github.com/Ulises-Estrad/sorr-ios-port/actions/runs/26537919700
+Device job: Build iOS shell unsigned IPA for device arm64
+Device job result: success
+Artifact: ios-shell-device-unsigned-arm64
+Artifact size: 445153 bytes
+```
+
 ## Workflow Summary
 
 Runner:
@@ -922,3 +933,5 @@ data/
 ```
 
 No device signing, provisioning profile, TestFlight, App Store, or paid developer flow is used by CI.
+
+The first successful device artifact run completed on commit `3909ccc`. It uploaded `ios-shell-device-unsigned-arm64` and kept the simulator proof green in the same workflow run.
