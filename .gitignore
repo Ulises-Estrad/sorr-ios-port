@@ -35,6 +35,7 @@ savegame/
 
 # Known extracted/generated asset folders
 out/
+out/local-only/
 out/fpg-preview/
 out/stage-first-previews/
 out/sorr2-ios-slice/

@@ -162,6 +162,40 @@ SORR_IMPORT/
 
 If Files leaves you with `On My iPhone/SorrIOSShell/SORR_IMPORT/SORR_IMPORT/SorR.dat`, that is accepted as the one-folder nested layout. If it leaves you with `On My iPhone/SorrIOSShell/SORR_IMPORT/SorR.dat`, that is accepted as the direct layout.
 
+## Local-Only Package Helper
+
+The local Windows helper can build the import folder and zip from the prepared data already on this PC:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools\create_d2_import_package.ps1
+```
+
+Default output:
+
+```text
+out/local-only/SORR_IMPORT/
+out/local-only/SORR_IMPORT.zip
+```
+
+The helper searches known local SoRR data roots, prefers the prepared `sorr-vita-master/data` layout, copies it into ignored `out/local-only/SORR_IMPORT`, creates `out/local-only/SORR_IMPORT.zip`, and verifies these required zip entries:
+
+```text
+SORR_IMPORT/SorR.dat
+SORR_IMPORT/mod/system.txt
+```
+
+Current local package proof:
+
+```text
+Source root: sorr-vita-master/data
+Zip: out/local-only/SORR_IMPORT.zip
+SHA256: B2E2F3901C65BE0FA3D739D3716C74C37AE13FB9BDF7535ADC487D9A3D22C72A
+Zip entries: 2430
+Required entries verified: yes
+```
+
+This zip is local-only. Do not commit it, upload it, attach it to GitHub Actions, or bundle it into the IPA. `.gitignore` excludes `out/`, `out/local-only/`, `*.zip`, `SorR.dat`, `data/`, and the known game asset extensions.
+
 ## Expected Visible Status
 
 Before data is copied:
