@@ -245,22 +245,26 @@ iPhone behavior: SorrIOSShell opens to a dark/blank shell-only idle screen and r
 Game data/assets: not bundled
 ```
 
+D2 status: file-sharing import/storage probe implemented; GitHub Actions device IPA proof pending.
+
+D2 does not bundle game data. It enables iOS file sharing so the user can copy prepared data into `Documents/SORR`; the app then stages detected data into `Library/Application Support/SORR` and verifies `SorR.dat`, `mod/system.txt`, and writable `savegame`, `xbox`, and `logs` paths.
+
 Goal:
 
 - build `SorrIOSShell.app` for `iphoneos` `arm64`,
-- package it as `Payload/SorrIOSShell.app` inside `SorrIOSShell-device-adhoc.ipa`,
+- package it as `Payload/SorrIOSShell.app` inside `SorrIOSShell-d2-data-import-adhoc.ipa`,
 - upload the IPA artifact for Windows download,
 - let Sideloadly handle local signing/install on the user's iPhone,
 - keep the IPA free of `SorR.dat`, `data/`, and game assets.
 
 Recommended order:
 
-1. Stop at D1 unless D2 is explicitly requested.
-2. Then decide how to provide prepared game data without committing it.
-3. Add a private/local data bundle input or workflow artifact strategy.
-4. Add a path shim so read-only bundle assets and writable support-root files can coexist.
-5. Lift x64-safe runtime guards from `_WIN64` to a portable 64-bit macro before full game execution on iOS.
-6. Attempt first private title/city render proof.
+1. Produce the D2 file-sharing probe IPA.
+2. Manually install with Sideloadly.
+3. Copy prepared data through Files -> `SorrIOSShell` -> `SORR`.
+4. Confirm the app finds/opens `SorR.dat` and `mod/system.txt` and writes `logs/ios_d2_data_import_probe.txt`.
+5. Stop until the physical D2 result is reported.
+6. Then decide how to move into D3 without committing or uploading private game data.
 
 ## Out Of Scope For This Plan
 

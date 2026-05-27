@@ -75,6 +75,8 @@ The successful run proves the shell:
 - explicitly does not load `SorR.dat`,
 - enters the responsive idle loop.
 
+D2 adds a device-only data import/storage probe while keeping the simulator job shell/data-layout only. The probe uses iOS file sharing rather than bundling private data.
+
 The workflow now also has a device artifact job:
 
 ```text
@@ -96,6 +98,16 @@ IPA inside artifact: build-products/SorrIOSShell-device-adhoc.ipa
 Physical install route: Windows + Sideloadly
 Physical iPhone result: app launches to shell-only dark idle screen
 Game data/assets: not bundled
+```
+
+Current D2 artifact target:
+
+```text
+Artifact: ios-shell-d2-data-import-device-arm64
+IPA inside artifact: build-products/SorrIOSShell-d2-data-import-adhoc.ipa
+Import route: iOS Files app / file sharing via Documents/SORR
+Runtime/game execution: intentionally skipped
+Game data/assets in IPA: not bundled
 ```
 
 ## Workflow Summary
@@ -313,19 +325,22 @@ SORR iOS shell: SDL_Init ok
 SORR iOS shell: SDL video/events/timer init ok
 SORR iOS shell: bundle root path=
 SORR iOS shell: support root path=
+SORR iOS shell: D2 file sharing import path=
 SORR iOS shell: savegame dir created
 SORR iOS shell: xbox dir created
 SORR iOS shell: logs dir created
 SORR iOS shell: data layout test file write/read ok
+SORR iOS shell: D2 waiting for data import path=
+SORR iOS shell: D2 probe log write/read ok
 SORR iOS shell: SDL_CreateWindow success
 SORR iOS shell: SDL_CreateRenderer success
-SORR iOS shell: reached Bennu runtime handoff probe
-SORR iOS shell: bgdrtm_entry returned
-SORR iOS shell: SorR.dat intentionally not loaded in milestone 1
+SORR iOS shell: reached D2 runtime skip probe
+SORR iOS shell: Bennu runtime intentionally skipped in D2
+SORR iOS shell: SorR.dat intentionally not loaded or executed in D2
 SORR iOS shell: entering responsive idle loop
 ```
 
-The shell source now emits separate success lines for `SDL_CreateWindow` and `SDL_CreateRenderer`. It also logs the bundle resource root and writable Application Support scaffold. `entering responsive idle loop` remains the final shell-only liveness marker.
+The shell source emits separate success lines for `SDL_CreateWindow` and `SDL_CreateRenderer`. It also logs the bundle resource root, writable Application Support scaffold, D2 file-sharing import folder, and D2 runtime skip. `entering responsive idle loop` remains the final shell-only liveness marker.
 
 Latest launch failure:
 
@@ -890,7 +905,7 @@ Do not bundle or load game data until a later phase explicitly asks for it.
 
 ## Device Sideloadly Artifact
 
-The device build job is shell-only and does not install or run on hardware in CI.
+The device build job is shell-only and does not install or run on hardware in CI. For D2, it produces a Sideloadly-ready probe IPA that can import private data through iOS file sharing after installation.
 
 Build target:
 
@@ -915,7 +930,7 @@ ios-shell-device-unsigned-arm64
 Expected IPA:
 
 ```text
-build-products/SorrIOSShell-device-adhoc.ipa
+build-products/SorrIOSShell-d2-data-import-adhoc.ipa
 ```
 
 Expected IPA layout:
@@ -982,3 +997,36 @@ Game data/assets: not bundled
 ```
 
 This completes D1. Do not proceed to D2 until explicitly requested.
+
+## D2 Data Import Probe
+
+D2 enables these Info.plist keys:
+
+```text
+UIFileSharingEnabled = true
+LSSupportsOpeningDocumentsInPlace = true
+```
+
+The workflow verifies both keys in the packaged IPA.
+
+The IPA remains asset-free. The package inspection still fails if the IPA contains:
+
+```text
+SorR.dat
+data/
+*.fpg
+*.wav
+*.ogg
+*.smk
+*.png
+```
+
+Manual import route after Sideloadly install:
+
+1. Launch `SorrIOSShell` once to create the iOS app container.
+2. In the iOS Files app, open `On My iPhone` -> `SorrIOSShell` -> `SORR`.
+3. Copy the prepared data contents into that folder.
+4. Return to or relaunch `SorrIOSShell`.
+5. Confirm the status screen reports `SORR.DAT FOUND OPENED`, `MOD/SYSTEM.TXT FOUND`, and `SAVEGAME XBOX LOGS WRITABLE`.
+
+The shell copies detected data from `Documents/SORR` into `Library/Application Support/SORR`, writes `logs/ios_d2_data_import_probe.txt`, and skips Bennu runtime execution.

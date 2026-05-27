@@ -376,15 +376,18 @@ jobs:
               "SORR iOS shell: SDL video/events/timer init ok"
               "SORR iOS shell: bundle root path="
               "SORR iOS shell: support root path="
+              "SORR iOS shell: D2 file sharing import path="
               "SORR iOS shell: savegame dir created"
               "SORR iOS shell: xbox dir created"
               "SORR iOS shell: logs dir created"
               "SORR iOS shell: data layout test file write/read ok"
+              "SORR iOS shell: D2 waiting for data import path="
+              "SORR iOS shell: D2 probe log write/read ok"
               "SORR iOS shell: SDL_CreateWindow success"
               "SORR iOS shell: SDL_CreateRenderer success"
-              "SORR iOS shell: reached Bennu runtime handoff probe"
-              "SORR iOS shell: bgdrtm_entry returned"
-              "SORR iOS shell: SorR.dat intentionally not loaded in milestone 1"
+              "SORR iOS shell: reached D2 runtime skip probe"
+              "SORR iOS shell: Bennu runtime intentionally skipped in D2"
+              "SORR iOS shell: SorR.dat intentionally not loaded or executed in D2"
               "SORR iOS shell: entering responsive idle loop"
             )
             for marker in "${required_markers[@]}"; do
@@ -434,7 +437,7 @@ jobs:
       IOS_DEVICE_ARCH: "arm64"
       IOS_DEVICE_BUILD_DIR: "build-ios-shell-device"
       ARTIFACT_DIR: "ci-artifacts/ios-shell-device"
-      IPA_NAME: "SorrIOSShell-device-adhoc.ipa"
+      IPA_NAME: "SorrIOSShell-d2-data-import-adhoc.ipa"
 
     steps:
       - name: Checkout
@@ -640,6 +643,8 @@ jobs:
             /usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$IPA_INSPECT/Payload/SorrIOSShell.app/Info.plist" | grep -E '^[A-Za-z0-9.-]+$'
             /usr/libexec/PlistBuddy -c 'Print :MinimumOSVersion' "$IPA_INSPECT/Payload/SorrIOSShell.app/Info.plist"
             /usr/libexec/PlistBuddy -c 'Print :UIDeviceFamily:0' "$IPA_INSPECT/Payload/SorrIOSShell.app/Info.plist" | grep -Fx '1'
+            /usr/libexec/PlistBuddy -c 'Print :UIFileSharingEnabled' "$IPA_INSPECT/Payload/SorrIOSShell.app/Info.plist" | grep -Fx 'true'
+            /usr/libexec/PlistBuddy -c 'Print :LSSupportsOpeningDocumentsInPlace' "$IPA_INSPECT/Payload/SorrIOSShell.app/Info.plist" | grep -Fx 'true'
             lipo -info "$IPA_INSPECT/Payload/SorrIOSShell.app/SorrIOSShell" | grep -F 'arm64'
             codesign --verify --deep --strict --verbose=2 "$IPA_INSPECT/Payload/SorrIOSShell.app"
           } 2>&1 | tee "$ARTIFACT_DIR/logs/package-unsigned-ipa.log"
@@ -648,7 +653,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ios-shell-device-unsigned-arm64
+          name: ios-shell-d2-data-import-device-arm64
           path: ci-artifacts/ios-shell-device
           if-no-files-found: warn
           retention-days: 14

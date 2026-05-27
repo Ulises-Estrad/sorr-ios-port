@@ -179,3 +179,14 @@ Expected app behavior:
 - [x] User confirms the installed app opens on the physical iPhone and reaches the shell-only dark idle screen.
 
 Physical-device launch is complete. D1 stops here; D2 must be started explicitly before any game data, touch controls, audio, or render-path work begins.
+
+## D2 Successor Note
+
+D2 is separate from this completed D1 proof. The D2 artifact is expected to be:
+
+```text
+ios-shell-d2-data-import-device-arm64
+build-products/SorrIOSShell-d2-data-import-adhoc.ipa
+```
+
+It still must not bundle `SorR.dat`, `data/`, or game assets. D2 uses iOS file sharing so prepared data can be copied privately through the Files app into `Documents/SORR` after Sideloadly installation.
