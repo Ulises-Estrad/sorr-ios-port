@@ -118,9 +118,14 @@ if(APPLE)
   target_link_libraries(SorrIOSShell PRIVATE
     "-framework AudioToolbox"
     "-framework AVFoundation"
+    "-framework CoreBluetooth"
     "-framework CoreGraphics"
+    "-framework CoreHaptics"
+    "-framework CoreMotion"
     "-framework Foundation"
     "-framework GameController"
+    "-framework Metal"
+    "-framework OpenGLES"
     "-framework QuartzCore"
     "-framework UIKit")
 endif()

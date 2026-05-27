@@ -401,6 +401,50 @@ Expected next run result:
 - Configure should advance past SDL2 include/library resolution.
 - The next blocker, if any, should be in Xcode generation or simulator linking.
 
+### Third CI failure: static SDL2 missing iOS frameworks at link
+
+Observed progress:
+
+- Configure passed.
+- Xcode project generation passed.
+- C sources compiled for `arm64-apple-ios18.5-simulator`.
+- The link command included `libSDL2main.a` and `libSDL2.a`.
+
+Observed failure:
+
+```text
+Undefined symbols for architecture arm64:
+  "_CBAdvertisementDataLocalNameKey"
+  "_OBJC_CLASS_$_CBCentralManager"
+  "_CHHapticDynamicParameterIDHapticIntensityControl"
+  "_OBJC_CLASS_$_CMMotionManager"
+  "_MTLCreateSystemDefaultDevice"
+  "_OBJC_CLASS_$_EAGLContext"
+  "_glActiveTexture"
+  "_glBindFramebuffer"
+  "_kEAGLColorFormatRGBA8"
+```
+
+Cause:
+
+- Static SDL2 on iOS does not bring all Apple framework dependencies transitively through the archive.
+- SDL2's linked objects reference BLE HID, haptics, motion/controller support, Metal rendering, and OpenGL ES rendering.
+
+Fix applied:
+
+- Added the missing framework links to the iOS shell target:
+  - `CoreBluetooth`
+  - `CoreHaptics`
+  - `CoreMotion`
+  - `Metal`
+  - `OpenGLES`
+- Existing framework links for `AudioToolbox`, `AVFoundation`, `CoreGraphics`, `Foundation`, `GameController`, `QuartzCore`, and `UIKit` remain.
+
+Expected next run result:
+
+- Link should advance past the missing SDL2 framework symbols.
+- The next likely blocker, if any, should be app bundle packaging/signing metadata or artifact collection.
+
 ### iOS shell configure fails on ZLIB
 
 Symptom:
