@@ -278,6 +278,12 @@ Required markers:
 SORR iOS shell: app entry
 SORR iOS shell: SDL_Init ok
 SORR iOS shell: SDL video/events/timer init ok
+SORR iOS shell: bundle root path=
+SORR iOS shell: support root path=
+SORR iOS shell: savegame dir created
+SORR iOS shell: xbox dir created
+SORR iOS shell: logs dir created
+SORR iOS shell: data layout test file write/read ok
 SORR iOS shell: SDL_CreateWindow success
 SORR iOS shell: SDL_CreateRenderer success
 SORR iOS shell: reached Bennu runtime handoff probe
@@ -286,7 +292,7 @@ SORR iOS shell: SorR.dat intentionally not loaded in milestone 1
 SORR iOS shell: entering responsive idle loop
 ```
 
-The shell source now emits separate success lines for `SDL_CreateWindow` and `SDL_CreateRenderer`. `entering responsive idle loop` remains the final shell-only liveness marker.
+The shell source now emits separate success lines for `SDL_CreateWindow` and `SDL_CreateRenderer`. It also logs the bundle resource root and writable Application Support scaffold. `entering responsive idle loop` remains the final shell-only liveness marker.
 
 Latest launch failure:
 
@@ -801,6 +807,32 @@ Working launch shape:
 - Runtime evidence is captured through simulator unified logging.
 
 No game data was bundled or loaded.
+
+### Ninth iteration: iOS data-layout scaffold, no game load
+
+Goal:
+
+- Resolve the app bundle resource root.
+- Resolve `Library/Application Support/SORR` inside the app container.
+- Create writable `savegame`, `xbox`, and `logs` directories.
+- Write and read a tiny proof file under `logs`.
+- Keep `SorR.dat` and all game data out of the bundle and repository.
+
+Implementation under test:
+
+- `SDL_GetBasePath()` supplies the bundle resource root.
+- `$HOME/Library/Application Support/SORR` supplies the writable support root.
+- The shell creates:
+  - `savegame`
+  - `xbox`
+  - `logs`
+- The shell writes `ios_data_layout_probe.txt` under `logs`, reads it back, and logs `data layout test file write/read ok`.
+
+Expected next run result:
+
+- The existing simulator launch proof should remain green.
+- The new data-layout markers should pass before the SDL window/renderer and runtime handoff markers.
+- `SorR.dat` must still be intentionally not loaded.
 
 ## Next Step After A Successful Shell Build
 

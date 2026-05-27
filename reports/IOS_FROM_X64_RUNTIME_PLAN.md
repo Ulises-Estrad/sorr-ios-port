@@ -51,6 +51,8 @@ Do not load `SorR.dat` in the iOS shell until:
 
 ## Milestone A - Build iOS Shell On Mac Or Cloud Mac
 
+Status: complete on GitHub Actions.
+
 Goal:
 
 - configure the existing iOS shell target,
@@ -95,6 +97,18 @@ Important: this should be a focused portability lift of the proven x64 fixes, no
 ## Milestone C - iOS Data Layout
 
 Desktop proof assumes a writable working directory. iOS does not have that.
+
+Phase 1 scaffold status: in progress, no game data.
+
+The current shell-only scaffold resolves and logs:
+
+- app bundle resource root,
+- `Library/Application Support/SORR`,
+- writable `savegame`,
+- writable `xbox`,
+- writable `logs`.
+
+It also writes and reads a tiny proof file under `logs` to prove Application Support is writable in the simulator container.
 
 Planned layout:
 
@@ -179,16 +193,15 @@ This is the first milestone that should exercise the game data on iOS.
 
 ## Immediate Next Action
 
-Use a Mac or cloud Mac to build the existing iOS shell only.
+Prove the iOS data-layout scaffold on GitHub Actions while still not bundling or loading game data.
 
 Recommended order:
 
-1. Build current iOS shell with SDL2 for iOS.
-2. Capture simulator logs/artifact.
-3. Lift x64-safe runtime guards from `_WIN64` to a portable 64-bit macro.
-4. Rebuild shell with the real x64-safe runtime path still not loading data.
-5. Implement data layout shim.
-6. Bundle data and attempt `SorR.dat` title/city render.
+1. Build and launch the current iOS shell with the data-layout scaffold.
+2. Confirm bundle root, support root, `savegame`, `xbox`, `logs`, and write/read markers in CI.
+3. Stop after the scaffold proof passes.
+4. Next phase: controlled local/private data bundle/render proof.
+5. Later: lift x64-safe runtime guards from `_WIN64` to a portable 64-bit macro before full game execution on iOS.
 
 ## Out Of Scope For This Plan
 

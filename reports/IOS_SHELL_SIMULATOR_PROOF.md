@@ -15,7 +15,7 @@ Guardrails honored:
 
 ## Result
 
-Status: CI build proof and simulator launch proof successful.
+Status: CI build proof and simulator launch proof successful; data-layout scaffold proof added and pending CI run.
 
 GitHub Actions result:
 
@@ -66,6 +66,14 @@ The successful launch proof validates:
 - fail the job if required shell startup markers are missing.
 
 No `SorR.dat` or game data was bundled or loaded.
+
+Current Phase 1 change under test:
+
+- resolve the app bundle resource root,
+- resolve `Library/Application Support/SORR`,
+- create writable `savegame`, `xbox`, and `logs` directories,
+- write and read `logs/ios_data_layout_probe.txt`,
+- keep `SorR.dat` intentionally unloaded.
 
 ## Earlier Local Blocker
 
@@ -201,13 +209,19 @@ The GitHub Actions workflow now adds `Launch iOS shell in simulator` after the b
 
 - [x] iOS simulator `.app` built: proven by GitHub Actions
 - [x] artifact packaging/upload: proven by GitHub Actions
-- [ ] app entry reached: workflow check added, pending run
-- [ ] `SDL_Init` begin/end: workflow check added, pending run
-- [ ] SDL video init: workflow check added, pending run
-- [ ] `SDL_CreateWindow` success: workflow check added, pending run
-- [ ] `SDL_CreateRenderer` success: workflow check added, pending run
-- [ ] `bgdrtm_entry` reached: workflow check added, pending run
-- [ ] idle loop running: workflow check added, pending run
+- [x] app entry reached: proven by GitHub Actions
+- [x] `SDL_Init` begin/end: proven by GitHub Actions
+- [x] SDL video init: proven by GitHub Actions
+- [ ] bundle root path logged: workflow check added, pending run
+- [ ] support root path logged: workflow check added, pending run
+- [ ] writable `savegame` directory created: workflow check added, pending run
+- [ ] writable `xbox` directory created: workflow check added, pending run
+- [ ] writable `logs` directory created: workflow check added, pending run
+- [ ] writable test file write/read: workflow check added, pending run
+- [x] `SDL_CreateWindow` success: proven by GitHub Actions
+- [x] `SDL_CreateRenderer` success: proven by GitHub Actions
+- [x] `bgdrtm_entry` reached: proven by GitHub Actions
+- [x] idle loop running: proven by GitHub Actions
 - [ ] clean quit: not proven
 
 ## First Launch Failure
@@ -383,3 +397,5 @@ iOS shell builds, installs, launches, creates SDL window/renderer, reaches the r
 ```
 
 Still do not bundle or load game data until the next phase explicitly asks for it.
+
+Phase 1 data-layout scaffold run is now queued for CI proof. It remains shell-only and asset-free.
