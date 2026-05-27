@@ -57,6 +57,18 @@ Expected IPA inside the artifact:
 build-products/SorrIOSShell-d3-first-render-adhoc.ipa
 ```
 
+## CI Iterations
+
+First D3 attempt:
+
+```text
+Commit: 8a44a5b
+Run: 26545508249
+Result: device configure failed
+Failure: vendored tre CMakeLists.txt declared cmake_minimum_required(VERSION 3.4), which CMake 4 rejects
+Fix: set CMAKE_POLICY_VERSION_MINIMUM=3.5 in the iOS D3 parent CMake before add_subdirectory(tre)
+```
+
 The IPA must still contain no:
 
 - `SorR.dat`

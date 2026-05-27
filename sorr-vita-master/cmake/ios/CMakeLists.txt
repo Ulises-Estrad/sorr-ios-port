@@ -17,6 +17,7 @@ if(NOT CMAKE_SYSTEM_NAME STREQUAL "iOS")
 endif()
 
 if(SORR_IOS_D3_FIRST_RENDER)
+  set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
   add_subdirectory("${SORR_ROOT}/3rdparty/tre" "${CMAKE_BINARY_DIR}/tre-ios")
 
   set(SORR_IOS_RUNTIME_SOURCE_FILES

@@ -1129,6 +1129,16 @@ Runtime integration changes in the D3 target:
 - keep PNG loading stubbed for this first render attempt,
 - preserve the D2 data preflight before any runtime execution.
 
+First D3 CI failure:
+
+```text
+Commit: 8a44a5b
+Run: 26545508249
+Failed step: Configure iOS shell device build
+Cause: CMake 4 rejected vendored tre's cmake_minimum_required(VERSION 3.4)
+Fix: the iOS D3 parent CMake now sets CMAKE_POLICY_VERSION_MINIMUM=3.5 before add_subdirectory(tre)
+```
+
 Manual D3 test flow:
 
 1. Keep the D2 data staged on the iPhone.
