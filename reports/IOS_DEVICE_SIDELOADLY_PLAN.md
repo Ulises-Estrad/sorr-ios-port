@@ -185,13 +185,21 @@ Physical-device launch is complete. D1 stops here; D2 must be started explicitly
 D2 is separate from this completed D1 proof. The D2 artifact is expected to be:
 
 ```text
-ios-shell-d2-data-import-device-arm64
-build-products/SorrIOSShell-d2-data-import-adhoc.ipa
+ios-shell-d2-sorr-import-device-arm64
+build-products/SorrIOSShell-d2-sorr-import-adhoc.ipa
 ```
 
-It still must not bundle `SorR.dat`, `data/`, or game assets. D2 uses iOS file sharing so prepared data can be copied privately through the Files app into `Documents/SORR` after Sideloadly installation.
+It still must not bundle `SorR.dat`, `data/`, or game assets. D2 uses iOS file sharing so prepared data can be copied privately through the Files app into `Documents/SORR_IMPORT` after Sideloadly installation. The app treats that folder as an inbox and stages valid direct or one-folder-nested data into `Library/Application Support/SORR`.
 
-D2 GitHub-side artifact proof:
+Practical Windows-to-iPhone D2 route:
+
+1. On Windows, create `SORR_IMPORT` with `SorR.dat`, `mod/system.txt`, `savegame`, `xbox`, and the remaining prepared data.
+2. Transfer the folder or a zip of it through iCloud Drive, iCloud.com, OneDrive, Google Drive, or another iOS Files-visible provider.
+3. On the iPhone, extract the zip if needed.
+4. Copy either the data contents or the one extracted top-level folder into `On My iPhone` -> `SorrIOSShell` -> `SORR_IMPORT`.
+5. Relaunch the app and verify the D2 status screen reports a direct or one-folder nested layout, staged data, found/opened required files, and writable probe paths.
+
+Previous D2 GitHub-side artifact proof:
 
 ```text
 Commit: 5d9036f
@@ -199,4 +207,11 @@ Run: https://github.com/Ulises-Estrad/sorr-ios-port/actions/runs/26541978819
 Artifact: ios-shell-d2-data-import-device-arm64
 IPA: build-products/SorrIOSShell-d2-data-import-adhoc.ipa
 Result: success
+```
+
+Updated D2 target artifact:
+
+```text
+Artifact: ios-shell-d2-sorr-import-device-arm64
+IPA: build-products/SorrIOSShell-d2-sorr-import-adhoc.ipa
 ```

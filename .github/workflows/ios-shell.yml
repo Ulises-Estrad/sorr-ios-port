@@ -376,12 +376,15 @@ jobs:
               "SORR iOS shell: SDL video/events/timer init ok"
               "SORR iOS shell: bundle root path="
               "SORR iOS shell: support root path="
-              "SORR iOS shell: D2 file sharing import path="
+              "SORR iOS shell: D2 import inbox path="
+              "SORR iOS shell: D2 canonical data path="
               "SORR iOS shell: savegame dir created"
               "SORR iOS shell: xbox dir created"
               "SORR iOS shell: logs dir created"
               "SORR iOS shell: data layout test file write/read ok"
+              "SORR iOS shell: D2 import layout detected=none"
               "SORR iOS shell: D2 waiting for data import path="
+              "SORR iOS shell: D2 staging result=not started"
               "SORR iOS shell: D2 probe log write/read ok"
               "SORR iOS shell: SDL_CreateWindow success"
               "SORR iOS shell: SDL_CreateRenderer success"
@@ -437,7 +440,7 @@ jobs:
       IOS_DEVICE_ARCH: "arm64"
       IOS_DEVICE_BUILD_DIR: "build-ios-shell-device"
       ARTIFACT_DIR: "ci-artifacts/ios-shell-device"
-      IPA_NAME: "SorrIOSShell-d2-data-import-adhoc.ipa"
+      IPA_NAME: "SorrIOSShell-d2-sorr-import-adhoc.ipa"
 
     steps:
       - name: Checkout
@@ -653,7 +656,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ios-shell-d2-data-import-device-arm64
+          name: ios-shell-d2-sorr-import-device-arm64
           path: ci-artifacts/ios-shell-device
           if-no-files-found: warn
           retention-days: 14

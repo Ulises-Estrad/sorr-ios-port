@@ -10,11 +10,11 @@ This phase remains probe-only. It does not load or execute the Bennu runtime, re
 
 ## Status
 
-Status: D2 GitHub Actions device IPA artifact proof complete; physical iPhone import/storage test pending.
+Status: D2 `SORR_IMPORT` inbox update implemented locally; GitHub Actions device artifact proof pending.
 
 D1 remains complete at commit `dc13aaf50bc31afe9945c6b9410178642ed69e55`.
 
-Proof run:
+Previous D2 file-sharing proof run:
 
 ```text
 Commit: 5d9036f
@@ -28,6 +28,14 @@ IPA inside artifact: build-products/SorrIOSShell-d2-data-import-adhoc.ipa
 
 The same workflow run kept the simulator shell/data-layout proof green.
 
+Current update:
+
+- replace the ambiguous `Documents/SORR` import folder with explicit `Documents/SORR_IMPORT`,
+- treat `Documents/SORR_IMPORT` as an import inbox only,
+- treat `Library/Application Support/SORR` as the canonical app data root,
+- accept direct and one-folder-nested import layouts,
+- show import layout and staging result on the visible status screen.
+
 ## Chosen Import Route
 
 The preferred document-picker ZIP route is deferred for D2 because it requires a native iOS picker bridge and ZIP extraction path.
@@ -35,7 +43,7 @@ The preferred document-picker ZIP route is deferred for D2 because it requires a
 D2 uses the approved fallback route:
 
 - enable iOS file sharing,
-- expose `Documents/SORR` through the Files app,
+- expose `Documents/SORR_IMPORT` through the Files app,
 - let the user copy prepared data there,
 - copy detected data into `Library/Application Support/SORR`,
 - verify files and writable paths from the shell.
@@ -45,13 +53,13 @@ D2 uses the approved fallback route:
 Expected GitHub Actions artifact:
 
 ```text
-ios-shell-d2-data-import-device-arm64
+ios-shell-d2-sorr-import-device-arm64
 ```
 
 Expected IPA inside the artifact:
 
 ```text
-build-products/SorrIOSShell-d2-data-import-adhoc.ipa
+build-products/SorrIOSShell-d2-sorr-import-adhoc.ipa
 ```
 
 The IPA must contain no:
@@ -70,11 +78,13 @@ The IPA must contain no:
 On launch the D2 shell:
 
 - resolves the app bundle resource root,
-- resolves `Documents/SORR` for file-sharing import,
+- resolves `Documents/SORR_IMPORT` as the file-sharing import inbox,
 - resolves `Library/Application Support/SORR`,
 - creates or verifies writable `savegame`, `xbox`, and `logs` directories,
 - writes and reads `logs/ios_d2_data_import_probe.txt`,
-- writes `Documents/SORR/README_D2_IMPORT.txt`,
+- writes `Documents/SORR_IMPORT/README_D2_IMPORT.txt`,
+- detects `none`, `direct`, `nested-one-folder`, or invalid import layouts,
+- stages valid import data into `Library/Application Support/SORR`,
 - checks for `SorR.dat`,
 - checks for `mod/system.txt`,
 - displays a simple SDL status screen,
@@ -83,32 +93,62 @@ On launch the D2 shell:
 
 ## Manual iPhone Import Steps
 
-1. Download the `ios-shell-d2-data-import-device-arm64` artifact from GitHub Actions.
-2. Extract `build-products/SorrIOSShell-d2-data-import-adhoc.ipa`.
+1. Download the `ios-shell-d2-sorr-import-device-arm64` artifact from GitHub Actions.
+2. Extract `build-products/SorrIOSShell-d2-sorr-import-adhoc.ipa`.
 3. Install the IPA on the iPhone with Sideloadly on Windows.
-4. Launch `SorrIOSShell` once so iOS creates the app container and `Documents/SORR`.
-5. Open the iOS Files app.
-6. Go to `On My iPhone` -> `SorrIOSShell` -> `SORR`.
-7. Copy the contents of the prepared SoRR data folder into `SORR`.
+4. Launch `SorrIOSShell` once so iOS creates the app container and `Documents/SORR_IMPORT`.
+5. On Windows, create a folder named `SORR_IMPORT`.
+6. Put the prepared SoRR data contents into that folder.
+7. Transfer the folder or a zip of the folder to the iPhone using iCloud Drive, iCloud.com, OneDrive, Google Drive, or another Files-visible provider.
+8. On the iPhone, open the Files app and locate the transferred folder or zip.
+9. If you transferred a zip, tap it once in Files to extract it.
+10. Go to `On My iPhone` -> `SorrIOSShell` -> `SORR_IMPORT`.
+11. Copy either the contents of the extracted `SORR_IMPORT` folder, or the one extracted folder itself, into this app `SORR_IMPORT` inbox.
+12. Return to `SorrIOSShell` or relaunch it.
+13. Wait for the visible status screen to show the data probe result.
 
-Expected copied layout:
-
-```text
-Documents/SORR/SorR.dat
-Documents/SORR/mod/system.txt
-Documents/SORR/savegame/
-Documents/SORR/xbox/
-```
-
-The shell also accepts this fallback layout:
+Correct direct import layout:
 
 ```text
-Documents/SORR/data/SorR.dat
-Documents/SORR/data/mod/system.txt
+SORR_IMPORT/
+  SorR.dat
+  mod/
+    system.txt
+  savegame/
+  xbox/
 ```
 
-8. Return to `SorrIOSShell` or relaunch it.
-9. Wait for the visible status screen to show the data probe result.
+Also accepted, if the transfer tool creates one top-level folder:
+
+```text
+SORR_IMPORT/
+  SomeFolder/
+    SorR.dat
+    mod/
+      system.txt
+    savegame/
+    xbox/
+```
+
+Wrong nested-too-deep layout:
+
+```text
+SORR_IMPORT/
+  SomeFolder/
+    AnotherFolder/
+      SorR.dat
+```
+
+Wrong missing/multiple layout:
+
+```text
+SORR_IMPORT/
+  multiple-folders/
+  other-folder/
+  SorR.dat missing
+```
+
+If Files leaves you with `On My iPhone/SorrIOSShell/SORR_IMPORT/SORR_IMPORT/SorR.dat`, that is accepted as the one-folder nested layout. If it leaves you with `On My iPhone/SorrIOSShell/SORR_IMPORT/SorR.dat`, that is accepted as the direct layout.
 
 ## Expected Visible Status
 
@@ -116,26 +156,36 @@ Before data is copied:
 
 ```text
 D2 SORR DATA PROBE
-FILE SHARING ROUTE
-WAITING FOR DATA IMPORT
-FILES APP: SORRIOSSHELL/SORR
+INBOX DOCUMENTS/SORR_IMPORT
+DATA APP SUPPORT/SORR
+LAYOUT NONE
+STAGING NOT STARTED
 SORR.DAT NOT FOUND
 MOD/SYSTEM.TXT MISSING
-SAVEGAME XBOX LOGS WRITABLE
+PROBE LOG OK
+SAVEGAME WRITABLE
+XBOX WRITABLE
+LOGS WRITABLE
 NO GAME EXECUTION
+NO GAME RENDERING
 ```
 
 After data is copied and staged:
 
 ```text
 D2 SORR DATA PROBE
-FILE SHARING ROUTE
-IMPORT STARTED
-IMPORT COMPLETED
+INBOX DOCUMENTS/SORR_IMPORT
+DATA APP SUPPORT/SORR
+LAYOUT DIRECT
+STAGING COPIED
 SORR.DAT FOUND OPENED
 MOD/SYSTEM.TXT FOUND
-SAVEGAME XBOX LOGS WRITABLE
+PROBE LOG OK
+SAVEGAME WRITABLE
+XBOX WRITABLE
+LOGS WRITABLE
 NO GAME EXECUTION
+NO GAME RENDERING
 ```
 
 ## Expected Logs
@@ -143,9 +193,12 @@ NO GAME EXECUTION
 The app should emit these proof markers:
 
 ```text
-SORR iOS shell: D2 file sharing import path=
+SORR iOS shell: D2 import inbox path=
+SORR iOS shell: D2 canonical data path=
+SORR iOS shell: D2 import layout detected=direct
 SORR iOS shell: D2 import started source=
 SORR iOS shell: D2 import completed source=
+SORR iOS shell: D2 staging result=copied
 SORR iOS shell: D2 SorR.dat found/opened path=
 SORR iOS shell: D2 required data file mod/system.txt found/opened path=
 SORR iOS shell: D2 probe log write/read ok path=
@@ -161,11 +214,11 @@ Windows syntax/link preflight passed with the D2 source:
 ```powershell
 $env:PATH = "$PWD\portable-tools\w64devkit\bin;$env:PATH"
 portable-tools\w64devkit\bin\cmake.exe -S sorr-vita-master/cmake/ios `
-  -B build-ios-shell-d2-preflight `
+  -B build-ios-shell-d2-sorr-import-preflight `
   -G "MinGW Makefiles" `
   -DCMAKE_PREFIX_PATH="$PWD\portable-deps\msys2-mingw32\mingw32" `
   -DSORR_IOS_SHELL_USE_SDL_MAIN_HANDLED=ON
-portable-tools\w64devkit\bin\cmake.exe --build build-ios-shell-d2-preflight --verbose
+portable-tools\w64devkit\bin\cmake.exe --build build-ios-shell-d2-sorr-import-preflight --verbose
 ```
 
 Result:
@@ -177,6 +230,6 @@ build: success
 
 ## Stop Line
 
-Stop after the D2 IPA artifact is produced and the manual import steps are documented.
+Stop after the updated D2 `SORR_IMPORT` IPA artifact is produced and the manual import steps are documented.
 
 Do not proceed to D3/rendering until the physical iPhone D2 import/storage probe is manually tested and reported.

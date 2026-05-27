@@ -103,14 +103,14 @@ Game data/assets: not bundled
 Current D2 artifact target:
 
 ```text
-Artifact: ios-shell-d2-data-import-device-arm64
-IPA inside artifact: build-products/SorrIOSShell-d2-data-import-adhoc.ipa
-Import route: iOS Files app / file sharing via Documents/SORR
+Artifact: ios-shell-d2-sorr-import-device-arm64
+IPA inside artifact: build-products/SorrIOSShell-d2-sorr-import-adhoc.ipa
+Import route: iOS Files app / file sharing via Documents/SORR_IMPORT
 Runtime/game execution: intentionally skipped
 Game data/assets in IPA: not bundled
 ```
 
-Latest D2 result:
+Previous D2 result:
 
 ```text
 Commit: 5d9036f
@@ -122,6 +122,8 @@ Artifact size: 459831 bytes
 IPA inside artifact: build-products/SorrIOSShell-d2-data-import-adhoc.ipa
 Physical import/storage result: pending user test
 ```
+
+Updated D2 `SORR_IMPORT` artifact proof is pending.
 
 ## Workflow Summary
 
@@ -338,12 +340,15 @@ SORR iOS shell: SDL_Init ok
 SORR iOS shell: SDL video/events/timer init ok
 SORR iOS shell: bundle root path=
 SORR iOS shell: support root path=
-SORR iOS shell: D2 file sharing import path=
+SORR iOS shell: D2 import inbox path=
+SORR iOS shell: D2 canonical data path=
 SORR iOS shell: savegame dir created
 SORR iOS shell: xbox dir created
 SORR iOS shell: logs dir created
 SORR iOS shell: data layout test file write/read ok
+SORR iOS shell: D2 import layout detected=none
 SORR iOS shell: D2 waiting for data import path=
+SORR iOS shell: D2 staging result=not started
 SORR iOS shell: D2 probe log write/read ok
 SORR iOS shell: SDL_CreateWindow success
 SORR iOS shell: SDL_CreateRenderer success
@@ -353,7 +358,7 @@ SORR iOS shell: SorR.dat intentionally not loaded or executed in D2
 SORR iOS shell: entering responsive idle loop
 ```
 
-The shell source emits separate success lines for `SDL_CreateWindow` and `SDL_CreateRenderer`. It also logs the bundle resource root, writable Application Support scaffold, D2 file-sharing import folder, and D2 runtime skip. `entering responsive idle loop` remains the final shell-only liveness marker.
+The shell source emits separate success lines for `SDL_CreateWindow` and `SDL_CreateRenderer`. It also logs the bundle resource root, writable Application Support scaffold, D2 `Documents/SORR_IMPORT` inbox, canonical `Library/Application Support/SORR` root, and D2 runtime skip. `entering responsive idle loop` remains the final shell-only liveness marker.
 
 Latest launch failure:
 
@@ -937,13 +942,13 @@ The workflow then applies a CI ad-hoc signature to the `iphoneos` `.app` before 
 Artifact name:
 
 ```text
-ios-shell-device-unsigned-arm64
+ios-shell-d2-sorr-import-device-arm64
 ```
 
 Expected IPA:
 
 ```text
-build-products/SorrIOSShell-d2-data-import-adhoc.ipa
+build-products/SorrIOSShell-d2-sorr-import-adhoc.ipa
 ```
 
 Expected IPA layout:
@@ -1037,11 +1042,14 @@ data/
 Manual import route after Sideloadly install:
 
 1. Launch `SorrIOSShell` once to create the iOS app container.
-2. In the iOS Files app, open `On My iPhone` -> `SorrIOSShell` -> `SORR`.
-3. Copy the prepared data contents into that folder.
-4. Return to or relaunch `SorrIOSShell`.
-5. Confirm the status screen reports `SORR.DAT FOUND OPENED`, `MOD/SYSTEM.TXT FOUND`, and `SAVEGAME XBOX LOGS WRITABLE`.
+2. On Windows, prepare `SORR_IMPORT` with `SorR.dat`, `mod/system.txt`, `savegame`, `xbox`, and the remaining prepared data.
+3. Transfer that folder or a zip of it through iCloud Drive, iCloud.com, OneDrive, Google Drive, or another Files-visible provider.
+4. In the iOS Files app, extract the zip if needed.
+5. Open `On My iPhone` -> `SorrIOSShell` -> `SORR_IMPORT`.
+6. Copy either the prepared data contents or the one extracted top-level folder into that inbox.
+7. Return to or relaunch `SorrIOSShell`.
+8. Confirm the status screen reports `LAYOUT DIRECT` or `LAYOUT NESTED ONE FOLDER`, `STAGING COPIED`, `SORR.DAT FOUND OPENED`, `MOD/SYSTEM.TXT FOUND`, `PROBE LOG OK`, and writable `savegame`, `xbox`, and `logs`.
 
-The shell copies detected data from `Documents/SORR` into `Library/Application Support/SORR`, writes `logs/ios_d2_data_import_probe.txt`, and skips Bennu runtime execution.
+The shell treats `Documents/SORR_IMPORT` as an import inbox only. It copies direct or one-folder-nested prepared data into the canonical `Library/Application Support/SORR` root, writes `logs/ios_d2_data_import_probe.txt`, and skips Bennu runtime execution.
 
-GitHub-side D2 artifact proof completed on run `26541978819`. The next step is the manual physical iPhone import/storage test; do not proceed to D3 until that result is reported.
+Previous GitHub-side D2 artifact proof completed on run `26541978819` with the older `Documents/SORR` inbox. The updated `SORR_IMPORT` artifact proof is pending. Do not proceed to D3 until the updated physical iPhone import/storage test is reported.

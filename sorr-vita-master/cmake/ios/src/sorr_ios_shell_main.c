@@ -60,8 +60,24 @@ typedef struct sorr_ios_data_layout
     bool d2_import_failed;
 } sorr_ios_data_layout;
 
-#define SORR_IOS_STATUS_MAX_LINES 12
+#define SORR_IOS_STATUS_MAX_LINES 16
 #define SORR_IOS_STATUS_LINE_LEN 96
+
+typedef enum sorr_ios_import_layout
+{
+    SORR_IOS_IMPORT_NONE = 0,
+    SORR_IOS_IMPORT_DIRECT,
+    SORR_IOS_IMPORT_NESTED_ONE_FOLDER,
+    SORR_IOS_IMPORT_INVALID_MULTIPLE,
+    SORR_IOS_IMPORT_INVALID_NESTED,
+    SORR_IOS_IMPORT_INVALID_MISSING_DAT
+} sorr_ios_import_layout;
+
+typedef struct sorr_ios_import_probe
+{
+    sorr_ios_import_layout layout;
+    char root[1024];
+} sorr_ios_import_probe;
 
 static char sorr_ios_status_lines[SORR_IOS_STATUS_MAX_LINES][SORR_IOS_STATUS_LINE_LEN];
 static int sorr_ios_status_line_count = 0;
@@ -242,7 +258,47 @@ static void sorr_ios_draw_status(SDL_Renderer *renderer)
 
     for (i = 0; i < sorr_ios_status_line_count; i++)
     {
-        sorr_ios_draw_text(renderer, 28, 30 + i * 34, 4, sorr_ios_status_lines[i]);
+        sorr_ios_draw_text(renderer, 24, 24 + i * 29, 3, sorr_ios_status_lines[i]);
+    }
+}
+
+static const char *sorr_ios_import_layout_name(sorr_ios_import_layout layout)
+{
+    switch (layout)
+    {
+        case SORR_IOS_IMPORT_DIRECT:
+            return "direct";
+        case SORR_IOS_IMPORT_NESTED_ONE_FOLDER:
+            return "nested-one-folder";
+        case SORR_IOS_IMPORT_INVALID_MULTIPLE:
+            return "invalid/multiple-folders";
+        case SORR_IOS_IMPORT_INVALID_NESTED:
+            return "invalid/nested-too-deep";
+        case SORR_IOS_IMPORT_INVALID_MISSING_DAT:
+            return "invalid/SorR.dat-missing";
+        case SORR_IOS_IMPORT_NONE:
+        default:
+            return "none";
+    }
+}
+
+static const char *sorr_ios_import_layout_status(sorr_ios_import_layout layout)
+{
+    switch (layout)
+    {
+        case SORR_IOS_IMPORT_DIRECT:
+            return "LAYOUT DIRECT";
+        case SORR_IOS_IMPORT_NESTED_ONE_FOLDER:
+            return "LAYOUT NESTED ONE FOLDER";
+        case SORR_IOS_IMPORT_INVALID_MULTIPLE:
+            return "LAYOUT INVALID MULTIPLE";
+        case SORR_IOS_IMPORT_INVALID_NESTED:
+            return "LAYOUT INVALID NESTED";
+        case SORR_IOS_IMPORT_INVALID_MISSING_DAT:
+            return "LAYOUT INVALID NO DAT";
+        case SORR_IOS_IMPORT_NONE:
+        default:
+            return "LAYOUT NONE";
     }
 }
 
@@ -536,6 +592,10 @@ static int sorr_ios_copy_tree(const char *src_dir, const char *dst_dir)
         {
             continue;
         }
+        if (strcmp(entry->d_name, "README_D2_IMPORT.txt") == 0)
+        {
+            continue;
+        }
 
         if (!sorr_ios_join_path(src_path, sizeof(src_path), src_dir, entry->d_name) ||
             !sorr_ios_join_path(dst_path, sizeof(dst_path), dst_dir, entry->d_name))
@@ -613,14 +673,14 @@ static int sorr_ios_prepare_data_layout(sorr_ios_data_layout *layout)
     }
 
     if (!sorr_ios_join_path(documents_dir, sizeof(documents_dir), home, "Documents") ||
-        !sorr_ios_join_path(layout->documents_root, sizeof(layout->documents_root), documents_dir, "SORR") ||
+        !sorr_ios_join_path(layout->documents_root, sizeof(layout->documents_root), home, "Documents") ||
         !sorr_ios_join_path(library_dir, sizeof(library_dir), home, "Library") ||
         !sorr_ios_join_path(app_support_dir, sizeof(app_support_dir), library_dir, "Application Support") ||
         !sorr_ios_join_path(layout->support_root, sizeof(layout->support_root), app_support_dir, "SORR") ||
         !sorr_ios_join_path(layout->savegame_dir, sizeof(layout->savegame_dir), layout->support_root, "savegame") ||
         !sorr_ios_join_path(layout->xbox_dir, sizeof(layout->xbox_dir), layout->support_root, "xbox") ||
         !sorr_ios_join_path(layout->logs_dir, sizeof(layout->logs_dir), layout->support_root, "logs") ||
-        !sorr_ios_join_path(layout->documents_import_dir, sizeof(layout->documents_import_dir), layout->documents_root, "data") ||
+        !sorr_ios_join_path(layout->documents_import_dir, sizeof(layout->documents_import_dir), layout->documents_root, "SORR_IMPORT") ||
         !sorr_ios_join_path(layout->sorr_dat_path, sizeof(layout->sorr_dat_path), layout->support_root, "SorR.dat") ||
         !sorr_ios_join_path(layout->required_file_path, sizeof(layout->required_file_path), layout->support_root, "mod/system.txt") ||
         !sorr_ios_join_path(layout->d2_probe_path, sizeof(layout->d2_probe_path), layout->logs_dir, "ios_d2_data_import_probe.txt"))
@@ -631,6 +691,7 @@ static int sorr_ios_prepare_data_layout(sorr_ios_data_layout *layout)
 
     if (!sorr_ios_mkdir_if_needed(documents_dir) ||
         !sorr_ios_mkdir_if_needed(layout->documents_root) ||
+        !sorr_ios_mkdir_if_needed(layout->documents_import_dir) ||
         !sorr_ios_mkdir_if_needed(library_dir) ||
         !sorr_ios_mkdir_if_needed(app_support_dir) ||
         !sorr_ios_mkdir_if_needed(layout->support_root))
@@ -642,7 +703,8 @@ static int sorr_ios_prepare_data_layout(sorr_ios_data_layout *layout)
     }
 
     SDL_Log("SORR iOS shell: support root path=%s", layout->support_root);
-    SDL_Log("SORR iOS shell: D2 file sharing import path=%s", layout->documents_root);
+    SDL_Log("SORR iOS shell: D2 import inbox path=%s", layout->documents_import_dir);
+    SDL_Log("SORR iOS shell: D2 canonical data path=%s", layout->support_root);
 
     if (!sorr_ios_create_dir_marker("savegame", layout->savegame_dir) ||
         !sorr_ios_create_dir_marker("xbox", layout->xbox_dir) ||
@@ -658,21 +720,24 @@ static void sorr_ios_write_import_readme(const sorr_ios_data_layout *layout)
 {
     char readme_path[1024];
     const char *readme_text =
-        "SoRR iOS D2 data import folder\n"
+        "SoRR iOS D2 SORR_IMPORT inbox\n"
         "\n"
-        "Copy the contents of the prepared SoRR data folder here.\n"
-        "Expected examples:\n"
+        "Copy prepared SoRR data here. This folder is only an import inbox.\n"
+        "\n"
+        "Accepted direct layout:\n"
         "- SorR.dat\n"
         "- mod/system.txt\n"
         "- savegame/\n"
         "- xbox/\n"
         "\n"
-        "You may also copy the prepared folder as Documents/SORR/data.\n"
+        "Also accepted: one top-level folder that contains SorR.dat.\n"
+        "Wrong: multiple top-level folders without SorR.dat, or nested two folders deep.\n"
+        "\n"
         "The shell copies detected data into Library/Application Support/SORR.\n"
         "No game runtime is executed during D2.\n";
 
     if (!layout ||
-        !sorr_ios_join_path(readme_path, sizeof(readme_path), layout->documents_root, "README_D2_IMPORT.txt"))
+        !sorr_ios_join_path(readme_path, sizeof(readme_path), layout->documents_import_dir, "README_D2_IMPORT.txt"))
     {
         return;
     }
@@ -683,36 +748,110 @@ static void sorr_ios_write_import_readme(const sorr_ios_data_layout *layout)
     }
 }
 
-static int sorr_ios_detect_import_root(const sorr_ios_data_layout *layout, char *out_root, size_t out_root_size)
+static int sorr_ios_dir_contains_sorr_dat(const char *dir)
 {
     char candidate[1024];
 
-    if (!layout || !out_root || out_root_size == 0)
+    return dir &&
+           sorr_ios_join_path(candidate, sizeof(candidate), dir, "SorR.dat") &&
+           sorr_ios_file_size(candidate, NULL);
+}
+
+static sorr_ios_import_probe sorr_ios_detect_import_root(const sorr_ios_data_layout *layout)
+{
+    sorr_ios_import_probe probe;
+
+    memset(&probe, 0, sizeof(probe));
+    probe.layout = SORR_IOS_IMPORT_NONE;
+
+    if (!layout)
     {
-        return 0;
+        return probe;
     }
 
-    if (sorr_ios_join_path(candidate, sizeof(candidate), layout->documents_root, "SorR.dat") &&
-        sorr_ios_file_size(candidate, NULL))
+    if (sorr_ios_dir_contains_sorr_dat(layout->documents_import_dir))
     {
-        snprintf(out_root, out_root_size, "%s", layout->documents_root);
-        return 1;
+        probe.layout = SORR_IOS_IMPORT_DIRECT;
+        snprintf(probe.root, sizeof(probe.root), "%s", layout->documents_import_dir);
+        return probe;
     }
 
-    if (sorr_ios_join_path(candidate, sizeof(candidate), layout->documents_import_dir, "SorR.dat") &&
-        sorr_ios_file_size(candidate, NULL))
+#ifndef _WIN32
     {
-        snprintf(out_root, out_root_size, "%s", layout->documents_import_dir);
-        return 1;
-    }
+        DIR *dir = opendir(layout->documents_import_dir);
+        struct dirent *entry;
+        char only_dir[1024] = "";
+        int dir_count = 0;
+        int file_count = 0;
+        int nested_dat_seen = 0;
 
-    return 0;
+        if (!dir)
+        {
+            return probe;
+        }
+
+        while ((entry = readdir(dir)) != NULL)
+        {
+            char path[1024];
+            struct stat st;
+
+            if (strcmp(entry->d_name, ".") == 0 ||
+                strcmp(entry->d_name, "..") == 0 ||
+                strcmp(entry->d_name, "README_D2_IMPORT.txt") == 0)
+            {
+                continue;
+            }
+
+            if (!sorr_ios_join_path(path, sizeof(path), layout->documents_import_dir, entry->d_name) ||
+                stat(path, &st) != 0)
+            {
+                continue;
+            }
+
+            if (S_ISDIR(st.st_mode))
+            {
+                dir_count++;
+                snprintf(only_dir, sizeof(only_dir), "%s", path);
+                if (sorr_ios_dir_contains_sorr_dat(path))
+                {
+                    nested_dat_seen = 1;
+                }
+            }
+            else
+            {
+                file_count++;
+            }
+        }
+
+        closedir(dir);
+
+        if (dir_count == 1 && nested_dat_seen)
+        {
+            probe.layout = SORR_IOS_IMPORT_NESTED_ONE_FOLDER;
+            snprintf(probe.root, sizeof(probe.root), "%s", only_dir);
+        }
+        else if (dir_count > 1)
+        {
+            probe.layout = SORR_IOS_IMPORT_INVALID_MULTIPLE;
+        }
+        else if (dir_count == 1)
+        {
+            probe.layout = SORR_IOS_IMPORT_INVALID_NESTED;
+        }
+        else if (file_count > 0)
+        {
+            probe.layout = SORR_IOS_IMPORT_INVALID_MISSING_DAT;
+        }
+    }
+#endif
+
+    return probe;
 }
 
 static int sorr_ios_write_d2_probe(const sorr_ios_data_layout *layout)
 {
     char readback[128];
-    const char *proof_text = "sorr-ios-d2-data-import-ok\n";
+    const char *proof_text = "sorr-ios-d2-sorr-import-ok\n";
     FILE *fp;
 
     if (!layout)
@@ -767,15 +906,61 @@ static int sorr_ios_write_d2_probe(const sorr_ios_data_layout *layout)
     return 1;
 }
 
+static int sorr_ios_dir_write_read_probe(const char *dir, const char *name)
+{
+    char probe_path[1024];
+    char readback[32];
+    const char *proof_text = "ok\n";
+    FILE *fp;
+
+    if (!dir || !name ||
+        !sorr_ios_mkdir_if_needed(dir) ||
+        !sorr_ios_join_path(probe_path, sizeof(probe_path), dir, name))
+    {
+        return 0;
+    }
+
+    fp = fopen(probe_path, "wb");
+    if (!fp)
+    {
+        return 0;
+    }
+    if (fwrite(proof_text, 1, strlen(proof_text), fp) != strlen(proof_text))
+    {
+        fclose(fp);
+        return 0;
+    }
+    fclose(fp);
+
+    fp = fopen(probe_path, "rb");
+    if (!fp)
+    {
+        return 0;
+    }
+    memset(readback, 0, sizeof(readback));
+    if (!fgets(readback, sizeof(readback), fp))
+    {
+        fclose(fp);
+        return 0;
+    }
+    fclose(fp);
+    remove(probe_path);
+
+    return strcmp(readback, proof_text) == 0;
+}
+
 static void sorr_ios_run_d2_probe(sorr_ios_data_layout *layout)
 {
-    char import_root[1024];
+    sorr_ios_import_probe import_probe;
+    const char *staging_status = "not started";
     long sorr_dat_size = 0;
     long required_size = 0;
-    int import_available;
     int sorr_dat_ok;
     int required_ok;
     int probe_ok;
+    int savegame_ok;
+    int xbox_ok;
+    int logs_ok;
 
     if (!layout)
     {
@@ -784,42 +969,81 @@ static void sorr_ios_run_d2_probe(sorr_ios_data_layout *layout)
 
     sorr_ios_status_clear();
     sorr_ios_status_add("D2 SORR DATA PROBE");
-    sorr_ios_status_add("FILE SHARING ROUTE");
+    sorr_ios_status_add("INBOX DOCUMENTS/SORR_IMPORT");
+    sorr_ios_status_add("DATA APP SUPPORT/SORR");
     sorr_ios_write_import_readme(layout);
 
-    import_available = sorr_ios_detect_import_root(layout, import_root, sizeof(import_root));
-    if (import_available)
+    import_probe = sorr_ios_detect_import_root(layout);
+    SDL_Log("SORR iOS shell: D2 import layout detected=%s inbox=%s",
+            sorr_ios_import_layout_name(import_probe.layout),
+            layout->documents_import_dir);
+    sorr_ios_status_add(sorr_ios_import_layout_status(import_probe.layout));
+
+    if (import_probe.layout == SORR_IOS_IMPORT_DIRECT ||
+        import_probe.layout == SORR_IOS_IMPORT_NESTED_ONE_FOLDER)
     {
         layout->d2_import_seen = true;
         SDL_Log("SORR iOS shell: D2 import started source=%s destination=%s",
-                import_root,
+                import_probe.root,
                 layout->support_root);
-        sorr_ios_status_add("IMPORT STARTED");
-        if (sorr_ios_copy_tree(import_root, layout->support_root))
+        if (sorr_ios_copy_tree(import_probe.root, layout->support_root))
         {
-            SDL_Log("SORR iOS shell: D2 import completed source=%s", import_root);
-            sorr_ios_status_add("IMPORT COMPLETED");
+            SDL_Log("SORR iOS shell: D2 import completed source=%s", import_probe.root);
+            staging_status = "copied";
             layout->d2_import_failed = false;
         }
         else
         {
-            SDL_Log("SORR iOS shell: D2 import failed source=%s", import_root);
-            sorr_ios_status_add("IMPORT FAILED");
+            SDL_Log("SORR iOS shell: D2 import failed source=%s", import_probe.root);
+            staging_status = "failed";
             layout->d2_import_failed = true;
         }
     }
+    else if (import_probe.layout == SORR_IOS_IMPORT_NONE)
+    {
+        SDL_Log("SORR iOS shell: D2 waiting for data import path=%s", layout->documents_import_dir);
+        layout->d2_import_failed = false;
+    }
     else
     {
-        SDL_Log("SORR iOS shell: D2 waiting for data import path=%s", layout->documents_root);
-        sorr_ios_status_add("WAITING FOR DATA IMPORT");
-        sorr_ios_status_add("FILES APP: SORRIOSSHELL/SORR");
+        SDL_Log("SORR iOS shell: D2 import invalid layout=%s path=%s",
+                sorr_ios_import_layout_name(import_probe.layout),
+                layout->documents_import_dir);
+        staging_status = "failed";
+        layout->d2_import_failed = true;
     }
 
     sorr_dat_ok = sorr_ios_open_file_probe("D2 SorR.dat", layout->sorr_dat_path, &sorr_dat_size);
     required_ok = sorr_ios_open_file_probe("D2 required data file mod/system.txt",
                                            layout->required_file_path,
                                            &required_size);
+    savegame_ok = sorr_ios_dir_write_read_probe(layout->savegame_dir, ".ios_d2_savegame_probe");
+    xbox_ok = sorr_ios_dir_write_read_probe(layout->xbox_dir, ".ios_d2_xbox_probe");
+    logs_ok = sorr_ios_dir_write_read_probe(layout->logs_dir, ".ios_d2_logs_probe");
     probe_ok = sorr_ios_write_d2_probe(layout);
+
+    if (strcmp(staging_status, "not started") == 0 && sorr_dat_ok && required_ok)
+    {
+        staging_status = "existing";
+    }
+
+    SDL_Log("SORR iOS shell: D2 staging result=%s", staging_status);
+    if (strcmp(staging_status, "copied") == 0)
+    {
+        sorr_ios_status_add("STAGING COPIED");
+    }
+    else if (strcmp(staging_status, "existing") == 0)
+    {
+        sorr_ios_status_add("STAGING EXISTING OK");
+    }
+    else if (strcmp(staging_status, "failed") == 0)
+    {
+        sorr_ios_status_add("STAGING FAILED");
+    }
+    else
+    {
+        sorr_ios_status_add("STAGING NOT STARTED");
+    }
 
     if (sorr_dat_ok)
     {
@@ -841,11 +1065,19 @@ static void sorr_ios_run_d2_probe(sorr_ios_data_layout *layout)
 
     if (probe_ok)
     {
-        sorr_ios_status_add("SAVEGAME XBOX LOGS WRITABLE");
+        sorr_ios_status_add("PROBE LOG OK");
+    }
+    else
+    {
+        sorr_ios_status_add("PROBE LOG FAILED");
     }
 
+    sorr_ios_status_add(savegame_ok ? "SAVEGAME WRITABLE" : "SAVEGAME NOT WRITABLE");
+    sorr_ios_status_add(xbox_ok ? "XBOX WRITABLE" : "XBOX NOT WRITABLE");
+    sorr_ios_status_add(logs_ok ? "LOGS WRITABLE" : "LOGS NOT WRITABLE");
     sorr_ios_status_add("NO GAME EXECUTION");
-    layout->d2_data_ready = (sorr_dat_ok && required_ok && probe_ok && !layout->d2_import_failed);
+    sorr_ios_status_add("NO GAME RENDERING");
+    layout->d2_data_ready = (sorr_dat_ok && required_ok && probe_ok && savegame_ok && xbox_ok && logs_ok && !layout->d2_import_failed);
 
     if (layout->d2_data_ready)
     {
