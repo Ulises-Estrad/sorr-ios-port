@@ -1084,3 +1084,58 @@ Game data/assets committed or bundled in IPA: no
 ```
 
 Do not proceed to D3 until explicitly instructed.
+
+## D3 First Render Device Artifact
+
+D3 starts after D1 and D2 are complete. It keeps the simulator job as the shell/data-layout proof and changes the device job into a first-render probe build.
+
+The device configure step now passes:
+
+```text
+-DSORR_IOS_D3_FIRST_RENDER=ON
+```
+
+Expected D3 artifact:
+
+```text
+ios-shell-d3-first-render-device-arm64
+```
+
+Expected IPA inside the artifact:
+
+```text
+build-products/SorrIOSShell-d3-first-render-adhoc.ipa
+```
+
+The D3 IPA is still asset-free. The workflow inspection continues to fail if the IPA contains:
+
+```text
+SorR.dat
+data/
+*.fpg
+*.wav
+*.ogg
+*.smk
+*.png
+```
+
+D3 uses the D2-staged physical-device data at `Library/Application Support/SORR`; it does not upload, bundle, or commit private game data.
+
+Runtime integration changes in the D3 target:
+
+- compile the portable BennuGD runtime source list into the iOS target,
+- enable the x64-safe pointer and native handle tables with `SORR_HOST_POINTER_TABLES`,
+- keep `mod_sound` stubbed so D3 does not require SDL2_mixer/audio codecs,
+- keep PNG loading stubbed for this first render attempt,
+- preserve the D2 data preflight before any runtime execution.
+
+Manual D3 test flow:
+
+1. Keep the D2 data staged on the iPhone.
+2. Download the `ios-shell-d3-first-render-device-arm64` artifact.
+3. Install `build-products/SorrIOSShell-d3-first-render-adhoc.ipa` with Sideloadly.
+4. Open the app.
+5. If D2 data is present, the app attempts real SoRR rendering from the staged data.
+6. If D2 data is missing, the app displays a visible missing-data status screen.
+
+Do not proceed to D4 controls or D5 gameplay until the physical D3 result is reported.

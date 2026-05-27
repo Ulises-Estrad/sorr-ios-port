@@ -1,4 +1,5 @@
 #include <stdbool.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -17,8 +18,16 @@
 
 #include "SDL.h"
 
+#ifdef SORR_IOS_D3_FIRST_RENDER
+#include "bgdrtm.h"
+#include "files.h"
+#include "instance.h"
+#include "xctype.h"
+#include "xstrings.h"
+#else
 #include "offsets.h"
 #include "sysprocs_st.h"
+#endif
 
 #ifndef S_ISDIR
 #define S_ISDIR(mode) (((mode) & S_IFDIR) != 0)
@@ -36,12 +45,37 @@
 #define SORR_IOS_SHELL_CLEAR_B 28
 #endif
 
+#ifndef SORR_IOS_D3_FIRST_RENDER
 FN_HOOK *module_finalize_list = NULL;
 int module_finalize_allocated = 0;
 int module_finalize_count = 0;
 void *globaldata = NULL;
+#endif
 
 void bgdrtm_entry(int argc, char *argv[]);
+
+#ifdef SORR_IOS_D3_FIRST_RENDER
+static char *sorr_ios_strdup(const char *text)
+{
+    size_t len;
+    char *copy;
+
+    if (!text)
+    {
+        return NULL;
+    }
+
+    len = strlen(text);
+    copy = (char *)malloc(len + 1);
+    if (!copy)
+    {
+        return NULL;
+    }
+
+    memcpy(copy, text, len + 1);
+    return copy;
+}
+#endif
 
 typedef struct sorr_ios_data_layout
 {
@@ -55,6 +89,7 @@ typedef struct sorr_ios_data_layout
     char sorr_dat_path[1024];
     char required_file_path[1024];
     char d2_probe_path[1024];
+    char d3_probe_path[1024];
     bool d2_data_ready;
     bool d2_import_seen;
     bool d2_import_failed;
@@ -494,6 +529,247 @@ static int sorr_ios_write_text_file(const char *path, const char *text)
     return 1;
 }
 
+#ifdef SORR_IOS_D3_FIRST_RENDER
+static void sorr_ios_d3_log(const sorr_ios_data_layout *layout, const char *format, ...)
+{
+    char line[1024];
+    va_list args;
+    FILE *fp;
+
+    if (!format)
+    {
+        return;
+    }
+
+    va_start(args, format);
+    vsnprintf(line, sizeof(line), format, args);
+    va_end(args);
+
+    SDL_Log("SORR iOS shell: D3 %s", line);
+
+    if (!layout || !layout->d3_probe_path[0])
+    {
+        return;
+    }
+
+    fp = fopen(layout->d3_probe_path, "ab");
+    if (!fp)
+    {
+        SDL_Log("SORR iOS shell: D3 probe log append failed path=%s errno=%d",
+                layout->d3_probe_path,
+                errno);
+        return;
+    }
+
+    fputs(line, fp);
+    fputc('\n', fp);
+    fclose(fp);
+}
+
+static void sorr_ios_set_d3_missing_data_status(const sorr_ios_data_layout *layout)
+{
+    sorr_ios_status_clear();
+    sorr_ios_status_set_error();
+    sorr_ios_status_add("D3 FIRST RENDER PROBE");
+    sorr_ios_status_add("D2 DATA REQUIRED");
+    sorr_ios_status_add("COMPLETE D2 IMPORT FIRST");
+    sorr_ios_status_add("DATA APP SUPPORT/SORR");
+    sorr_ios_status_add(layout && layout->d2_data_ready ? "D2 DATA READY" : "D2 DATA MISSING");
+    sorr_ios_status_add("SORR.DAT NOT OPENED");
+    sorr_ios_status_add("NO GAME EXECUTION");
+    sorr_ios_status_add("NO GAME RENDERING");
+}
+
+static int sorr_ios_prepare_runtime_app_paths(const sorr_ios_data_layout *layout)
+{
+    char runtime_fullpath[1024];
+
+    if (!layout)
+    {
+        return 0;
+    }
+
+    free(appexename);
+    free(appexepath);
+    free(appexefullpath);
+    free(appname);
+
+    appexename = sorr_ios_strdup("SorrIOSShell");
+    appexepath = sorr_ios_strdup(layout->support_root);
+    appname = sorr_ios_strdup("SorR.dat");
+
+    if (!appexename || !appexepath || !appname)
+    {
+        return 0;
+    }
+
+    if (!sorr_ios_join_path(runtime_fullpath, sizeof(runtime_fullpath), layout->support_root, appexename))
+    {
+        return 0;
+    }
+
+    appexefullpath = sorr_ios_strdup(runtime_fullpath);
+    return appexefullpath != NULL;
+}
+
+static int sorr_ios_run_d3_first_render(sorr_ios_data_layout *layout,
+                                        SDL_Window **window_ref,
+                                        SDL_Renderer **renderer_ref)
+{
+    char *runtime_argv[1];
+    INSTANCE *mainproc_running;
+    int ret;
+    long sorr_dat_size = 0;
+    long required_size = 0;
+
+    if (!layout)
+    {
+        return 1;
+    }
+
+    remove(layout->d3_probe_path);
+    sorr_ios_d3_log(layout, "probe log path=%s", layout->d3_probe_path);
+    sorr_ios_d3_log(layout, "app support path=%s", layout->support_root);
+    sorr_ios_d3_log(layout, "SorR.dat path=%s", layout->sorr_dat_path);
+
+    sorr_ios_status_clear();
+    sorr_ios_status_set_waiting();
+    sorr_ios_status_add("D3 FIRST RENDER PROBE");
+    sorr_ios_status_add("DATA APP SUPPORT/SORR");
+
+    if (!layout->d2_data_ready)
+    {
+        sorr_ios_d3_log(layout, "D2 data not ready; refusing runtime execution");
+        sorr_ios_set_d3_missing_data_status(layout);
+        return 1;
+    }
+
+    if (!sorr_ios_open_file_probe("D3 SorR.dat", layout->sorr_dat_path, &sorr_dat_size))
+    {
+        sorr_ios_d3_log(layout, "SorR.dat open failed before runtime");
+        sorr_ios_status_set_error();
+        sorr_ios_status_add("SORR.DAT OPEN FAILED");
+        return 1;
+    }
+    sorr_ios_status_add("SORR.DAT FOUND OPENED");
+
+    if (!sorr_ios_open_file_probe("D3 required data file mod/system.txt",
+                                  layout->required_file_path,
+                                  &required_size))
+    {
+        sorr_ios_d3_log(layout, "mod/system.txt open failed before runtime");
+        sorr_ios_status_set_error();
+        sorr_ios_status_add("MOD/SYSTEM.TXT MISSING");
+        return 1;
+    }
+    sorr_ios_status_add("MOD/SYSTEM.TXT FOUND");
+
+    if (!sorr_ios_write_text_file(layout->d3_probe_path, "d3-first-render-probe-start\n"))
+    {
+        SDL_Log("SORR iOS shell: D3 probe initial write failed path=%s errno=%d",
+                layout->d3_probe_path,
+                errno);
+        sorr_ios_status_set_error();
+        sorr_ios_status_add("D3 PROBE LOG FAILED");
+        return 1;
+    }
+    sorr_ios_d3_log(layout, "probe log write ok");
+
+    SDL_setenv("OS_ID", "0", 1);
+    SDL_setenv("SORR_PORTABLE_AUDIO_STUB", "1", 1);
+    SDL_setenv("SORR_PORTABLE_PUMP_EVENTS", "1", 1);
+    SDL_setenv("SORR_PORTABLE_DIAG", "1", 1);
+    SDL_setenv("SORR_PORTABLE_DIAG_FILES", "1", 1);
+    SDL_setenv("SORR_PORTABLE_DIAG_LOOP", "1", 1);
+    SDL_setenv("SORR_PORTABLE_DIAG_RENDER", "1", 1);
+    SDL_setenv("SORR_PORTABLE_DIAG_VIDEO", "1", 1);
+    SDL_setenv("SDL_RENDER_DRIVER", "opengles2", 0);
+    SDL_setenv("SDL_AUDIODRIVER", "dummy", 0);
+
+    if (chdir(layout->support_root) != 0)
+    {
+        sorr_ios_d3_log(layout, "chdir failed path=%s errno=%d", layout->support_root, errno);
+        sorr_ios_status_set_error();
+        sorr_ios_status_add("CHDIR FAILED");
+        return 1;
+    }
+    sorr_ios_d3_log(layout, "chdir ok path=%s", layout->support_root);
+
+    if (!sorr_ios_prepare_runtime_app_paths(layout))
+    {
+        sorr_ios_d3_log(layout, "runtime app path setup failed");
+        sorr_ios_status_set_error();
+        sorr_ios_status_add("RUNTIME PATH SETUP FAILED");
+        return 1;
+    }
+
+    file_addp(layout->support_root);
+    file_addp(".");
+    sorr_ios_d3_log(layout, "runtime file search paths added");
+
+    sorr_ios_status_add("RUNTIME INIT START");
+    sorr_ios_d3_log(layout, "runtime init start");
+    string_init();
+    init_c_type();
+
+    if (!dcb_load("SorR.dat"))
+    {
+        sorr_ios_d3_log(layout, "dcb_load failed for SorR.dat");
+        sorr_ios_status_set_error();
+        sorr_ios_status_add("DCB LOAD FAILED");
+        return 1;
+    }
+    sorr_ios_d3_log(layout, "dcb_load ok");
+
+    sysproc_init();
+    sorr_ios_d3_log(layout, "sysproc_init ok");
+
+    runtime_argv[0] = "SorR.dat";
+    bgdrtm_entry(1, runtime_argv);
+    sorr_ios_d3_log(layout, "runtime init end mainproc=%p", mainproc);
+
+    if (!mainproc)
+    {
+        sorr_ios_status_set_error();
+        sorr_ios_status_add("MAINPROC MISSING");
+        return 1;
+    }
+
+    sorr_ios_status_add("RUNTIME INIT OK");
+    sorr_ios_status_add("HANDOFF TO RENDER");
+    sorr_ios_d3_log(layout, "first script execution start mainproc=%s", mainproc->name ? mainproc->name : "(unnamed)");
+    mainproc_running = instance_new(mainproc, NULL);
+    sorr_ios_d3_log(layout, "instance_new returned %p", mainproc_running);
+    if (!mainproc_running)
+    {
+        sorr_ios_status_set_error();
+        sorr_ios_status_add("MAIN INSTANCE FAILED");
+        return 1;
+    }
+
+    if (renderer_ref && *renderer_ref)
+    {
+        sorr_ios_draw_status(*renderer_ref);
+        SDL_RenderPresent(*renderer_ref);
+        SDL_Delay(300);
+        SDL_DestroyRenderer(*renderer_ref);
+        *renderer_ref = NULL;
+    }
+
+    if (window_ref && *window_ref)
+    {
+        SDL_DestroyWindow(*window_ref);
+        *window_ref = NULL;
+    }
+
+    sorr_ios_d3_log(layout, "first frame/render loop handoff begin");
+    ret = instance_go_all();
+    sorr_ios_d3_log(layout, "instance_go_all returned ret=%d", ret);
+    bgdrtm_exit(ret);
+    return ret;
+}
+#endif
+
 #ifndef _WIN32
 static int sorr_ios_copy_file_if_needed(const char *src, const char *dst)
 {
@@ -683,7 +959,8 @@ static int sorr_ios_prepare_data_layout(sorr_ios_data_layout *layout)
         !sorr_ios_join_path(layout->documents_import_dir, sizeof(layout->documents_import_dir), layout->documents_root, "SORR_IMPORT") ||
         !sorr_ios_join_path(layout->sorr_dat_path, sizeof(layout->sorr_dat_path), layout->support_root, "SorR.dat") ||
         !sorr_ios_join_path(layout->required_file_path, sizeof(layout->required_file_path), layout->support_root, "mod/system.txt") ||
-        !sorr_ios_join_path(layout->d2_probe_path, sizeof(layout->d2_probe_path), layout->logs_dir, "ios_d2_data_import_probe.txt"))
+        !sorr_ios_join_path(layout->d2_probe_path, sizeof(layout->d2_probe_path), layout->logs_dir, "ios_d2_data_import_probe.txt") ||
+        !sorr_ios_join_path(layout->d3_probe_path, sizeof(layout->d3_probe_path), layout->logs_dir, "ios_d3_first_render_probe.txt"))
     {
         SDL_Log("SORR iOS shell: data layout path construction failed");
         return 0;
@@ -1098,6 +1375,7 @@ static void sorr_ios_run_d2_probe(sorr_ios_data_layout *layout)
     SDL_Log("SORR iOS shell: D2 SorR.dat intentionally not loaded or executed");
 }
 
+#ifndef SORR_IOS_D3_FIRST_RENDER
 static int sorr_ios_runtime_entry_probe(int argc, char **argv)
 {
     SDL_Log("SORR iOS shell: reached D2 runtime skip probe argc=%d argv0=%s",
@@ -1108,6 +1386,7 @@ static int sorr_ios_runtime_entry_probe(int argc, char **argv)
     SDL_Log("SORR iOS shell: SorR.dat intentionally not loaded or executed in D2");
     return 0;
 }
+#endif
 
 int main(int argc, char *argv[])
 {
@@ -1171,6 +1450,20 @@ int main(int argc, char *argv[])
     }
     SDL_Log("SORR iOS shell: SDL_CreateRenderer success");
 
+#ifdef SORR_IOS_D3_FIRST_RENDER
+    if (data_layout.d2_data_ready)
+    {
+        if (sorr_ios_run_d3_first_render(&data_layout, &window, &renderer) != 0)
+        {
+            SDL_Log("SORR iOS shell: D3 first render probe failed before runtime handoff");
+        }
+    }
+    else
+    {
+        sorr_ios_set_d3_missing_data_status(&data_layout);
+        SDL_Log("SORR iOS shell: D3 waiting for D2-staged data before runtime execution");
+    }
+#else
     if (sorr_ios_runtime_entry_probe(argc, argv) != 0)
     {
         SDL_Log("SORR iOS shell: runtime handoff probe failed");
@@ -1179,6 +1472,7 @@ int main(int argc, char *argv[])
         SDL_Quit();
         return 1;
     }
+#endif
 
     SDL_Log("SORR iOS shell: entering responsive idle loop");
 
@@ -1194,20 +1488,51 @@ int main(int argc, char *argv[])
             }
         }
 
+#ifndef SORR_IOS_D3_FIRST_RENDER
         if (SDL_GetTicks() - last_d2_probe_ticks > 2000)
         {
             sorr_ios_run_d2_probe(&data_layout);
             last_d2_probe_ticks = SDL_GetTicks();
         }
+#else
+        (void)last_d2_probe_ticks;
+        if (!data_layout.d2_data_ready && SDL_GetTicks() - last_d2_probe_ticks > 2000)
+        {
+            sorr_ios_run_d2_probe(&data_layout);
+            if (data_layout.d2_data_ready)
+            {
+                sorr_ios_status_clear();
+                sorr_ios_status_set_ready();
+                sorr_ios_status_add("D3 DATA READY");
+                sorr_ios_status_add("RELAUNCH APP TO RENDER");
+                sorr_ios_status_add("NO GAME EXECUTION");
+                sorr_ios_status_add("NO GAME RENDERING");
+            }
+            else
+            {
+                sorr_ios_set_d3_missing_data_status(&data_layout);
+            }
+            last_d2_probe_ticks = SDL_GetTicks();
+        }
+#endif
 
-        sorr_ios_draw_status(renderer);
-        SDL_RenderPresent(renderer);
+        if (renderer)
+        {
+            sorr_ios_draw_status(renderer);
+            SDL_RenderPresent(renderer);
+        }
         SDL_Delay(16);
     }
 
     SDL_Log("SORR iOS shell: clean shutdown");
-    SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(window);
+    if (renderer)
+    {
+        SDL_DestroyRenderer(renderer);
+    }
+    if (window)
+    {
+        SDL_DestroyWindow(window);
+    }
     SDL_Quit();
     free(globaldata);
     globaldata = NULL;

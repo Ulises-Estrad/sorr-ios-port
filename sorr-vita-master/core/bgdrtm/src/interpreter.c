@@ -48,7 +48,7 @@
 #endif
 
 #include <assert.h>
-#if defined(_WIN64)
+#if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif
@@ -242,7 +242,7 @@ static int portable_x64_sysproc_load_save( int is_save, int * params )
 }
 #endif
 
-#if defined(PORTABLE_RUNTIME_DIAG) && defined(_WIN64)
+#if defined(PORTABLE_RUNTIME_DIAG) && (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif
@@ -607,7 +607,7 @@ int instance_go( INSTANCE * r )
             mnemonic_dump( *ptr, ptr[1] ) ;
         }
 
-#if defined(PORTABLE_RUNTIME_DIAG) && defined(_WIN64)
+#if defined(PORTABLE_RUNTIME_DIAG) && (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
         portable_x64_log_step( r, ptr );
 #endif
 
@@ -616,7 +616,7 @@ int instance_go( INSTANCE * r )
             /* Stack manipulation */
 
             case MN_DUP:
-#if defined(_WIN64)
+#if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
                 portable_x64_stack_copy_cell( r->stack_ptr, &r->stack_ptr[-1] );
 #else
                 *r->stack_ptr = r->stack_ptr[-1] ;
@@ -643,7 +643,7 @@ int instance_go( INSTANCE * r )
             case MN_INDEX | MN_BYTE:
             case MN_INDEX | MN_BYTE | MN_UNSIGNED:
             case MN_INDEX | MN_FLOAT: /* Add float, I don't know why it was missing (SplinterGU) */
-#if defined(_WIN64)
+#if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
                 portable_x64_stack_adjust_ptr( &r->stack_ptr[-1], ptr[1] );
 #else
                 r->stack_ptr[-1] += ptr[1] ;
@@ -652,7 +652,7 @@ int instance_go( INSTANCE * r )
                 break ;
 
             case MN_ARRAY:
-#if defined(_WIN64)
+#if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
                 portable_x64_stack_adjust_ptr( &r->stack_ptr[-2], ptr[1] * r->stack_ptr[-1] );
 #else
                 r->stack_ptr[-2] += ( ptr[1] * r->stack_ptr[-1] ) ;
@@ -759,7 +759,7 @@ int instance_go( INSTANCE * r )
                 }
 
                 r->stack_ptr -= p->params ;
-#if defined(_WIN64)
+#if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
                 if ( p->name && p->paramtypes && p->params == 4 && strcmp( p->paramtypes, "SV++" ) == 0 && ( strcmp( p->name, "LOAD" ) == 0 || strcmp( p->name, "SAVE" ) == 0 ) )
                 {
                     *r->stack_ptr = portable_x64_sysproc_load_save( strcmp( p->name, "SAVE" ) == 0, r->stack_ptr );
@@ -781,10 +781,10 @@ int instance_go( INSTANCE * r )
                     exit( 0 );
                 }
                 r->stack_ptr -= p->params ;
-#if defined(PORTABLE_RUNTIME_DIAG) && defined(_WIN64)
+#if defined(PORTABLE_RUNTIME_DIAG) && (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
                 PORTABLE_DIAG_LOG( "SCRIPT", "MN_SYSPROC code=%d name=%s params=%d types=%s stack_ptr=%p p0=0x%08x p1=0x%08x p2=0x%08x", ptr[1], p->name ? p->name : "(null)", p->params, p->paramtypes ? p->paramtypes : "(null)", ( void * )r->stack_ptr, p->params > 0 ? ( unsigned int )r->stack_ptr[0] : 0u, p->params > 1 ? ( unsigned int )r->stack_ptr[1] : 0u, p->params > 2 ? ( unsigned int )r->stack_ptr[2] : 0u );
 #endif
-#if defined(_WIN64)
+#if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
                 if ( p->name && strcmp( p->name, "GET_DESKTOP_SIZE" ) == 0 && p->params == 2 )
                 {
                     portable_x64_sysproc_get_desktop_size( r, r->stack_ptr );
@@ -812,7 +812,7 @@ int instance_go( INSTANCE * r )
             case MN_PRIVATE | MN_BYTE | MN_UNSIGNED:
             case MN_PRIVATE | MN_STRING:
             case MN_PRIVATE | MN_FLOAT:
-#if defined(_WIN64)
+#if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
                 portable_x64_stack_set_ptr( r->stack_ptr++, &PRIDWORD( r, ptr[1] ) );
 #else
                 *r->stack_ptr++ = ( uint32_t ) & PRIDWORD( r, ptr[1] );
@@ -828,7 +828,7 @@ int instance_go( INSTANCE * r )
             case MN_PUBLIC | MN_BYTE | MN_UNSIGNED:
             case MN_PUBLIC | MN_STRING:
             case MN_PUBLIC | MN_FLOAT:
-#if defined(_WIN64)
+#if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
                 portable_x64_stack_set_ptr( r->stack_ptr++, &PUBDWORD( r, ptr[1] ) );
 #else
                 *r->stack_ptr++ = ( uint32_t ) & PUBDWORD( r, ptr[1] ) ;
@@ -844,7 +844,7 @@ int instance_go( INSTANCE * r )
             case MN_LOCAL | MN_BYTE | MN_UNSIGNED:
             case MN_LOCAL | MN_STRING:
             case MN_LOCAL | MN_FLOAT:
-#if defined(_WIN64)
+#if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
                 portable_x64_stack_set_ptr( r->stack_ptr++, &LOCDWORD( r, ptr[1] ) );
 #else
                 *r->stack_ptr++ = ( uint32_t ) & LOCDWORD( r, ptr[1] ) ;
@@ -860,7 +860,7 @@ int instance_go( INSTANCE * r )
             case MN_GLOBAL | MN_BYTE | MN_UNSIGNED:
             case MN_GLOBAL | MN_STRING:
             case MN_GLOBAL | MN_FLOAT:
-#if defined(_WIN64)
+#if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
                 portable_x64_stack_set_ptr( r->stack_ptr++, &GLODWORD( ptr[1] ) );
 #else
                 *r->stack_ptr++ = ( uint32_t ) & GLODWORD( ptr[1] ) ;
@@ -883,7 +883,7 @@ int instance_go( INSTANCE * r )
                     exit( 0 );
                 }
                 else
-#if defined(_WIN64)
+#if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
                     portable_x64_stack_set_ptr( &r->stack_ptr[-1], &LOCDWORD( i, ptr[1] ) );
 #else
                     r->stack_ptr[-1] = ( uint32_t ) & LOCDWORD( i, ptr[1] ) ;
@@ -906,7 +906,7 @@ int instance_go( INSTANCE * r )
                     exit( 0 );
                 }
                 else
-#if defined(_WIN64)
+#if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
                     portable_x64_stack_set_ptr( &r->stack_ptr[-1], &PUBDWORD( i, ptr[1] ) );
 #else
                     r->stack_ptr[-1] = ( uint32_t ) & PUBDWORD( i, ptr[1] ) ;
@@ -975,7 +975,7 @@ int instance_go( INSTANCE * r )
             case MN_PTR:
             case MN_PTR | MN_UNSIGNED:
             case MN_PTR | MN_FLOAT:
-#if defined(_WIN64)
+#if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
                 r->stack_ptr[-1] = *( int32_t * )portable_x64_stack_get_ptr( &r->stack_ptr[-1] ) ;
 #else
                 r->stack_ptr[-1] = *( int32_t * )r->stack_ptr[-1] ;
@@ -1042,7 +1042,7 @@ int instance_go( INSTANCE * r )
                 break ;
 
             case MN_STRING | MN_PTR:
-#if defined(_WIN64)
+#if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
                 r->stack_ptr[-1] = *( int32_t * )portable_x64_stack_get_ptr( &r->stack_ptr[-1] ) ;
 #else
                 r->stack_ptr[-1] = *( int32_t * )r->stack_ptr[-1] ;
@@ -1148,7 +1148,7 @@ int instance_go( INSTANCE * r )
                 break ;
 
             case MN_WORD | MN_PTR:
-#if defined(_WIN64)
+#if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
                 r->stack_ptr[-1] = *( int16_t * )portable_x64_stack_get_ptr( &r->stack_ptr[-1] ) ;
 #else
                 r->stack_ptr[-1] = *( int16_t * )r->stack_ptr[-1] ;
@@ -1157,7 +1157,7 @@ int instance_go( INSTANCE * r )
                 break ;
 
             case MN_WORD | MN_PTR | MN_UNSIGNED:
-#if defined(_WIN64)
+#if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
                 r->stack_ptr[-1] = *( uint16_t * )portable_x64_stack_get_ptr( &r->stack_ptr[-1] ) ;
 #else
                 r->stack_ptr[-1] = *( uint16_t * )r->stack_ptr[-1] ;
@@ -1256,7 +1256,7 @@ int instance_go( INSTANCE * r )
                 break ;
 
             case MN_BYTE | MN_PTR:
-#if defined(_WIN64)
+#if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
                 r->stack_ptr[-1] = *(( int8_t * )portable_x64_stack_get_ptr( &r->stack_ptr[-1] ) ) ;
 #else
                 r->stack_ptr[-1] = *(( int8_t * )r->stack_ptr[-1] ) ;
@@ -1265,7 +1265,7 @@ int instance_go( INSTANCE * r )
                 break ;
 
             case MN_BYTE | MN_PTR | MN_UNSIGNED:
-#if defined(_WIN64)
+#if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
                 r->stack_ptr[-1] = *(( uint8_t * )portable_x64_stack_get_ptr( &r->stack_ptr[-1] ) ) ;
 #else
                 r->stack_ptr[-1] = *(( uint8_t * )r->stack_ptr[-1] ) ;
@@ -1737,7 +1737,7 @@ int instance_go( INSTANCE * r )
                 break ;
 
             case MN_LETNP | MN_STRING:
-#if defined(_WIN64)
+#if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
                 {
                     int32_t * string_slot = ( int32_t * )portable_x64_stack_get_ptr( &r->stack_ptr[-2] );
                     string_discard( *string_slot );
@@ -1752,7 +1752,7 @@ int instance_go( INSTANCE * r )
                 break ;
 
             case MN_LET | MN_STRING:
-#if defined(_WIN64)
+#if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
                 {
                     int32_t * string_slot = ( int32_t * )portable_x64_stack_get_ptr( &r->stack_ptr[-2] );
                     string_discard( *string_slot );
@@ -1866,10 +1866,10 @@ int instance_go( INSTANCE * r )
             /* Fixed-length strings operations*/
 
             case MN_A2STR:
-#if defined(PORTABLE_RUNTIME_DIAG) && defined(_WIN64)
+#if defined(PORTABLE_RUNTIME_DIAG) && (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
                 portable_x64_log_mn_a2str( r, ptr, ptr[1] );
 #endif
-#if defined(_WIN64)
+#if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
                 str = ( char * )portable_x64_stack_get_ptr( &r->stack_ptr[-ptr[1] - 1] );
 #else
                 str = *( char ** )( &r->stack_ptr[-ptr[1] - 1] ) ;
@@ -1882,7 +1882,7 @@ int instance_go( INSTANCE * r )
 
             case MN_STR2A:
                 n = r->stack_ptr[-1];
-#if defined(_WIN64)
+#if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
                 str = ( char * )portable_x64_stack_get_ptr( &r->stack_ptr[-2] );
                 strncpy( str, string_get( n ), ptr[1] ) ;
                 str[ptr[1]] = 0;
@@ -1897,7 +1897,7 @@ int instance_go( INSTANCE * r )
 
             case MN_STRACAT:
                 n = r->stack_ptr[-1];
-#if defined(_WIN64)
+#if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
                 str = ( char * )portable_x64_stack_get_ptr( &r->stack_ptr[-2] );
                 strncat( str, string_get( n ), (ptr[1]-1) - strlen( str ) ) ;
                 str[ptr[1]-1] = 0;
@@ -1914,7 +1914,7 @@ int instance_go( INSTANCE * r )
 
             case MN_LETNP:
             case MN_LETNP | MN_UNSIGNED:
-#if defined(_WIN64)
+#if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
                 ( *( int32_t * )portable_x64_stack_get_ptr( &r->stack_ptr[-2] ) ) = r->stack_ptr[-1] ;
 #else
                 ( *( int32_t * )( r->stack_ptr[-2] ) ) = r->stack_ptr[-1] ;
@@ -1925,7 +1925,7 @@ int instance_go( INSTANCE * r )
 
             case MN_LET:
             case MN_LET | MN_UNSIGNED:
-#if defined(_WIN64)
+#if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
                 ( *( int32_t * )portable_x64_stack_get_ptr( &r->stack_ptr[-2] ) ) = r->stack_ptr[-1] ;
 #else
                 ( *( int32_t * )( r->stack_ptr[-2] ) ) = r->stack_ptr[-1] ;
@@ -1936,7 +1936,7 @@ int instance_go( INSTANCE * r )
 
             case MN_INC:
             case MN_INC | MN_UNSIGNED:
-#if defined(_WIN64)
+#if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
                 ( *( int32_t * )portable_x64_stack_get_ptr( &r->stack_ptr[-1] ) ) += ptr[1] ;
 #else
                 ( *( int32_t * )( r->stack_ptr[-1] ) ) += ptr[1] ;
@@ -1946,7 +1946,7 @@ int instance_go( INSTANCE * r )
 
             case MN_DEC:
             case MN_DEC | MN_UNSIGNED:
-#if defined(_WIN64)
+#if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
                 ( *( int32_t * )portable_x64_stack_get_ptr( &r->stack_ptr[-1] ) ) -= ptr[1] ;
 #else
                 ( *( int32_t * )( r->stack_ptr[-1] ) ) -= ptr[1] ;
@@ -1956,7 +1956,7 @@ int instance_go( INSTANCE * r )
 
             case MN_POSTDEC:
             case MN_POSTDEC | MN_UNSIGNED:
-#if defined(_WIN64)
+#if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
                 {
                     int32_t * value = ( int32_t * )portable_x64_stack_get_ptr( &r->stack_ptr[-1] );
                     *value -= ptr[1] ;
@@ -1971,7 +1971,7 @@ int instance_go( INSTANCE * r )
 
             case MN_POSTINC:
             case MN_POSTINC | MN_UNSIGNED:
-#if defined(_WIN64)
+#if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
                 {
                     int32_t * value = ( int32_t * )portable_x64_stack_get_ptr( &r->stack_ptr[-1] );
                     *value += ptr[1] ;
@@ -1986,7 +1986,7 @@ int instance_go( INSTANCE * r )
 
             case MN_VARADD:
             case MN_VARADD | MN_UNSIGNED:
-#if defined(_WIN64)
+#if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
                 *( int32_t * )portable_x64_stack_get_ptr( &r->stack_ptr[-2] ) += r->stack_ptr[-1] ;
 #else
                 *( int32_t * )( r->stack_ptr[-2] ) += r->stack_ptr[-1] ;
@@ -1997,7 +1997,7 @@ int instance_go( INSTANCE * r )
 
             case MN_VARSUB:
             case MN_VARSUB | MN_UNSIGNED:
-#if defined(_WIN64)
+#if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
                 *( int32_t * )portable_x64_stack_get_ptr( &r->stack_ptr[-2] ) -= r->stack_ptr[-1] ;
 #else
                 *( int32_t * )( r->stack_ptr[-2] ) -= r->stack_ptr[-1] ;
@@ -2008,7 +2008,7 @@ int instance_go( INSTANCE * r )
 
             case MN_VARMUL:
             case MN_VARMUL | MN_UNSIGNED:
-#if defined(_WIN64)
+#if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
                 *( int32_t * )portable_x64_stack_get_ptr( &r->stack_ptr[-2] ) *= r->stack_ptr[-1] ;
 #else
                 *( int32_t * )( r->stack_ptr[-2] ) *= r->stack_ptr[-1] ;
@@ -2024,7 +2024,7 @@ int instance_go( INSTANCE * r )
                     fprintf( stderr, "ERROR: Runtime error in %s(%d) - Division by zero\n", r->proc->name, LOCDWORD( r, PROCESS_ID ) ) ;
                     exit( 0 );
                 }
-#if defined(_WIN64)
+#if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
                 *( int32_t * )portable_x64_stack_get_ptr( &r->stack_ptr[-2] ) /= r->stack_ptr[-1] ;
 #else
                 *( int32_t * )( r->stack_ptr[-2] ) /= r->stack_ptr[-1] ;
@@ -2040,7 +2040,7 @@ int instance_go( INSTANCE * r )
                     fprintf( stderr, "ERROR: Runtime error in %s(%d) - Division by zero\n", r->proc->name, LOCDWORD( r, PROCESS_ID ) ) ;
                     exit( 0 );
                 }
-#if defined(_WIN64)
+#if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
                 *( int32_t * )portable_x64_stack_get_ptr( &r->stack_ptr[-2] ) %= r->stack_ptr[-1] ;
 #else
                 *( int32_t * )( r->stack_ptr[-2] ) %= r->stack_ptr[-1] ;
@@ -2051,7 +2051,7 @@ int instance_go( INSTANCE * r )
 
             case MN_VAROR:
             case MN_VAROR | MN_UNSIGNED:
-#if defined(_WIN64)
+#if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
                 *( int32_t * )portable_x64_stack_get_ptr( &r->stack_ptr[-2] ) |= r->stack_ptr[-1] ;
 #else
                 *( int32_t * )( r->stack_ptr[-2] ) |= r->stack_ptr[-1] ;
@@ -2062,7 +2062,7 @@ int instance_go( INSTANCE * r )
 
             case MN_VARXOR:
             case MN_VARXOR | MN_UNSIGNED:
-#if defined(_WIN64)
+#if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
                 *( int32_t * )portable_x64_stack_get_ptr( &r->stack_ptr[-2] ) ^= r->stack_ptr[-1] ;
 #else
                 *( int32_t * )( r->stack_ptr[-2] ) ^= r->stack_ptr[-1] ;
@@ -2073,7 +2073,7 @@ int instance_go( INSTANCE * r )
 
             case MN_VARAND:
             case MN_VARAND | MN_UNSIGNED:
-#if defined(_WIN64)
+#if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
                 *( int32_t * )portable_x64_stack_get_ptr( &r->stack_ptr[-2] ) &= r->stack_ptr[-1] ;
 #else
                 *( int32_t * )( r->stack_ptr[-2] ) &= r->stack_ptr[-1] ;
@@ -2083,7 +2083,7 @@ int instance_go( INSTANCE * r )
                 break ;
 
             case MN_VARROR:
-#if defined(_WIN64)
+#if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
                 *( int32_t * )portable_x64_stack_get_ptr( &r->stack_ptr[-2] ) >>= r->stack_ptr[-1] ;
 #else
                 *( int32_t * )( r->stack_ptr[-2] ) >>= r->stack_ptr[-1] ;
@@ -2093,7 +2093,7 @@ int instance_go( INSTANCE * r )
                 break ;
 
             case MN_VARROR | MN_UNSIGNED:
-#if defined(_WIN64)
+#if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
                 *( uint32_t * )portable_x64_stack_get_ptr( &r->stack_ptr[-2] ) >>= r->stack_ptr[-1] ;
 #else
                 *( uint32_t * )( r->stack_ptr[-2] ) >>= r->stack_ptr[-1] ;
@@ -2103,7 +2103,7 @@ int instance_go( INSTANCE * r )
                 break ;
 
             case MN_VARROL:
-#if defined(_WIN64)
+#if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
                 *( int32_t * )portable_x64_stack_get_ptr( &r->stack_ptr[-2] ) <<= r->stack_ptr[-1] ;
 #else
                 *( int32_t * )( r->stack_ptr[-2] ) <<= r->stack_ptr[-1] ;
@@ -2113,7 +2113,7 @@ int instance_go( INSTANCE * r )
                 break ;
 
             case MN_VARROL | MN_UNSIGNED:
-#if defined(_WIN64)
+#if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
                 *( uint32_t * )portable_x64_stack_get_ptr( &r->stack_ptr[-2] ) <<= r->stack_ptr[-1] ;
 #else
                 *( uint32_t * )( r->stack_ptr[-2] ) <<= r->stack_ptr[-1] ;
@@ -2257,7 +2257,7 @@ int instance_go( INSTANCE * r )
 
             case MN_BYTE | MN_LETNP:
             case MN_BYTE | MN_LETNP | MN_UNSIGNED:
-#if defined(_WIN64)
+#if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
                 ( *( uint8_t * )portable_x64_stack_get_ptr( &r->stack_ptr[-2] ) ) = r->stack_ptr[-1] ;
 #else
                 ( *( uint8_t * )( r->stack_ptr[-2] ) ) = r->stack_ptr[-1] ;
@@ -2268,7 +2268,7 @@ int instance_go( INSTANCE * r )
 
             case MN_BYTE | MN_LET:
             case MN_BYTE | MN_LET | MN_UNSIGNED:
-#if defined(_WIN64)
+#if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
                 ( *( uint8_t * )portable_x64_stack_get_ptr( &r->stack_ptr[-2] ) ) = r->stack_ptr[-1] ;
 #else
                 ( *( uint8_t * )( r->stack_ptr[-2] ) ) = r->stack_ptr[-1] ;
@@ -2396,7 +2396,7 @@ int instance_go( INSTANCE * r )
             /* Direct operations with variables FLOAT type */
 
             case MN_FLOAT | MN_LETNP:
-#if defined(_WIN64)
+#if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
                 ( *( float * )portable_x64_stack_get_ptr( &r->stack_ptr[-2] ) ) = *( float * ) & r->stack_ptr[-1] ;
 #else
                 ( *( float * )( r->stack_ptr[-2] ) ) = *( float * ) & r->stack_ptr[-1] ;
@@ -2406,7 +2406,7 @@ int instance_go( INSTANCE * r )
                 break ;
 
             case MN_FLOAT | MN_LET :
-#if defined(_WIN64)
+#if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
                 ( *( float * )portable_x64_stack_get_ptr( &r->stack_ptr[-2] ) ) = *( float * ) & r->stack_ptr[-1] ;
 #else
                 ( *( float * )( r->stack_ptr[-2] ) ) = *( float * ) & r->stack_ptr[-1] ;
@@ -2438,7 +2438,7 @@ int instance_go( INSTANCE * r )
                 break ;
 
             case MN_FLOAT | MN_VARADD:
-#if defined(_WIN64)
+#if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
                 *( float * )portable_x64_stack_get_ptr( &r->stack_ptr[-2] ) += *( float * ) & r->stack_ptr[-1] ;
 #else
                 *( float * )( r->stack_ptr[-2] ) += *( float * ) & r->stack_ptr[-1] ;
@@ -2448,7 +2448,7 @@ int instance_go( INSTANCE * r )
                 break ;
 
             case MN_FLOAT | MN_VARSUB:
-#if defined(_WIN64)
+#if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
                 *( float * )portable_x64_stack_get_ptr( &r->stack_ptr[-2] ) -= *( float * ) & r->stack_ptr[-1] ;
 #else
                 *( float * )( r->stack_ptr[-2] ) -= *( float * ) & r->stack_ptr[-1] ;
@@ -2458,7 +2458,7 @@ int instance_go( INSTANCE * r )
                 break ;
 
             case MN_FLOAT | MN_VARMUL:
-#if defined(_WIN64)
+#if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
                 *( float * )portable_x64_stack_get_ptr( &r->stack_ptr[-2] ) *= *( float * ) & r->stack_ptr[-1] ;
 #else
                 *( float * )( r->stack_ptr[-2] ) *= *( float * ) & r->stack_ptr[-1] ;
@@ -2468,7 +2468,7 @@ int instance_go( INSTANCE * r )
                 break ;
 
             case MN_FLOAT | MN_VARDIV:
-#if defined(_WIN64)
+#if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
                 *( float * )portable_x64_stack_get_ptr( &r->stack_ptr[-2] ) /= *( float * ) & r->stack_ptr[-1] ;
 #else
                 *( float * )( r->stack_ptr[-2] ) /= *( float * ) & r->stack_ptr[-1] ;

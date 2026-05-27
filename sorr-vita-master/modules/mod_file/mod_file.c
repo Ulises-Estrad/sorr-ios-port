@@ -42,7 +42,7 @@
 #include "portable_diag.h"
 #endif
 
-#if defined(_WIN64)
+#if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
 #define MODFILE_X64_HANDLE_TABLE_SIZE 4096
 
 static file * modfile_x64_handles[MODFILE_X64_HANDLE_TABLE_SIZE];
@@ -178,7 +178,7 @@ static int modfile_fopen( INSTANCE * my, int * params )
     file *fp = file_open( p, ops[params[1]] );
 //    SDL_Log("Calling file_open(%s, %s) -> %d", p, ops[params[1]], r);
 
-#if defined(_WIN64)
+#if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
 #ifdef PORTABLE_RUNTIME_DIAG
     PORTABLE_DIAG_LOG( "FILE", "x64 FOPEN path=%s mode=%s fp=%p", p ? p : "(null)", ops[params[1]], ( void * )fp );
 #endif

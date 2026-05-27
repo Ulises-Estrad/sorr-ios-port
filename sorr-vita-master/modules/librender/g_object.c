@@ -40,7 +40,7 @@ static int sequencer = 0;
 
 CONTAINER * sorted_object_list = NULL;
 
-#if defined(_WIN64)
+#if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
 #define GR_OBJECT_X64_HANDLE_TABLE_SIZE 16384
 static OBJECT * gr_object_x64_handles[GR_OBJECT_X64_HANDLE_TABLE_SIZE];
 

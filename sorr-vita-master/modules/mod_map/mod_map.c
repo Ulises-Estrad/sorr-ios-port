@@ -48,7 +48,7 @@
 
 /* --------------------------------------------------------------------------- */
 
-#if defined(_WIN64)
+#if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
 #define MODMAP_X64_PALETTE_TABLE_SIZE 4096
 static PALETTE * modmap_x64_palettes[MODMAP_X64_PALETTE_TABLE_SIZE];
 
@@ -125,7 +125,7 @@ static PALETTE * modmap_x64_palette_release( int handle, const char * op )
 #define modmap_x64_palette_release(handle,op) (( PALETTE * )( handle ))
 #endif
 
-#if defined(_WIN64)
+#if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
 extern void * portable_x64_sysproc_pointer_param( int * cell );
 #define modmap_x64_pointer_param(cell) portable_x64_sysproc_pointer_param( cell )
 #else

@@ -6,20 +6,26 @@ on:
     paths:
       - ".github/workflows/ios-shell.yml"
       - "sorr-vita-master/cmake/ios/**"
+      - "sorr-vita-master/core/common/**"
+      - "sorr-vita-master/core/bgdrtm/src/**"
       - "sorr-vita-master/core/bgdrtm/src/fmath.c"
       - "sorr-vita-master/core/bgdrtm/src/misc.c"
       - "sorr-vita-master/core/bgdrtm/src/strings.c"
       - "sorr-vita-master/core/bgdrtm/include/**"
       - "sorr-vita-master/core/include/**"
+      - "sorr-vita-master/modules/**"
   pull_request:
     paths:
       - ".github/workflows/ios-shell.yml"
       - "sorr-vita-master/cmake/ios/**"
+      - "sorr-vita-master/core/common/**"
+      - "sorr-vita-master/core/bgdrtm/src/**"
       - "sorr-vita-master/core/bgdrtm/src/fmath.c"
       - "sorr-vita-master/core/bgdrtm/src/misc.c"
       - "sorr-vita-master/core/bgdrtm/src/strings.c"
       - "sorr-vita-master/core/bgdrtm/include/**"
       - "sorr-vita-master/core/include/**"
+      - "sorr-vita-master/modules/**"
 
 concurrency:
   group: ios-shell-${{ github.ref }}
@@ -440,7 +446,7 @@ jobs:
       IOS_DEVICE_ARCH: "arm64"
       IOS_DEVICE_BUILD_DIR: "build-ios-shell-device"
       ARTIFACT_DIR: "ci-artifacts/ios-shell-device"
-      IPA_NAME: "SorrIOSShell-d2-sorr-import-adhoc.ipa"
+      IPA_NAME: "SorrIOSShell-d3-first-render-adhoc.ipa"
 
     steps:
       - name: Checkout
@@ -566,6 +572,7 @@ jobs:
               -DCMAKE_OSX_ARCHITECTURES="$IOS_DEVICE_ARCH" \
               -DCMAKE_PREFIX_PATH="$SDL2_IOS_DEVICE_PREFIX" \
               -DSORR_IOS_SDL2_ROOT="$SDL2_IOS_DEVICE_PREFIX" \
+              -DSORR_IOS_D3_FIRST_RENDER=ON \
               -DSORR_IOS_BUNDLE_IDENTIFIER="dev.local.sorr.iosshell"
           } 2>&1 | tee "$ARTIFACT_DIR/logs/ios-shell-configure.log"
 
@@ -656,7 +663,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ios-shell-d2-sorr-import-device-arm64
+          name: ios-shell-d3-first-render-device-arm64
           path: ci-artifacts/ios-shell-device
           if-no-files-found: warn
           retention-days: 14

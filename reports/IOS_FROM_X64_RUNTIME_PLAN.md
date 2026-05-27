@@ -311,6 +311,32 @@ Completed D2 sequence:
 6. D2 is complete; stop until D3 is explicitly requested.
 7. Then decide how to move into D3 without committing or uploading private game data.
 
+D3 status: first render proof has now been requested.
+
+D3 keeps the D2 data route and does not bundle game data. The device job builds an asset-free IPA that reads the already staged physical-device data from:
+
+```text
+Library/Application Support/SORR
+```
+
+D3 build target:
+
+```text
+Artifact: ios-shell-d3-first-render-device-arm64
+IPA: build-products/SorrIOSShell-d3-first-render-adhoc.ipa
+```
+
+D3 implementation strategy:
+
+- keep the D2 preflight and visible status screen,
+- require `SorR.dat` and `mod/system.txt` in `Application Support/SORR`,
+- enable the x64-safe pointer/handle path for iOS through `SORR_HOST_POINTER_TABLES`,
+- compile the portable runtime source list into the iOS target,
+- keep audio stubbed and avoid SDL2_mixer for first render,
+- attempt the first real title/menu/city render only after D2 data is verified.
+
+D3 remains render-only. Touch controls, gameplay input, audio, SOR2-only pruning, and App Store/TestFlight signing stay out of scope.
+
 ## Out Of Scope For This Plan
 
 - SOR2-only pruning.

@@ -8,6 +8,7 @@ set(SORR_IOS_BUNDLE_IDENTIFIER "dev.local.sorr.iosshell" CACHE STRING "Bundle id
 set(SORR_IOS_SDL2_ROOT "" CACHE PATH "Path to an SDL2 iOS install prefix containing include/SDL2 and lib")
 set(SORR_IOS_SDL2_FRAMEWORK "" CACHE PATH "Path to SDL2.framework for iOS")
 option(SORR_IOS_SHELL_USE_SDL_MAIN_HANDLED "Define SDL_MAIN_HANDLED for the iOS shell app" OFF)
+option(SORR_IOS_D3_FIRST_RENDER "Build the D3 runtime-linked first-render probe" OFF)
 
 find_package(ZLIB REQUIRED)
 
@@ -15,11 +16,98 @@ if(NOT CMAKE_SYSTEM_NAME STREQUAL "iOS")
   message(WARNING "This build area is intended for an iOS toolchain. Configure with an iOS CMake toolchain or Xcode generator on macOS.")
 endif()
 
+if(SORR_IOS_D3_FIRST_RENDER)
+  add_subdirectory("${SORR_ROOT}/3rdparty/tre" "${CMAKE_BINARY_DIR}/tre-ios")
+
+  set(SORR_IOS_RUNTIME_SOURCE_FILES
+    ${SORR_ROOT}/core/bgdrtm/src/copy.c
+    ${SORR_ROOT}/core/bgdrtm/src/dcbr.c
+    ${SORR_ROOT}/core/bgdrtm/src/dirs.c
+    ${SORR_ROOT}/core/bgdrtm/src/instance.c
+    ${SORR_ROOT}/core/bgdrtm/src/interpreter.c
+    ${SORR_ROOT}/core/bgdrtm/src/misc.c
+    ${SORR_ROOT}/core/bgdrtm/src/strings.c
+    ${SORR_ROOT}/core/bgdrtm/src/sysprocs.c
+    ${SORR_ROOT}/core/bgdrtm/src/varspace_file.c
+    ${SORR_ROOT}/core/bgdrtm/src/fmath.c
+    ${SORR_ROOT}/core/common/debug.c
+    ${SORR_ROOT}/core/common/files.c
+    ${SORR_ROOT}/core/common/xctype.c
+    ${SORR_ROOT}/modules/libbgload/bgload.c
+    ${SORR_ROOT}/modules/mod_say/mod_say.c
+    ${SORR_ROOT}/modules/mod_string/mod_string.c
+    ${SORR_ROOT}/modules/mod_math/mod_math.c
+    ${SORR_ROOT}/modules/mod_mem/mod_mem.c
+    ${SORR_ROOT}/modules/mod_time/mod_time.c
+    ${SORR_ROOT}/modules/mod_file/mod_file.c
+    ${CMAKE_CURRENT_LIST_DIR}/src/sorr_ios_mod_sound_stub.c
+    ${SORR_ROOT}/modules/libsdlhandler/libsdlhandler.c
+    ${SORR_ROOT}/modules/libjoy/libjoy.c
+    ${SORR_ROOT}/modules/mod_joy/mod_joy.c
+    ${SORR_ROOT}/modules/libkey/libkey.c
+    ${SORR_ROOT}/modules/mod_key/mod_key.c
+    ${SORR_ROOT}/modules/mod_proc/mod_proc.c
+    ${SORR_ROOT}/modules/mod_sort/mod_sort.c
+    ${SORR_ROOT}/modules/mod_timers/mod_timers.c
+    ${SORR_ROOT}/modules/libgrbase/g_bitmap.c
+    ${SORR_ROOT}/modules/libgrbase/g_clear.c
+    ${SORR_ROOT}/modules/libgrbase/g_grlib.c
+    ${SORR_ROOT}/modules/libgrbase/g_pal.c
+    ${SORR_ROOT}/modules/libgrbase/g_blendop.c
+    ${SORR_ROOT}/modules/libgrbase/g_conversion.c
+    ${SORR_ROOT}/modules/libgrbase/libgrbase.c
+    ${SORR_ROOT}/modules/libblit/g_blit.c
+    ${SORR_ROOT}/modules/libblit/g_pixel.c
+    ${SORR_ROOT}/modules/libblit/libblit.c
+    ${SORR_ROOT}/modules/libvideo/g_regions.c
+    ${SORR_ROOT}/modules/libvideo/g_video.c
+    ${SORR_ROOT}/modules/librender/g_fade.c
+    ${SORR_ROOT}/modules/librender/g_frame.c
+    ${SORR_ROOT}/modules/librender/g_instance.c
+    ${SORR_ROOT}/modules/librender/g_object.c
+    ${SORR_ROOT}/modules/librender/g_rects.c
+    ${SORR_ROOT}/modules/librender/g_screen.c
+    ${SORR_ROOT}/modules/librender/librender.c
+    ${SORR_ROOT}/modules/mod_video/mod_video.c
+    ${SORR_ROOT}/modules/libmouse/libmouse.c
+    ${SORR_ROOT}/modules/mod_multi/mod_multi.c
+    ${SORR_ROOT}/modules/mod_map/file_fnt.c
+    ${SORR_ROOT}/modules/mod_map/file_fpg.c
+    ${SORR_ROOT}/modules/mod_map/file_map.c
+    ${SORR_ROOT}/modules/mod_map/file_pal.c
+    ${SORR_ROOT}/modules/mod_map/file_pcx.c
+    ${CMAKE_CURRENT_LIST_DIR}/src/sorr_ios_file_png_stub.c
+    ${SORR_ROOT}/modules/mod_map/mod_map.c
+    ${SORR_ROOT}/modules/libfont/libfont.c
+    ${SORR_ROOT}/modules/mod_dir/mod_dir.c
+    ${SORR_ROOT}/modules/libtext/libtext.c
+    ${SORR_ROOT}/modules/mod_text/mod_text.c
+    ${SORR_ROOT}/modules/mod_rand/mod_rand.c
+    ${SORR_ROOT}/modules/mod_grproc/mod_grproc.c
+    ${SORR_ROOT}/modules/libscroll/libscroll.c
+    ${SORR_ROOT}/modules/mod_scroll/mod_scroll.c
+    ${SORR_ROOT}/modules/libdraw/libdraw.c
+    ${SORR_ROOT}/modules/mod_draw/mod_draw.c
+    ${SORR_ROOT}/modules/mod_regex/mod_regex.c
+    ${SORR_ROOT}/modules/mod_screen/mod_screen.c
+    ${SORR_ROOT}/modules/mod_path/mod_path.c
+    ${SORR_ROOT}/modules/mod_effects/mod_effects.c
+    ${SORR_ROOT}/modules/mod_blendop/mod_blendop.c
+    ${SORR_ROOT}/modules/mod_m7/mod_m7.c
+    ${SORR_ROOT}/modules/libwm/libwm.c
+    ${SORR_ROOT}/modules/mod_wm/mod_wm.c
+    ${SORR_ROOT}/modules/mod_sys/mod_sys.c
+    ${SORR_ROOT}/modules/mod_flic/mod_flic.c)
+else()
+  set(SORR_IOS_RUNTIME_SOURCE_FILES
+    ${SORR_ROOT}/core/bgdrtm/src/fmath.c
+    ${SORR_ROOT}/core/bgdrtm/src/misc.c
+    ${SORR_ROOT}/core/bgdrtm/src/strings.c)
+endif()
+
 add_executable(SorrIOSShell MACOSX_BUNDLE
   src/sorr_ios_shell_main.c
-  ${SORR_ROOT}/core/bgdrtm/src/fmath.c
-  ${SORR_ROOT}/core/bgdrtm/src/misc.c
-  ${SORR_ROOT}/core/bgdrtm/src/strings.c)
+  ${SORR_IOS_RUNTIME_SOURCE_FILES})
 
 set_target_properties(SorrIOSShell PROPERTIES
   MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_LIST_DIR}/Info.plist.in"
@@ -35,13 +123,86 @@ target_compile_definitions(SorrIOSShell PRIVATE
   TARGET_IOS
   SORR_IOS_APP_SHELL)
 
+if(SORR_IOS_D3_FIRST_RENDER)
+  target_compile_definitions(SorrIOSShell PRIVATE
+    __MONOLITHIC__
+    NO_MODCHIPMUNK
+    NO_MODICONV
+    NO_MODFMODEX
+    NO_MODCURL
+    NO_MODMATHI
+    NO_MODSENSOR
+    NO_FSOCK
+    NO_MODIAP
+    NO_MODIMAGE
+    PORTABLE_RUNTIME_DIAG
+    PORTABLE_RUNTIME_PUMP_EVENTS_DEFAULT
+    SORR_HOST_POINTER_TABLES
+    SORR_IOS_D3_FIRST_RENDER
+    VERSION="1.0.0")
+endif()
+
 target_include_directories(SorrIOSShell PRIVATE
   ${SORR_ROOT}/core/bgdrtm/include
   ${SORR_ROOT}/core/include
   ${ZLIB_INCLUDE_DIRS})
 
+if(SORR_IOS_D3_FIRST_RENDER)
+  target_include_directories(SorrIOSShell PRIVATE
+    ${SORR_ROOT}/modules/libbgload
+    ${SORR_ROOT}/modules/mod_say
+    ${SORR_ROOT}/modules/mod_string
+    ${SORR_ROOT}/modules/mod_math
+    ${SORR_ROOT}/modules/mod_mem
+    ${SORR_ROOT}/modules/mod_time
+    ${SORR_ROOT}/modules/mod_file
+    ${SORR_ROOT}/modules/mod_sound
+    ${SORR_ROOT}/modules/libsdlhandler
+    ${SORR_ROOT}/modules/mod_joy
+    ${SORR_ROOT}/modules/libjoy
+    ${SORR_ROOT}/modules/libkey
+    ${SORR_ROOT}/modules/mod_key
+    ${SORR_ROOT}/modules/mod_proc
+    ${SORR_ROOT}/modules/mod_sort
+    ${SORR_ROOT}/modules/mod_timers
+    ${SORR_ROOT}/modules/libgrbase
+    ${SORR_ROOT}/modules/libblit
+    ${SORR_ROOT}/modules/libvideo
+    ${SORR_ROOT}/modules/librender
+    ${SORR_ROOT}/modules/mod_video
+    ${SORR_ROOT}/modules/libmouse
+    ${SORR_ROOT}/modules/mod_mouse
+    ${SORR_ROOT}/modules/mod_map
+    ${SORR_ROOT}/modules/libfont
+    ${SORR_ROOT}/modules/mod_dir
+    ${SORR_ROOT}/modules/libtext
+    ${SORR_ROOT}/modules/mod_text
+    ${SORR_ROOT}/modules/mod_rand
+    ${SORR_ROOT}/modules/mod_grproc
+    ${SORR_ROOT}/modules/libscroll
+    ${SORR_ROOT}/modules/mod_scroll
+    ${SORR_ROOT}/modules/mod_draw
+    ${SORR_ROOT}/modules/mod_screen
+    ${SORR_ROOT}/modules/mod_path
+    ${SORR_ROOT}/modules/mod_effects
+    ${SORR_ROOT}/modules/mod_blendop
+    ${SORR_ROOT}/modules/mod_m7
+    ${SORR_ROOT}/modules/libwm
+    ${SORR_ROOT}/modules/mod_wm
+    ${SORR_ROOT}/modules/mod_sys
+    ${SORR_ROOT}/modules/mod_flic
+    ${SORR_ROOT}/modules/mod_regex
+    ${SORR_ROOT}/modules/mod_multi
+    ${SORR_ROOT}/3rdparty/tre/lib
+    ${CMAKE_CURRENT_LIST_DIR}/../portable
+    ${CMAKE_CURRENT_LIST_DIR}/src)
+endif()
+
 if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
   target_compile_options(SorrIOSShell PRIVATE -ffunction-sections -fdata-sections)
+  if(SORR_IOS_D3_FIRST_RENDER)
+    target_compile_options(SorrIOSShell PRIVATE -include "${SORR_ROOT}/core/include/xstrings.h")
+  endif()
 endif()
 
 if(APPLE)
@@ -131,7 +292,10 @@ endif()
 
 target_link_libraries(SorrIOSShell PRIVATE ZLIB::ZLIB)
 
-# Milestone 1 intentionally links only the tiny bgdrtm entry subset and does
-# not load SorR.dat.
-# Use cmake/portable/CMakeLists.txt as the source-list reference for the later
-# runtime target once the pointer-through-int ABI plan is implemented.
+if(SORR_IOS_D3_FIRST_RENDER)
+  target_link_libraries(SorrIOSShell PRIVATE libtre)
+endif()
+
+# The default target remains the shell/data-layout proof. D3 explicitly opts
+# into the portable runtime source list and uses local iOS stubs for audio and
+# PNG so first render can be attempted without bundling codecs or game assets.

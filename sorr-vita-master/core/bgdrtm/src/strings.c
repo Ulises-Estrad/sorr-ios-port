@@ -52,7 +52,7 @@
 #include "portable_diag.h"
 #endif
 
-#if defined(PORTABLE_RUNTIME_DIAG) && defined(_WIN64)
+#if defined(PORTABLE_RUNTIME_DIAG) && (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif
@@ -458,7 +458,7 @@ static int string_getid()
 
 int string_new( const char * ptr )
 {
-#if defined(PORTABLE_RUNTIME_DIAG) && defined(_WIN64)
+#if defined(PORTABLE_RUNTIME_DIAG) && (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
     PORTABLE_DIAG_LOG( "SCRIPT", "string_new ptr=%p readable=%d", ( const void * )ptr, portable_x64_string_ptr_looks_readable( ptr ) );
 #endif
     char * str = strdup( ptr ) ;

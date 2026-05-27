@@ -44,7 +44,7 @@
 
 #include "sysprocs_st.h"
 
-#if defined(_WIN64)
+#if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
 extern PALETTE * modmap_x64_palette_from_handle( int handle, const char * op );
 #define LIBRENDER_X64_PALETTE_FROM_HANDLE(handle,op) modmap_x64_palette_from_handle( handle, op )
 #else
@@ -215,7 +215,7 @@ void draw_instance( INSTANCE * i, REGION * clip )
     int x, y, r ;
     /* Difference with draw_instance_at to here */
 
-#if defined(_WIN64)
+#if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
     map = instance_graph( i ) ;
 #else
 //    map = instance_graph( i ) ;
@@ -299,7 +299,7 @@ int draw_instance_info( INSTANCE * i, REGION * region, int * z, int * drawme )
     * drawme = 0;
 
     graph = instance_graph( i );
-#if defined(_WIN64)
+#if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
     LOCDWORD( librender, i, GRAPHPTR ) = graph ? 1 : 0;
 #else
     LOCDWORD( librender, i, GRAPHPTR ) = ( int ) graph;
