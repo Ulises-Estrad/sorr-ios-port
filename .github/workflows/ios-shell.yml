@@ -226,6 +226,8 @@ jobs:
 
             xcrun simctl boot "$DEVICE_UDID" || true
             xcrun simctl bootstatus "$DEVICE_UDID" -b
+            open -a Simulator --args -CurrentDeviceUDID "$DEVICE_UDID" || true
+            sleep 5
 
             echo "Removing any stale app registration before install..."
             xcrun simctl uninstall "$DEVICE_UDID" "$BUNDLE_ID" || true
@@ -266,8 +268,6 @@ jobs:
               set +e
               xcrun simctl launch \
                 --terminate-running-process \
-                --stdout="$STDOUT_LOG" \
-                --stderr="$STDERR_LOG" \
                 "$DEVICE_UDID" \
                 "$BUNDLE_ID" > "$LAUNCH_CMD_LOG" 2>&1 &
               SIMCTL_LAUNCH_PID="$!"
@@ -350,6 +350,19 @@ jobs:
             cat "$COMBINED_LOG"
 
             if [[ "$LAUNCH_EXIT" -ne 0 ]]; then
+              {
+                echo "simctl launch failed with exit code $LAUNCH_EXIT"
+                echo
+                echo "Last simctl launch lines:"
+                tail -n 80 "$LAUNCH_LOG" || true
+                echo
+                echo "Last host CoreSimulator lines mentioning the bundle:"
+                grep -E "$BUNDLE_ID|SorrIOSShell|SBMainWorkspace|FBSOpenApplication|Launch failed|RequestDenied" "$HOST_LOG_SHOW" | tail -n 80 || true
+                echo
+                echo "Last in-simulator system lines mentioning the bundle:"
+                grep -E "$BUNDLE_ID|SorrIOSShell|SBMainWorkspace|FBSOpenApplication|Launch failed|RequestDenied" "$SYSTEM_LOG_SHOW" | tail -n 80 || true
+              } > "$ARTIFACT_DIR/logs/simulator/launch-failure-summary.log"
+              echo "::error title=simctl launch failed::$(tr '\n' ' ' < "$ARTIFACT_DIR/logs/simulator/launch-failure-summary.log" | cut -c 1-900)"
               echo "::error::simctl launch failed with exit code $LAUNCH_EXIT"
               exit "$LAUNCH_EXIT"
             fi

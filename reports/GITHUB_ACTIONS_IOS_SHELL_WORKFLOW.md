@@ -737,6 +737,29 @@ Expected next run result:
 - A successful foreground app launch should no longer hang the workflow; the required shell markers should decide pass/fail.
 - A stuck pre-entry launch should fail quickly with uploaded logs rather than waiting for the full job timeout.
 
+### Seventh follow-up: bounded launch still returns exit code 1
+
+Observed public annotation:
+
+```text
+Launch iOS shell in simulator
+simctl launch failed with exit code 1
+```
+
+The build and install steps still completed before the launch failure.
+
+Fix applied:
+
+- Remove `simctl launch --stdout` and `--stderr` redirection from the launch command to avoid any attachment or file-redirection edge case in SpringBoard launch.
+- Keep app log capture through simulator `log stream` and `log show`.
+- Open `Simulator.app` for the selected UDID after `bootstatus` to make the booted simulator foreground/active before install and launch.
+- Emit a compact `::error` annotation with the tail of the launch log and filtered host/system launch logs, so future failures expose the reason without needing artifact download credentials.
+
+Expected next run result:
+
+- If stdout/stderr attachment or a purely headless SpringBoard state caused the denial, the shell should start and emit the required markers.
+- If launch is still denied, the public Actions annotations should include the specific SpringBoard/RunningBoard reason for the next patch.
+
 ## Next Step After A Successful Shell Build
 
 After the workflow produces `SorrIOSShell.app` for simulator:

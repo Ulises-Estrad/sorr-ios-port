@@ -326,6 +326,19 @@ Seventh fix:
 - Add `simulator/simctl-launch-command.log` to preserve the raw command output from the bounded launch attempt.
 - Add workflow concurrency so a newer repair-loop push cancels any older in-progress iOS shell run on the same branch.
 
+Seventh follow-up:
+
+- The launch step no longer ran indefinitely.
+- Public GitHub annotations still reported `simctl launch failed with exit code 1`.
+- Full artifact logs remain authentication-gated from this local machine.
+
+Eighth fix:
+
+- Remove `--stdout` and `--stderr` from `simctl launch`; keep log capture through simulator unified logging.
+- Open `Simulator.app` for the selected simulator after `bootstatus` to avoid a purely headless SpringBoard launch attempt.
+- Add `simulator/launch-failure-summary.log`.
+- Emit a compact GitHub `::error` annotation containing launch-log and filtered SpringBoard/RunningBoard/CoreSimulator failure tails for future no-auth inspection.
+
 ## Expected First Success Log
 
 When run from a real macOS/Xcode+iOS simulator environment, the target should still be validated against:
