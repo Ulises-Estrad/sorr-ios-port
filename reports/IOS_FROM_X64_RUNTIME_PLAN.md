@@ -98,9 +98,17 @@ Important: this should be a focused portability lift of the proven x64 fixes, no
 
 Desktop proof assumes a writable working directory. iOS does not have that.
 
-Phase 1 scaffold status: in progress, no game data.
+Phase 1 scaffold status: complete on GitHub Actions, no game data.
 
-The current shell-only scaffold resolves and logs:
+Proof run:
+
+```text
+Commit: 2d3e5a6
+Run: https://github.com/Ulises-Estrad/sorr-ios-port/actions/runs/26537165603
+Status: Success
+```
+
+The shell-only scaffold resolves and logs:
 
 - app bundle resource root,
 - `Library/Application Support/SORR`,
@@ -193,15 +201,15 @@ This is the first milestone that should exercise the game data on iOS.
 
 ## Immediate Next Action
 
-Prove the iOS data-layout scaffold on GitHub Actions while still not bundling or loading game data.
+Stop after the iOS data-layout scaffold proof. The next phase should be a controlled local/private data bundle/render proof.
 
 Recommended order:
 
-1. Build and launch the current iOS shell with the data-layout scaffold.
-2. Confirm bundle root, support root, `savegame`, `xbox`, `logs`, and write/read markers in CI.
-3. Stop after the scaffold proof passes.
-4. Next phase: controlled local/private data bundle/render proof.
-5. Later: lift x64-safe runtime guards from `_WIN64` to a portable 64-bit macro before full game execution on iOS.
+1. Decide how to provide prepared game data without committing it.
+2. Add a private/local data bundle input or workflow artifact strategy.
+3. Add a path shim so read-only bundle assets and writable support-root files can coexist.
+4. Lift x64-safe runtime guards from `_WIN64` to a portable 64-bit macro before full game execution on iOS.
+5. Attempt first private title/city render proof.
 
 ## Out Of Scope For This Plan
 

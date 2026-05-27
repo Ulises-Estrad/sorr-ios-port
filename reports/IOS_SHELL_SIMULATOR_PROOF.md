@@ -15,7 +15,7 @@ Guardrails honored:
 
 ## Result
 
-Status: CI build proof and simulator launch proof successful; data-layout scaffold proof added and pending CI run.
+Status: CI build proof, simulator launch proof, and data-layout scaffold proof successful.
 
 GitHub Actions result:
 
@@ -26,6 +26,13 @@ Status: Success
 Total duration: 10m 39s
 Job: Build iOS shell for simulator arm64, 10m 35s
 Artifact: ios-shell-simulator-arm64, 2.43 MB
+
+Add iOS data layout scaffold proof
+Commit: 2d3e5a6
+Run: https://github.com/Ulises-Estrad/sorr-ios-port/actions/runs/26537165603
+Status: Success
+Job: Build iOS shell for simulator arm64
+Artifact: ios-shell-simulator-arm64, 2.34 MB
 ```
 
 The successful macOS CI run completed:
@@ -67,7 +74,7 @@ The successful launch proof validates:
 
 No `SorR.dat` or game data was bundled or loaded.
 
-Current Phase 1 change under test:
+Phase 1 data-layout scaffold proof validated:
 
 - resolve the app bundle resource root,
 - resolve `Library/Application Support/SORR`,
@@ -212,12 +219,12 @@ The GitHub Actions workflow now adds `Launch iOS shell in simulator` after the b
 - [x] app entry reached: proven by GitHub Actions
 - [x] `SDL_Init` begin/end: proven by GitHub Actions
 - [x] SDL video init: proven by GitHub Actions
-- [ ] bundle root path logged: workflow check added, pending run
-- [ ] support root path logged: workflow check added, pending run
-- [ ] writable `savegame` directory created: workflow check added, pending run
-- [ ] writable `xbox` directory created: workflow check added, pending run
-- [ ] writable `logs` directory created: workflow check added, pending run
-- [ ] writable test file write/read: workflow check added, pending run
+- [x] bundle root path logged: proven by GitHub Actions
+- [x] support root path logged: proven by GitHub Actions
+- [x] writable `savegame` directory created: proven by GitHub Actions
+- [x] writable `xbox` directory created: proven by GitHub Actions
+- [x] writable `logs` directory created: proven by GitHub Actions
+- [x] writable test file write/read: proven by GitHub Actions
 - [x] `SDL_CreateWindow` success: proven by GitHub Actions
 - [x] `SDL_CreateRenderer` success: proven by GitHub Actions
 - [x] `bgdrtm_entry` reached: proven by GitHub Actions
@@ -372,6 +379,19 @@ Eighth follow-up result:
   - `SorR.dat` was intentionally not loaded,
   - the responsive idle loop was entered.
 
+Ninth follow-up result:
+
+- The data-layout scaffold workflow completed successfully on commit `2d3e5a6`.
+- The run URL was `https://github.com/Ulises-Estrad/sorr-ios-port/actions/runs/26537165603`.
+- The job status was `Success`.
+- The run produced the `ios-shell-simulator-arm64` artifact.
+- Since the workflow fails if any data-layout marker is missing, the successful run proves:
+  - bundle root path was resolved and logged,
+  - `Library/Application Support/SORR` was resolved and logged,
+  - writable `savegame`, `xbox`, and `logs` directories were created,
+  - a tiny proof file was written under `logs` and read back,
+  - `SorR.dat` was intentionally not loaded.
+
 ## Expected First Success Log
 
 When run from a real macOS/Xcode+iOS simulator environment, the target should still be validated against:
@@ -390,12 +410,10 @@ SORR iOS shell: entering responsive idle loop
 
 ## Next Required Action
 
-The shell-only simulator proof is complete. The next phase can start from this proven baseline:
+The shell-only simulator and data-layout scaffold proofs are complete. The next phase can start from this proven baseline:
 
 ```text
-iOS shell builds, installs, launches, creates SDL window/renderer, reaches the runtime handoff probe, and idles in the simulator.
+iOS shell builds, installs, launches, creates the writable Application Support scaffold, writes/reads a proof file, creates SDL window/renderer, reaches the runtime handoff probe, and idles in the simulator.
 ```
 
 Still do not bundle or load game data until the next phase explicitly asks for it.
-
-Phase 1 data-layout scaffold run is now queued for CI proof. It remains shell-only and asset-free.

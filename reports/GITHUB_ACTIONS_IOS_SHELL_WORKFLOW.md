@@ -26,6 +26,12 @@ Status: Success
 Total duration: 10m 39s
 Job: Build iOS shell for simulator arm64, 10m 35s
 Artifact: ios-shell-simulator-arm64, 2.43 MB
+
+Add iOS data layout scaffold proof
+Commit: 2d3e5a6
+Run: https://github.com/Ulises-Estrad/sorr-ios-port/actions/runs/26537165603
+Status: Success
+Artifact: ios-shell-simulator-arm64, 2.34 MB
 ```
 
 The successful run completed:
@@ -60,6 +66,10 @@ The successful run proves the shell:
 - reaches app entry,
 - initializes SDL,
 - initializes SDL video/events/timer,
+- resolves the app bundle resource root,
+- resolves `Library/Application Support/SORR`,
+- creates writable `savegame`, `xbox`, and `logs` directories,
+- writes and reads a tiny proof file under `logs`,
 - creates an SDL window and renderer,
 - reaches and returns from the Bennu runtime handoff probe,
 - explicitly does not load `SorR.dat`,
@@ -834,14 +844,23 @@ Expected next run result:
 - The new data-layout markers should pass before the SDL window/renderer and runtime handoff markers.
 - `SorR.dat` must still be intentionally not loaded.
 
+Follow-up result:
+
+- The workflow completed successfully on commit `2d3e5a6`.
+- The run URL was `https://github.com/Ulises-Estrad/sorr-ios-port/actions/runs/26537165603`.
+- The `ios-shell-simulator-arm64` artifact uploaded successfully.
+- The marker checks prove the writable Application Support scaffold and write/read proof passed.
+- No game data was bundled or loaded.
+
 ## Next Step After A Successful Shell Build
 
 After the workflow produces and launches `SorrIOSShell.app` for simulator:
 
-1. Generalize the x64-safe runtime fixes from `_WIN64` to a portable 64-bit guard.
-2. Build the iOS shell with the x64-safe runtime path still not loading `SorR.dat`.
-3. Add the iOS data layout shim.
-4. Add the touch keyboard bridge.
-5. Only then bundle prepared data and attempt title/city render.
+1. Prepare a controlled local/private data bundle or CI artifact input that does not commit `SorR.dat`.
+2. Add a read-only bundle root plus writable support-root path shim for game-relative file opens.
+3. Generalize the x64-safe runtime fixes from `_WIN64` to a portable 64-bit guard.
+4. Build the iOS shell with the x64-safe runtime path.
+5. Add the touch keyboard bridge.
+6. Only then attempt a private title/city render proof.
 
 Do not bundle or load game data until a later phase explicitly asks for it.
