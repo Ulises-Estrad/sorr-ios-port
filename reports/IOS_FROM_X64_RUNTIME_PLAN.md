@@ -203,7 +203,7 @@ This is the first milestone that should exercise the game data on iOS.
 
 D1 now adds a shell-only physical-device artifact before any private data bundle/render proof.
 
-D1 status: GitHub Actions artifact proof complete.
+D1 status: GitHub Actions ad-hoc-signed device IPA artifact proof complete, physical Sideloadly retest pending.
 
 ```text
 Commit: 3909ccc
@@ -219,17 +219,27 @@ Sideloadly v0.60
 Install failed: Guru Meditation f65043@1006:23a71c Invalid file
 ```
 
-Current D1 fix under test:
+Current D1 fix result:
 
 - keep the shell-only `iphoneos` artifact,
 - ad-hoc sign the `.app` in CI before IPA packaging,
 - produce `SorrIOSShell-device-adhoc.ipa`,
 - add deeper IPA validation for `Info.plist`, executable path, `arm64`, and code signature.
 
+Ad-hoc-signed follow-up result:
+
+```text
+Commit: 236455a
+Run: https://github.com/Ulises-Estrad/sorr-ios-port/actions/runs/26540409093
+Artifact: ios-shell-device-unsigned-arm64
+IPA inside artifact: build-products/SorrIOSShell-device-adhoc.ipa
+Result: success
+```
+
 Goal:
 
 - build `SorrIOSShell.app` for `iphoneos` `arm64`,
-- package it as `Payload/SorrIOSShell.app` inside `SorrIOSShell-device-unsigned.ipa`,
+- package it as `Payload/SorrIOSShell.app` inside `SorrIOSShell-device-adhoc.ipa`,
 - upload the IPA artifact for Windows download,
 - let Sideloadly handle local signing/install on the user's iPhone,
 - keep the IPA free of `SorR.dat`, `data/`, and game assets.

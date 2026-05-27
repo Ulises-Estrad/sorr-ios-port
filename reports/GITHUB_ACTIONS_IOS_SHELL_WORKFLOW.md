@@ -81,17 +81,18 @@ The workflow now also has a device artifact job:
 Build iOS shell unsigned IPA for device arm64
 ```
 
-That job builds an `iphoneos` `arm64` shell app, packages `Payload/SorrIOSShell.app`, uploads `SorrIOSShell-device-unsigned.ipa`, and verifies the IPA contains no game data.
+That job builds an `iphoneos` `arm64` shell app, packages `Payload/SorrIOSShell.app`, uploads a shell-only IPA, and verifies the IPA contains no game data.
 
 Latest D1 result:
 
 ```text
-Commit: 3909ccc
-Run: https://github.com/Ulises-Estrad/sorr-ios-port/actions/runs/26537919700
+Commit: 236455a
+Run: https://github.com/Ulises-Estrad/sorr-ios-port/actions/runs/26540409093
 Device job: Build iOS shell unsigned IPA for device arm64
 Device job result: success
 Artifact: ios-shell-device-unsigned-arm64
-Artifact size: 445153 bytes
+Artifact size: 456283 bytes
+IPA inside artifact: build-products/SorrIOSShell-device-adhoc.ipa
 ```
 
 ## Workflow Summary
@@ -894,13 +895,13 @@ Build target:
 iphoneos arm64
 ```
 
-Signing mode:
+Build signing mode:
 
 ```text
 CODE_SIGNING_ALLOWED=NO
 ```
 
-This produces an unsigned or unsigned-like `.app` intended for Sideloadly to sign locally on Windows.
+The workflow then applies a CI ad-hoc signature to the `iphoneos` `.app` before IPA packaging. Sideloadly should still re-sign the IPA locally on Windows, but the app bundle inside the IPA is no longer completely unsigned.
 
 Artifact name:
 
@@ -911,7 +912,7 @@ ios-shell-device-unsigned-arm64
 Expected IPA:
 
 ```text
-build-products/SorrIOSShell-device-unsigned.ipa
+build-products/SorrIOSShell-device-adhoc.ipa
 ```
 
 Expected IPA layout:
@@ -944,7 +945,7 @@ Install failed: Guru Meditation f65043@1006:23a71c Invalid file
 IPA: SorrIOSShell-device-unsigned.ipa
 ```
 
-Current D1 packaging fix under test:
+Current D1 packaging fix result:
 
 - ad-hoc sign the `iphoneos` `.app` with `codesign --sign -` before IPA packaging,
 - rename the IPA to `SorrIOSShell-device-adhoc.ipa`,
@@ -954,3 +955,16 @@ Current D1 packaging fix under test:
 - validate the Mach-O contains `arm64`,
 - verify the ad-hoc code signature,
 - keep the forbidden asset checks.
+
+Follow-up result:
+
+```text
+Commit: 236455a
+Run: https://github.com/Ulises-Estrad/sorr-ios-port/actions/runs/26540409093
+Result: Success
+Artifact: ios-shell-device-unsigned-arm64
+Artifact size: 456283 bytes
+IPA inside artifact: build-products/SorrIOSShell-device-adhoc.ipa
+```
+
+This completes the GitHub-side D1 artifact repair. The remaining D1 work is to download the new artifact on Windows and retry Sideloadly with `SorrIOSShell-device-adhoc.ipa`.

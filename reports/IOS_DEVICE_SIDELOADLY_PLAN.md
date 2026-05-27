@@ -10,7 +10,7 @@ The IPA is intended for Windows download and Sideloadly signing/install.
 
 ## Result
 
-Status: D1 GitHub Actions device IPA artifact proof complete, first physical Sideloadly install attempt failed on IPA validity.
+Status: D1 GitHub Actions ad-hoc-signed device IPA artifact proof complete, physical Sideloadly retest pending.
 
 Proof run:
 
@@ -40,12 +40,26 @@ Interpretation:
 - Sideloadly rejected the IPA before app launch.
 - The first likely issue is a completely unsigned `iphoneos` app bundle inside the IPA.
 
-Current fix under test:
+Fix applied:
 
 - Ad-hoc sign `SorrIOSShell.app` in CI before packaging.
 - Rename the output to `SorrIOSShell-device-adhoc.ipa`.
 - Inspect the IPA after packaging by unzipping it into a fresh directory.
 - Verify `Info.plist`, `CFBundleExecutable`, `CFBundlePackageType`, `CFBundleIdentifier`, `MinimumOSVersion`, `UIDeviceFamily`, `arm64` Mach-O, and code signature.
+
+Ad-hoc-signed proof run:
+
+```text
+Commit: 236455a
+Run: https://github.com/Ulises-Estrad/sorr-ios-port/actions/runs/26540409093
+Device job: Build iOS shell unsigned IPA for device arm64
+Device job result: success
+Artifact: ios-shell-device-unsigned-arm64
+Artifact size: 456283 bytes
+IPA inside artifact: build-products/SorrIOSShell-device-adhoc.ipa
+```
+
+The same workflow run also kept the simulator shell/data-layout proof green. The GitHub-side D1 artifact has been rebuilt with an ad-hoc app signature; the remaining D1 check is the manual Sideloadly install/open test on the physical iPhone.
 
 ## Guardrails
 
@@ -148,7 +162,7 @@ Expected app behavior:
 - [x] IPA artifact uploads successfully.
 - [x] IPA inspection confirms no game data/assets.
 - [x] User downloads the first IPA on Windows for Sideloadly signing/install.
-- [ ] GitHub Actions packages an ad-hoc-signed `SorrIOSShell-device-adhoc.ipa`.
+- [x] GitHub Actions packages an ad-hoc-signed `SorrIOSShell-device-adhoc.ipa`.
 - [ ] User downloads the ad-hoc-signed IPA on Windows for Sideloadly signing/install.
 - [ ] User confirms the installed app opens on the physical iPhone and reaches the shell idle loop.
 
