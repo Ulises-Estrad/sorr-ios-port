@@ -15,6 +15,26 @@ The workflow proves:
 - the isolated `SorrIOSShell` CMake target can configure,
 - the shell app can build as a simulator `.app`.
 
+Current CI status:
+
+```text
+Build iOS shell for simulator arm64: succeeded in 4m 22s
+```
+
+The successful run completed:
+
+- setup,
+- checkout,
+- game asset guard,
+- tool version print,
+- SDL2 fetch,
+- SDL2 configure for iOS simulator,
+- SDL2 build/install,
+- iOS shell configure,
+- iOS shell build,
+- app artifact packaging,
+- log/artifact upload.
+
 It intentionally does not:
 
 - upload game assets,

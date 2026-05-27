@@ -15,7 +15,45 @@ Guardrails honored:
 
 ## Result
 
-Status: blocked before iOS configure/build.
+Status: CI build proof successful; simulator launch proof still pending.
+
+GitHub Actions result:
+
+```text
+Build iOS shell for simulator arm64: succeeded in 4m 22s
+```
+
+The successful macOS CI run completed:
+
+- setup,
+- checkout,
+- game asset guard,
+- tool version print,
+- SDL2 fetch,
+- SDL2 configure for iOS simulator,
+- SDL2 build/install,
+- iOS shell configure,
+- iOS shell build,
+- app artifact packaging,
+- log/artifact upload.
+
+This proves:
+
+- GitHub Actions macOS/Xcode runner works,
+- iPhoneSimulator SDK is available,
+- SDL2 2.30.12 can be built and installed for `iphonesimulator` `arm64`,
+- `SorrIOSShell` configures against the SDL2 iOS install,
+- static SDL2's required Apple framework closure is linked,
+- simulator `.app` build and artifact upload succeed.
+
+Still not proven:
+
+- installing/running the `.app` in an actual simulator,
+- runtime log capture from app launch,
+- SDL window/renderer creation at runtime,
+- responsive idle loop on simulator.
+
+## Earlier Local Blocker
 
 The active tool session is still a Windows/PowerShell environment, not macOS/Xcode. Xcode, `xcodebuild`, `xcrun`, CMake on PATH, and the iOS simulator SDK are not available from this session. No iOS app was configured, built, installed, or launched.
 
@@ -113,30 +151,33 @@ The temporary failed configure directory was removed after the attempt. Logs wer
 
 ## Build For iOS Simulator
 
-Not run.
+Successful in GitHub Actions.
 
-Blocked by:
+The local Windows session still cannot run the simulator build directly, but CI built the iOS simulator shell app on macOS.
 
-- no macOS/Xcode session exposed to tools,
-- no `xcodebuild`,
-- no `xcrun`,
-- no iOS simulator SDK,
-- no SDL2 iOS dependency.
+Expected artifact:
+
+```text
+ios-shell-simulator-arm64
+build-products/SorrIOSShell-iphonesimulator-arm64.zip
+```
 
 ## Simulator Launch
 
 Not run.
 
-Blocked by the same environment/toolchain issues above.
+The workflow currently stops at build/package/upload. A follow-up CI/manual Mac step is needed to install and launch the `.app` in a simulator and capture runtime logs.
 
 ## Runtime Log Checklist
 
-- [ ] app entry reached: not proven
-- [ ] `SDL_Init` begin/end: not proven
-- [ ] SDL video init: not proven
-- [ ] `SDL_CreateWindow` success: not proven
-- [ ] `SDL_CreateRenderer` success: not proven
-- [ ] `bgdrtm_entry` reached: not proven
+- [x] iOS simulator `.app` built: proven by GitHub Actions
+- [x] artifact packaging/upload: proven by GitHub Actions
+- [ ] app entry reached: not proven at runtime
+- [ ] `SDL_Init` begin/end: not proven at runtime
+- [ ] SDL video init: not proven at runtime
+- [ ] `SDL_CreateWindow` success: not proven at runtime
+- [ ] `SDL_CreateRenderer` success: not proven at runtime
+- [ ] `bgdrtm_entry` reached: not proven at runtime
 - [ ] idle loop running: not proven
 - [ ] clean quit: not proven
 
@@ -156,29 +197,8 @@ SORR iOS shell: entering responsive idle loop
 
 ## Next Required Action
 
-Run the steps in `reports/MACOS_XCODE_IOS_BUILD_STEPS.md` from a tool session that actually exposes macOS/Xcode, or manually from Terminal on the Mac:
-
-```bash
-xcodebuild -version
-xcrun --sdk iphonesimulator --show-sdk-path
-cmake --version
-```
-
-Then provide or build SDL2 for iOS and configure with either:
-
-```bash
--DSORR_IOS_SDL2_FRAMEWORK=/absolute/path/to/SDL2.framework
-```
-
-or:
-
-```bash
--DSORR_IOS_SDL2_ROOT=/absolute/path/to/sdl2-ios-prefix
-```
-
-Stop once the shell reaches:
+Add a CI or manual Mac simulator launch step that installs and runs the uploaded `SorrIOSShell.app`, then captures logs until the shell reaches:
 
 ```text
 SORR iOS shell: entering responsive idle loop
 ```
-
