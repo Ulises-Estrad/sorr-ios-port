@@ -124,6 +124,15 @@ Code signing is disabled for simulator build steps:
 CODE_SIGNING_ALLOWED=NO
 ```
 
+Before simulator install, the workflow applies a local simulator-only ad-hoc signature:
+
+```bash
+codesign --force --deep --sign - --timestamp=none "$APP_PATH"
+codesign --verify --deep --strict --verbose=2 "$APP_PATH"
+```
+
+This does not use provisioning profiles, device signing, IPA export, TestFlight, or App Store signing. It only makes the CI-built simulator `.app` acceptable to SpringBoard for `simctl launch`.
+
 ## Required Repo Exclusions
 
 The repo should not contain game data or large local extraction outputs.
@@ -213,12 +222,13 @@ After the simulator `.app` build succeeds, the workflow now:
 
 1. Selects the first available iPhone simulator from `xcrun simctl list devices available --json`.
 2. Boots it and waits for `simctl bootstatus`.
-3. Installs `SorrIOSShell.app`.
-4. Launches the bundle.
-5. Captures app stdout/stderr and simulator logs for 20 seconds.
-6. Terminates the shell.
-7. Combines `simctl launch`, app stdout/stderr, `log stream`, and `log show` output.
-8. Fails the job if required startup markers are missing.
+3. Applies a simulator-only ad-hoc signature to `SorrIOSShell.app`.
+4. Installs `SorrIOSShell.app`.
+5. Launches the bundle.
+6. Captures app stdout/stderr and simulator logs for 20 seconds.
+7. Terminates the shell.
+8. Combines `simctl launch`, app stdout/stderr, `log stream`, and `log show` output.
+9. Fails the job if required startup markers are missing.
 
 Required markers:
 
@@ -525,6 +535,39 @@ Fix:
 - inspect `ios-shell-build.log`,
 - if failure is SDL main/app entry related, test `SORR_IOS_SHELL_USE_SDL_MAIN_HANDLED=ON` in a follow-up branch,
 - if failure is signing related, keep simulator destination and `CODE_SIGNING_ALLOWED=NO`.
+
+### First simulator launch failure: SpringBoard denied app launch
+
+Observed failure:
+
+```text
+An error was encountered processing the command (domain=FBSOpenApplicationServiceErrorDomain, code=1):
+Simulator device failed to launch dev.local.sorr.iosshell.ci.
+The request was denied by service delegate (SBMainWorkspace).
+```
+
+Observed progress:
+
+- The workflow selected an available iPhone simulator.
+- `simctl bootstatus` completed.
+- The app path and bundle id were found.
+- The failure occurred at `simctl launch`, before shell runtime log markers appeared.
+
+Likely cause:
+
+- The app was built with `CODE_SIGNING_ALLOWED=NO`.
+- `simctl install` can accept the bundle, but SpringBoard may still deny launch of an unsigned simulator app.
+
+Fix applied:
+
+- Keep Xcode build signing disabled to avoid device/provisioning paths.
+- Add a local simulator-only ad-hoc `codesign -` pass before `simctl install`.
+- Verify and display the ad-hoc signature before boot/install/launch continues.
+
+Expected next run result:
+
+- `simctl launch` should advance past the SpringBoard denial.
+- The next blocker, if any, should be missing runtime log markers or an actual shell process crash.
 
 ## Next Step After A Successful Shell Build
 

@@ -49,6 +49,7 @@ This proves:
 Next proof now wired in CI:
 
 - boot an available iPhone simulator,
+- ad-hoc sign the built simulator app for local `simctl` launch,
 - install `SorrIOSShell.app`,
 - launch it,
 - capture app stdout/stderr and simulator logs for 20 seconds,
@@ -179,6 +180,7 @@ The GitHub Actions workflow now adds `Launch iOS shell in simulator` after the b
 - lists available simulator devices,
 - selects the first available iPhone simulator,
 - boots and waits for the simulator,
+- applies a local simulator-only ad-hoc signature with `codesign -`,
 - installs the built app,
 - launches the bundle id from the app `Info.plist`,
 - redirects app stdout/stderr to artifact logs,
@@ -198,6 +200,24 @@ The GitHub Actions workflow now adds `Launch iOS shell in simulator` after the b
 - [ ] `bgdrtm_entry` reached: workflow check added, pending run
 - [ ] idle loop running: workflow check added, pending run
 - [ ] clean quit: not proven
+
+## First Launch Failure
+
+The first simulator launch attempt reached simulator boot/install, then failed at `simctl launch`:
+
+```text
+An error was encountered processing the command (domain=FBSOpenApplicationServiceErrorDomain, code=1):
+Simulator device failed to launch dev.local.sorr.iosshell.ci.
+The request was denied by service delegate (SBMainWorkspace).
+```
+
+Current fix:
+
+- keep Xcode build signing disabled,
+- ad-hoc sign the built simulator `.app` locally with `codesign --sign -`,
+- verify the signature before `simctl install`.
+
+This is simulator-local signing only. It does not start device signing, IPA export, TestFlight, or App Store work.
 
 ## Expected First Success Log
 
