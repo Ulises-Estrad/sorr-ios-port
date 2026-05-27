@@ -201,15 +201,26 @@ This is the first milestone that should exercise the game data on iOS.
 
 ## Immediate Next Action
 
-Stop after the iOS data-layout scaffold proof. The next phase should be a controlled local/private data bundle/render proof.
+D1 now adds a shell-only physical-device artifact before any private data bundle/render proof.
+
+Goal:
+
+- build `SorrIOSShell.app` for `iphoneos` `arm64`,
+- package it as `Payload/SorrIOSShell.app` inside `SorrIOSShell-device-unsigned.ipa`,
+- upload the IPA artifact for Windows download,
+- let Sideloadly handle local signing/install on the user's iPhone,
+- keep the IPA free of `SorR.dat`, `data/`, and game assets.
 
 Recommended order:
 
-1. Decide how to provide prepared game data without committing it.
-2. Add a private/local data bundle input or workflow artifact strategy.
-3. Add a path shim so read-only bundle assets and writable support-root files can coexist.
-4. Lift x64-safe runtime guards from `_WIN64` to a portable 64-bit macro before full game execution on iOS.
-5. Attempt first private title/city render proof.
+1. Produce the unsigned shell-only IPA on GitHub Actions.
+2. Download and install it with Sideloadly on Windows.
+3. Confirm the app opens and reaches the shell idle loop on the physical iPhone.
+4. Then decide how to provide prepared game data without committing it.
+5. Add a private/local data bundle input or workflow artifact strategy.
+6. Add a path shim so read-only bundle assets and writable support-root files can coexist.
+7. Lift x64-safe runtime guards from `_WIN64` to a portable 64-bit macro before full game execution on iOS.
+8. Attempt first private title/city render proof.
 
 ## Out Of Scope For This Plan
 

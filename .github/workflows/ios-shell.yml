@@ -50,10 +50,13 @@ jobs:
             echo "Checking checkout for game assets that must not be committed or uploaded..."
             matches="$(find . \
               \( -name 'SorR.dat' \
+                -o -path './sorr-vita-master/data' \
+                -o -path './sorr-vita-master/data/*' \
                 -o -name '*.fpg' \
                 -o -name '*.wav' \
                 -o -name '*.ogg' \
-                -o -name '*.smk' \) \
+                -o -name '*.smk' \
+                -o -name '*.png' \) \
               -not -path './.git/*' \
               -not -path './ci-artifacts/*' \
               -print | head -n 20)"
@@ -418,5 +421,209 @@ jobs:
         with:
           name: ios-shell-simulator-arm64
           path: ci-artifacts/ios-shell
+          if-no-files-found: warn
+          retention-days: 14
+
+  ios-shell-device-unsigned:
+    name: Build iOS shell unsigned IPA for device arm64
+    runs-on: macos-15
+    timeout-minutes: 45
+
+    env:
+      SDL2_VERSION: "2.30.12"
+      IOS_DEVICE_ARCH: "arm64"
+      IOS_DEVICE_BUILD_DIR: "build-ios-shell-device"
+      ARTIFACT_DIR: "ci-artifacts/ios-shell-device"
+      IPA_NAME: "SorrIOSShell-device-unsigned.ipa"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Guard against bundled game assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$ARTIFACT_DIR/logs"
+          {
+            echo "Checking checkout for game assets that must not be committed or uploaded..."
+            matches="$(find . \
+              \( -name 'SorR.dat' \
+                -o -path './sorr-vita-master/data' \
+                -o -path './sorr-vita-master/data/*' \
+                -o -name '*.fpg' \
+                -o -name '*.wav' \
+                -o -name '*.ogg' \
+                -o -name '*.smk' \
+                -o -name '*.png' \) \
+              -not -path './.git/*' \
+              -not -path './ci-artifacts/*' \
+              -print | head -n 20)"
+            if [[ -n "$matches" ]]; then
+              echo "::error::Game assets are present in the checkout. Remove them from the repository before running the iOS shell workflow."
+              echo "$matches"
+              exit 1
+            fi
+            echo "No prohibited game assets found in checkout."
+          } 2>&1 | tee "$ARTIFACT_DIR/logs/asset-guard.log"
+
+      - name: Print device build tool versions
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            echo "## sw_vers"
+            sw_vers
+            echo
+            echo "## uname -a"
+            uname -a
+            echo
+            echo "## xcodebuild -version"
+            xcodebuild -version
+            echo
+            echo "## iphoneos SDK"
+            xcrun --sdk iphoneos --show-sdk-path
+            echo
+            echo "## cmake --version"
+            cmake --version
+          } 2>&1 | tee "$ARTIFACT_DIR/logs/tool-versions.log"
+
+      - name: Fetch SDL2 source
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/sdl2-src" "$ARTIFACT_DIR/logs"
+          SDL2_TARBALL="$RUNNER_TEMP/SDL2-${SDL2_VERSION}.tar.gz"
+          {
+            echo "Downloading SDL2 ${SDL2_VERSION}"
+            curl -L --fail --retry 3 \
+              "https://www.libsdl.org/release/SDL2-${SDL2_VERSION}.tar.gz" \
+              -o "$SDL2_TARBALL"
+            tar -xzf "$SDL2_TARBALL" -C "$RUNNER_TEMP/sdl2-src" --strip-components=1
+            echo "SDL2 source extracted to $RUNNER_TEMP/sdl2-src"
+          } 2>&1 | tee "$ARTIFACT_DIR/logs/sdl2-fetch.log"
+
+      - name: Configure SDL2 for iOS device
+        shell: bash
+        run: |
+          set -euo pipefail
+          set -o pipefail
+          SDL2_PREFIX="$GITHUB_WORKSPACE/_deps/sdl2-ios-device"
+          {
+            mkdir -p "$GITHUB_WORKSPACE/_deps"
+            echo "SDL2_IOS_DEVICE_PREFIX=$SDL2_PREFIX" >> "$GITHUB_ENV"
+            echo "Installing SDL2 to $SDL2_PREFIX"
+            cmake -S "$RUNNER_TEMP/sdl2-src" \
+              -B "$RUNNER_TEMP/sdl2-build-device" \
+              -G Xcode \
+              -DCMAKE_SYSTEM_NAME=iOS \
+              -DCMAKE_OSX_SYSROOT=iphoneos \
+              -DCMAKE_OSX_ARCHITECTURES="$IOS_DEVICE_ARCH" \
+              -DCMAKE_INSTALL_PREFIX="$SDL2_PREFIX" \
+              -DSDL_STATIC=ON \
+              -DSDL_SHARED=OFF \
+              -DSDL_TEST=OFF
+          } 2>&1 | tee "$ARTIFACT_DIR/logs/sdl2-configure.log"
+
+      - name: Build and install SDL2 for iOS device
+        shell: bash
+        run: |
+          set -euo pipefail
+          set -o pipefail
+          {
+            cmake --build "$RUNNER_TEMP/sdl2-build-device" \
+              --config Release \
+              -- \
+              -destination 'generic/platform=iOS' \
+              CODE_SIGNING_ALLOWED=NO
+            cmake --install "$RUNNER_TEMP/sdl2-build-device" --config Release
+            echo "Installed SDL2 device prefix:"
+            find "$SDL2_IOS_DEVICE_PREFIX" -maxdepth 5 -print | sort
+          } 2>&1 | tee "$ARTIFACT_DIR/logs/sdl2-build-install.log"
+
+      - name: Configure iOS shell device build
+        shell: bash
+        run: |
+          set -euo pipefail
+          set -o pipefail
+          {
+            echo "SDL2_IOS_DEVICE_PREFIX=$SDL2_IOS_DEVICE_PREFIX"
+            echo "SDL2 device discovery debug:"
+            find "$GITHUB_WORKSPACE/_deps" -maxdepth 5 \
+              \( -name "SDL2.framework" -o -name "libSDL2*.a" -o -name "SDL.h" \) \
+              -print | sort
+            cmake -S sorr-vita-master/cmake/ios \
+              -B "$IOS_DEVICE_BUILD_DIR" \
+              -G Xcode \
+              -DCMAKE_SYSTEM_NAME=iOS \
+              -DCMAKE_OSX_SYSROOT=iphoneos \
+              -DCMAKE_OSX_ARCHITECTURES="$IOS_DEVICE_ARCH" \
+              -DCMAKE_PREFIX_PATH="$SDL2_IOS_DEVICE_PREFIX" \
+              -DSORR_IOS_SDL2_ROOT="$SDL2_IOS_DEVICE_PREFIX" \
+              -DSORR_IOS_BUNDLE_IDENTIFIER="dev.local.sorr.iosshell"
+          } 2>&1 | tee "$ARTIFACT_DIR/logs/ios-shell-configure.log"
+
+      - name: Build unsigned iOS shell app for device
+        shell: bash
+        run: |
+          set -euo pipefail
+          set -o pipefail
+          {
+            cmake --build "$IOS_DEVICE_BUILD_DIR" \
+              --config Release \
+              -- \
+              -destination 'generic/platform=iOS' \
+              CODE_SIGNING_ALLOWED=NO
+          } 2>&1 | tee "$ARTIFACT_DIR/logs/ios-shell-build.log"
+
+      - name: Package unsigned device IPA
+        shell: bash
+        run: |
+          set -euo pipefail
+          set -o pipefail
+          {
+            APP_PATH="$(find "$IOS_DEVICE_BUILD_DIR" -path '*Release-iphoneos/SorrIOSShell.app' -type d | head -n 1 || true)"
+            if [[ -z "$APP_PATH" ]]; then
+              APP_PATH="$(find "$IOS_DEVICE_BUILD_DIR" -name 'SorrIOSShell.app' -type d | head -n 1 || true)"
+            fi
+            if [[ -z "$APP_PATH" ]]; then
+              echo "::error::SorrIOSShell.app was not produced for iphoneos."
+              exit 1
+            fi
+
+            echo "Device app path: $APP_PATH"
+            echo "Info.plist:"
+            plutil -p "$APP_PATH/Info.plist"
+            echo "Device app bundle tree:"
+            find "$APP_PATH" -maxdepth 3 -print | sort
+            echo "Executable architecture:"
+            lipo -info "$APP_PATH/SorrIOSShell"
+            echo "Code signature display, expected to be unsigned or ad-hoc only:"
+            codesign --display --verbose=4 "$APP_PATH" 2>&1 || true
+
+            IPA_STAGE="$RUNNER_TEMP/sorr-ios-device-ipa"
+            rm -rf "$IPA_STAGE"
+            mkdir -p "$IPA_STAGE/Payload" "$ARTIFACT_DIR/build-products"
+            cp -R "$APP_PATH" "$IPA_STAGE/Payload/"
+
+            (cd "$IPA_STAGE" && zip -qry "$GITHUB_WORKSPACE/$ARTIFACT_DIR/build-products/$IPA_NAME" Payload)
+            echo "Created IPA: $ARTIFACT_DIR/build-products/$IPA_NAME"
+            unzip -l "$ARTIFACT_DIR/build-products/$IPA_NAME" | tee "$ARTIFACT_DIR/logs/ipa-contents.log"
+
+            forbidden="$(unzip -l "$ARTIFACT_DIR/build-products/$IPA_NAME" | awk '{print $4}' | grep -E '(^|/)SorR\.dat$|(^|/)data/|\.fpg$|\.wav$|\.ogg$|\.smk$|\.png$' || true)"
+            if [[ -n "$forbidden" ]]; then
+              echo "::error::Forbidden game data/assets were packaged into the IPA."
+              echo "$forbidden"
+              exit 1
+            fi
+            echo "IPA inspection passed: no SorR.dat, data/, FPG, WAV, OGG, SMK, or PNG content."
+          } 2>&1 | tee "$ARTIFACT_DIR/logs/package-unsigned-ipa.log"
+
+      - name: Upload unsigned device IPA and logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-shell-device-unsigned-arm64
+          path: ci-artifacts/ios-shell-device
           if-no-files-found: warn
           retention-days: 14

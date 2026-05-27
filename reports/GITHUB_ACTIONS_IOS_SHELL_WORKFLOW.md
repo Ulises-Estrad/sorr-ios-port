@@ -75,6 +75,14 @@ The successful run proves the shell:
 - explicitly does not load `SorR.dat`,
 - enters the responsive idle loop.
 
+The workflow now also has a device artifact job:
+
+```text
+Build iOS shell unsigned IPA for device arm64
+```
+
+That job builds an `iphoneos` `arm64` shell app, packages `Payload/SorrIOSShell.app`, uploads `SorrIOSShell-device-unsigned.ipa`, and verifies the IPA contains no game data.
+
 ## Workflow Summary
 
 Runner:
@@ -864,3 +872,53 @@ After the workflow produces and launches `SorrIOSShell.app` for simulator:
 6. Only then attempt a private title/city render proof.
 
 Do not bundle or load game data until a later phase explicitly asks for it.
+
+## Device Sideloadly Artifact
+
+The device build job is shell-only and does not install or run on hardware in CI.
+
+Build target:
+
+```text
+iphoneos arm64
+```
+
+Signing mode:
+
+```text
+CODE_SIGNING_ALLOWED=NO
+```
+
+This produces an unsigned or unsigned-like `.app` intended for Sideloadly to sign locally on Windows.
+
+Artifact name:
+
+```text
+ios-shell-device-unsigned-arm64
+```
+
+Expected IPA:
+
+```text
+build-products/SorrIOSShell-device-unsigned.ipa
+```
+
+Expected IPA layout:
+
+```text
+Payload/SorrIOSShell.app
+```
+
+The job inspects the IPA and fails if it contains:
+
+```text
+SorR.dat
+data/
+*.fpg
+*.wav
+*.ogg
+*.smk
+*.png
+```
+
+No device signing, provisioning profile, TestFlight, App Store, or paid developer flow is used by CI.
