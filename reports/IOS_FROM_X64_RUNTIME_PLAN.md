@@ -212,6 +212,20 @@ Artifact: ios-shell-device-unsigned-arm64
 Result: success
 ```
 
+First physical Sideloadly install result:
+
+```text
+Sideloadly v0.60
+Install failed: Guru Meditation f65043@1006:23a71c Invalid file
+```
+
+Current D1 fix under test:
+
+- keep the shell-only `iphoneos` artifact,
+- ad-hoc sign the `.app` in CI before IPA packaging,
+- produce `SorrIOSShell-device-adhoc.ipa`,
+- add deeper IPA validation for `Info.plist`, executable path, `arm64`, and code signature.
+
 Goal:
 
 - build `SorrIOSShell.app` for `iphoneos` `arm64`,

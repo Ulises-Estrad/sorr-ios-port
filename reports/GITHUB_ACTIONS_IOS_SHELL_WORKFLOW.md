@@ -935,3 +935,22 @@ data/
 No device signing, provisioning profile, TestFlight, App Store, or paid developer flow is used by CI.
 
 The first successful device artifact run completed on commit `3909ccc`. It uploaded `ios-shell-device-unsigned-arm64` and kept the simulator proof green in the same workflow run.
+
+First physical Sideloadly result:
+
+```text
+Sideloadly v0.60
+Install failed: Guru Meditation f65043@1006:23a71c Invalid file
+IPA: SorrIOSShell-device-unsigned.ipa
+```
+
+Current D1 packaging fix under test:
+
+- ad-hoc sign the `iphoneos` `.app` with `codesign --sign -` before IPA packaging,
+- rename the IPA to `SorrIOSShell-device-adhoc.ipa`,
+- unzip the produced IPA into a fresh inspection directory,
+- print and validate `Info.plist`,
+- validate `CFBundleExecutable`, `CFBundlePackageType`, `CFBundleIdentifier`, `MinimumOSVersion`, `UIDeviceFamily`,
+- validate the Mach-O contains `arm64`,
+- verify the ad-hoc code signature,
+- keep the forbidden asset checks.

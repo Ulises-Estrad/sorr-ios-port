@@ -434,7 +434,7 @@ jobs:
       IOS_DEVICE_ARCH: "arm64"
       IOS_DEVICE_BUILD_DIR: "build-ios-shell-device"
       ARTIFACT_DIR: "ci-artifacts/ios-shell-device"
-      IPA_NAME: "SorrIOSShell-device-unsigned.ipa"
+      IPA_NAME: "SorrIOSShell-device-adhoc.ipa"
 
     steps:
       - name: Checkout
@@ -598,17 +598,33 @@ jobs:
             find "$APP_PATH" -maxdepth 3 -print | sort
             echo "Executable architecture:"
             lipo -info "$APP_PATH/SorrIOSShell"
-            echo "Code signature display, expected to be unsigned or ad-hoc only:"
+            echo "Code signature display before ad-hoc signing:"
+            codesign --display --verbose=4 "$APP_PATH" 2>&1 || true
+            echo "Applying ad-hoc signature for Sideloadly-friendly IPA packaging"
+            codesign --force --sign - --timestamp=none "$APP_PATH"
+            codesign --verify --deep --strict --verbose=2 "$APP_PATH"
             codesign --display --verbose=4 "$APP_PATH" 2>&1 || true
 
             IPA_STAGE="$RUNNER_TEMP/sorr-ios-device-ipa"
+            IPA_INSPECT="$RUNNER_TEMP/sorr-ios-device-ipa-inspect"
             rm -rf "$IPA_STAGE"
+            rm -rf "$IPA_INSPECT"
             mkdir -p "$IPA_STAGE/Payload" "$ARTIFACT_DIR/build-products"
             cp -R "$APP_PATH" "$IPA_STAGE/Payload/"
 
             (cd "$IPA_STAGE" && zip -qry "$GITHUB_WORKSPACE/$ARTIFACT_DIR/build-products/$IPA_NAME" Payload)
             echo "Created IPA: $ARTIFACT_DIR/build-products/$IPA_NAME"
             unzip -l "$ARTIFACT_DIR/build-products/$IPA_NAME" | tee "$ARTIFACT_DIR/logs/ipa-contents.log"
+            unzip -q "$ARTIFACT_DIR/build-products/$IPA_NAME" -d "$IPA_INSPECT"
+            echo "Inspected IPA tree:"
+            find "$IPA_INSPECT" -maxdepth 4 -print | sort
+            echo "Inspected IPA Info.plist:"
+            plutil -p "$IPA_INSPECT/Payload/SorrIOSShell.app/Info.plist"
+            echo "Inspected IPA executable:"
+            file "$IPA_INSPECT/Payload/SorrIOSShell.app/SorrIOSShell"
+            lipo -info "$IPA_INSPECT/Payload/SorrIOSShell.app/SorrIOSShell"
+            echo "Inspected IPA code signature:"
+            codesign -dv "$IPA_INSPECT/Payload/SorrIOSShell.app" 2>&1 || true
 
             forbidden="$(unzip -l "$ARTIFACT_DIR/build-products/$IPA_NAME" | awk '{print $4}' | grep -E '(^|/)SorR\.dat$|(^|/)data/|\.fpg$|\.wav$|\.ogg$|\.smk$|\.png$' || true)"
             if [[ -n "$forbidden" ]]; then
@@ -617,6 +633,15 @@ jobs:
               exit 1
             fi
             echo "IPA inspection passed: no SorR.dat, data/, FPG, WAV, OGG, SMK, or PNG content."
+            test -d "$IPA_INSPECT/Payload/SorrIOSShell.app"
+            test -x "$IPA_INSPECT/Payload/SorrIOSShell.app/SorrIOSShell"
+            /usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$IPA_INSPECT/Payload/SorrIOSShell.app/Info.plist" | grep -Fx 'SorrIOSShell'
+            /usr/libexec/PlistBuddy -c 'Print :CFBundlePackageType' "$IPA_INSPECT/Payload/SorrIOSShell.app/Info.plist" | grep -Fx 'APPL'
+            /usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$IPA_INSPECT/Payload/SorrIOSShell.app/Info.plist" | grep -E '^[A-Za-z0-9.-]+$'
+            /usr/libexec/PlistBuddy -c 'Print :MinimumOSVersion' "$IPA_INSPECT/Payload/SorrIOSShell.app/Info.plist"
+            /usr/libexec/PlistBuddy -c 'Print :UIDeviceFamily:0' "$IPA_INSPECT/Payload/SorrIOSShell.app/Info.plist" | grep -Fx '1'
+            lipo -info "$IPA_INSPECT/Payload/SorrIOSShell.app/SorrIOSShell" | grep -F 'arm64'
+            codesign --verify --deep --strict --verbose=2 "$IPA_INSPECT/Payload/SorrIOSShell.app"
           } 2>&1 | tee "$ARTIFACT_DIR/logs/package-unsigned-ipa.log"
 
       - name: Upload unsigned device IPA and logs

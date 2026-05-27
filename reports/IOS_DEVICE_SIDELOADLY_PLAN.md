@@ -10,7 +10,7 @@ The IPA is intended for Windows download and Sideloadly signing/install.
 
 ## Result
 
-Status: D1 GitHub Actions device IPA artifact proof complete.
+Status: D1 GitHub Actions device IPA artifact proof complete, first physical Sideloadly install attempt failed on IPA validity.
 
 Proof run:
 
@@ -24,6 +24,28 @@ Artifact size: 445153 bytes
 ```
 
 The same workflow run also kept the simulator shell/data-layout proof green.
+
+First physical install result:
+
+```text
+Sideloadly v0.60
+Install failed: Guru Meditation f65043@1006:23a71c Invalid file
+IPA: SorrIOSShell-device-unsigned.ipa
+```
+
+Interpretation:
+
+- USB device detection is fixed.
+- GitHub Actions produced an IPA artifact.
+- Sideloadly rejected the IPA before app launch.
+- The first likely issue is a completely unsigned `iphoneos` app bundle inside the IPA.
+
+Current fix under test:
+
+- Ad-hoc sign `SorrIOSShell.app` in CI before packaging.
+- Rename the output to `SorrIOSShell-device-adhoc.ipa`.
+- Inspect the IPA after packaging by unzipping it into a fresh directory.
+- Verify `Info.plist`, `CFBundleExecutable`, `CFBundlePackageType`, `CFBundleIdentifier`, `MinimumOSVersion`, `UIDeviceFamily`, `arm64` Mach-O, and code signature.
 
 ## Guardrails
 
@@ -50,7 +72,7 @@ ios-shell-device-unsigned-arm64
 Expected IPA inside the artifact:
 
 ```text
-build-products/SorrIOSShell-device-unsigned.ipa
+build-products/SorrIOSShell-device-adhoc.ipa
 ```
 
 Expected IPA layout:
@@ -71,7 +93,8 @@ It builds:
 
 - SDL2 2.30.12 for `iphoneos`,
 - `SorrIOSShell.app` for `iphoneos` `arm64`,
-- unsigned or unsigned-like app bundle with `CODE_SIGNING_ALLOWED=NO`,
+- app bundle built with `CODE_SIGNING_ALLOWED=NO`,
+- CI ad-hoc signature applied with `codesign --sign -` before packaging,
 - IPA zip with `Payload/SorrIOSShell.app`.
 
 The job does not install or run on a device.
@@ -81,7 +104,7 @@ The job does not install or run on a device.
 The workflow runs:
 
 ```bash
-unzip -l SorrIOSShell-device-unsigned.ipa
+unzip -l SorrIOSShell-device-adhoc.ipa
 ```
 
 Then it fails if the IPA contains any of:
@@ -103,7 +126,7 @@ This keeps the CI artifact shell-only.
 After the GitHub Actions job passes:
 
 1. Download the `ios-shell-device-unsigned-arm64` artifact on Windows.
-2. Extract `SorrIOSShell-device-unsigned.ipa`.
+2. Extract `SorrIOSShell-device-adhoc.ipa`.
 3. Open Sideloadly.
 4. Select the IPA.
 5. Connect the iPhone.
@@ -124,7 +147,9 @@ Expected app behavior:
 - [x] GitHub Actions packages `Payload/SorrIOSShell.app` into `SorrIOSShell-device-unsigned.ipa`.
 - [x] IPA artifact uploads successfully.
 - [x] IPA inspection confirms no game data/assets.
-- [ ] User downloads the IPA on Windows for Sideloadly signing/install.
+- [x] User downloads the first IPA on Windows for Sideloadly signing/install.
+- [ ] GitHub Actions packages an ad-hoc-signed `SorrIOSShell-device-adhoc.ipa`.
+- [ ] User downloads the ad-hoc-signed IPA on Windows for Sideloadly signing/install.
 - [ ] User confirms the installed app opens on the physical iPhone and reaches the shell idle loop.
 
 Physical-device launch is the manual final check for D1 because CI does not have the user's iPhone.
