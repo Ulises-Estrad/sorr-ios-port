@@ -149,6 +149,16 @@ Failure: libscroll.c used int scroll-index callback parameters where the render 
 Fix: convert the scroll render-object callbacks to void * plus intptr_t casts
 ```
 
+Tenth D3 attempt:
+
+```text
+Commit: 8e5cfa1
+Run: 26548410341
+Result: device compile failed
+Failure: libmouse.c used INSTANCE * callback parameters where the render object API expects void * callback context
+Fix: convert mouse callbacks to void *; also convert the remaining included g_instance render-object callbacks found by local gr_new_object scan
+```
+
 The IPA must still contain no:
 
 - `SorR.dat`

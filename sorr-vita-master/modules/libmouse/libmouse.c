@@ -202,8 +202,9 @@ static void do_mouse_events()
  *      1 if the mouse has changed since last call
  */
 
-static int mouse_info( INSTANCE * i, REGION * clip, int * z, int * drawme )
+static int mouse_info( void * what, REGION * clip, int * z, int * drawme )
 {
+    ( void ) what;
     int mousex ;
     int mousey ;
     int mousez ;
@@ -312,8 +313,9 @@ static int mouse_info( INSTANCE * i, REGION * clip, int * z, int * drawme )
  *      None
  */
 
-static void mouse_draw( INSTANCE * i, REGION * clip )
+static void mouse_draw( void * what, REGION * clip )
 {
+    ( void ) what;
     int r ;
     REGION region;
 

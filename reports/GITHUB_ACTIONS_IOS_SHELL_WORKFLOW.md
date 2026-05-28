@@ -1219,6 +1219,16 @@ Cause: libscroll.c passed int scroll indexes to gr_new_object callbacks while th
 Fix: scroll callbacks now accept void * context and convert through intptr_t at the callback boundary
 ```
 
+Tenth D3 CI failure:
+
+```text
+Commit: 8e5cfa1
+Run: 26548410341
+Failed step: Build unsigned iOS shell app for device
+Cause: libmouse.c passed INSTANCE * callbacks to gr_new_object while the render object API expects void * callback context
+Fix: mouse callbacks now accept void * context; the remaining included g_instance render-object callback boundary was converted after a local gr_new_object scan
+```
+
 Manual D3 test flow:
 
 1. Keep the D2 data staged on the iPhone.
