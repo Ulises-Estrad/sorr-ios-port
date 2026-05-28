@@ -311,7 +311,7 @@ Completed D2 sequence:
 6. D2 is complete; stop until D3 is explicitly requested.
 7. Then decide how to move into D3 without committing or uploading private game data.
 
-D3 status: first render proof has now been requested.
+D3 status: physical iPhone first render proof complete.
 
 D3 keeps the D2 data route and does not bundle game data. The device job builds an asset-free IPA that reads the already staged physical-device data from:
 
@@ -337,7 +337,25 @@ Artifact size: 674040 bytes
 IPA: build-products/SorrIOSShell-d3-first-render-adhoc.ipa
 IPA size: 598798 bytes
 Asset inspection: passed, no SorR.dat/data/assets bundled
-Physical iPhone result: pending manual Sideloadly install/test
+Physical iPhone result: real SoRR/game runtime rendered and ran from D2-staged data
+Audio result: no audible audio yet; later follow-up, not a D3 failure
+```
+
+Physical iPhone D3 proof:
+
+```text
+D3 Actions run: 26549967383
+Artifact: ios-shell-d3-first-render-device-arm64
+IPA: build-products/SorrIOSShell-d3-first-render-adhoc.ipa
+Artifact-producing commit: d79a53a
+D3 docs commit before physical proof: 148ead7 [skip ci]
+Install route: Windows + Sideloadly
+Data source: existing D2-staged Library/Application Support/SORR data
+Physical result: actual SoRR game/runtime rendered and the game ran on the physical iPhone
+Audio result: no audible audio yet
+Game data/assets bundled in IPA: no
+Game assets committed: no
+D4/D5 status: not started
 ```
 
 D3 implementation strategy:
@@ -349,7 +367,7 @@ D3 implementation strategy:
 - keep audio stubbed and avoid SDL2_mixer for first render,
 - attempt the first real title/menu/city render only after D2 data is verified.
 
-D3 remains render-only. Touch controls, gameplay input, audio, SOR2-only pruning, and App Store/TestFlight signing stay out of scope.
+D3 remained render-only. Touch controls, gameplay input, audio follow-up, SOR2-only pruning, and App Store/TestFlight signing stay out of scope until explicitly requested.
 
 ## Out Of Scope For This Plan
 

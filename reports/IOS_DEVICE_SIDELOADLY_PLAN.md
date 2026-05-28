@@ -243,4 +243,24 @@ Game rendering: no
 Game data/assets committed or bundled in IPA: no
 ```
 
-D2 is complete. Do not proceed to D3/rendering until explicitly instructed.
+D2 is complete and D3 has since been explicitly requested and completed.
+
+## D3 Successor Note
+
+D3 is the physical iPhone first render proof. It reuses the D2-staged data at `Library/Application Support/SORR`; the IPA still does not bundle or commit private game data.
+
+```text
+D3 Actions run: 26549967383
+Artifact: ios-shell-d3-first-render-device-arm64
+IPA: build-products/SorrIOSShell-d3-first-render-adhoc.ipa
+Artifact-producing commit: d79a53a
+D3 docs commit before physical proof: 148ead7 [skip ci]
+Install route: Windows + Sideloadly
+Physical result: actual SoRR game/runtime rendered and the game ran on the physical iPhone
+Audio result: no audible audio yet
+Game data/assets bundled in IPA: no
+Game assets committed: no
+D4/D5 status: not started
+```
+
+The missing audio is a later follow-up, not a D3 failure. Do not proceed to D4 controls, D5 gameplay, or audio follow-up work until explicitly instructed.

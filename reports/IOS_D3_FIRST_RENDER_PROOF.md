@@ -6,6 +6,8 @@ Date: 2026-05-27
 
 D3 is the first physical iPhone render proof.
 
+Status: D3 physical iPhone first render proof complete.
+
 It uses the D2-staged data already stored at:
 
 ```text
@@ -68,7 +70,8 @@ IPA inside artifact: build-products/SorrIOSShell-d3-first-render-adhoc.ipa
 IPA size: 598798 bytes
 Result: success
 Asset status: no SorR.dat, data/, FPG/WAV/OGG/SMK/PNG assets, or prepared game data in the IPA
-Physical iPhone result: pending manual Sideloadly install/test
+Physical iPhone result: real SoRR/game runtime rendered and ran from D2-staged data
+Audio result: no audible audio yet; this is a known follow-up and not a D3 failure
 ```
 
 ## CI Iterations
@@ -222,8 +225,27 @@ Result: device IPA artifact produced successfully
 Artifact: ios-shell-d3-first-render-device-arm64
 IPA: build-products/SorrIOSShell-d3-first-render-adhoc.ipa
 Asset scan: passed
-Physical iPhone result: pending manual Sideloadly install/test
+Physical iPhone result: real SoRR/game runtime rendered and ran from D2-staged data
 ```
+
+## Physical iPhone Proof
+
+```text
+D3 Actions run: 26549967383
+Artifact: ios-shell-d3-first-render-device-arm64
+IPA: build-products/SorrIOSShell-d3-first-render-adhoc.ipa
+Artifact-producing commit: d79a53a
+D3 docs commit before physical proof: 148ead7 [skip ci]
+Install route: Windows + Sideloadly
+Data source: existing D2-staged Library/Application Support/SORR data
+Physical result: actual SoRR game/runtime rendered and the game ran on the physical iPhone
+Audio result: no audible audio yet
+Game data/assets bundled in IPA: no
+Game assets committed: no
+D4/D5 status: not started
+```
+
+The missing audio is not a D3 blocker. D3 explicitly allowed audio to be missing, disabled, or stubbed. Audio remains a later follow-up.
 
 The IPA must still contain no:
 

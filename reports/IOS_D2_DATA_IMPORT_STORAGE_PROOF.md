@@ -312,4 +312,4 @@ build: success
 
 Stop after the completed physical iPhone D2 import/storage proof is documented.
 
-Do not proceed to D3/rendering until explicitly instructed.
+D3 was later explicitly requested and completed as a separate first-render proof. D2 remains the completed data import/storage milestone and should not be redefined.

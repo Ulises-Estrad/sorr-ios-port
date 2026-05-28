@@ -1083,7 +1083,7 @@ Game rendering: no
 Game data/assets committed or bundled in IPA: no
 ```
 
-Do not proceed to D3 until explicitly instructed.
+D3 was later explicitly requested and completed as a separate first-render proof. D2 remains the completed data import/storage milestone and should not be redefined.
 
 ## D3 First Render Device Artifact
 
@@ -1118,7 +1118,8 @@ Artifact size: 674040 bytes
 IPA: build-products/SorrIOSShell-d3-first-render-adhoc.ipa
 IPA size: 598798 bytes
 Asset inspection: passed, no SorR.dat/data/assets bundled
-Physical iPhone result: pending manual Sideloadly install/test
+Physical iPhone result: real SoRR/game runtime rendered and ran from D2-staged data
+Audio result: no audible audio yet; later follow-up, not a D3 failure
 ```
 
 The D3 IPA is still asset-free. The workflow inspection continues to fail if the IPA contains:
@@ -1294,6 +1295,23 @@ IPA: build-products/SorrIOSShell-d3-first-render-adhoc.ipa
 Asset inspection: passed
 ```
 
+Physical D3 result:
+
+```text
+D3 Actions run: 26549967383
+Artifact: ios-shell-d3-first-render-device-arm64
+IPA: build-products/SorrIOSShell-d3-first-render-adhoc.ipa
+Artifact-producing commit: d79a53a
+D3 docs commit before physical proof: 148ead7 [skip ci]
+Install route: Windows + Sideloadly
+Data source: existing D2-staged Library/Application Support/SORR data
+Physical result: actual SoRR game/runtime rendered and the game ran on the physical iPhone
+Audio result: no audible audio yet
+Game data/assets bundled in IPA: no
+Game assets committed: no
+D4/D5 status: not started
+```
+
 Manual D3 test flow:
 
 1. Keep the D2 data staged on the iPhone.
@@ -1303,4 +1321,4 @@ Manual D3 test flow:
 5. If D2 data is present, the app attempts real SoRR rendering from the staged data.
 6. If D2 data is missing, the app displays a visible missing-data status screen.
 
-Do not proceed to D4 controls or D5 gameplay until the physical D3 result is reported.
+D3 physical first render proof is complete. Do not proceed to D4 controls, D5 gameplay, or audio follow-up work until explicitly instructed.
