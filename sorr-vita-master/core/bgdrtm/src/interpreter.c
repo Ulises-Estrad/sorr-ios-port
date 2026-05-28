@@ -389,12 +389,17 @@ volatile unsigned int sorr_ios_d3_render_instance_object_destroyed_count = 0;
 volatile unsigned int sorr_ios_d3_render_invalid_callback_count = 0;
 volatile unsigned int sorr_ios_d3_snapshot_count = 0;
 volatile unsigned int sorr_ios_d3_last_proc_id = 0;
+volatile unsigned long long sorr_ios_d3_last_proc_ptr = 0;
+volatile unsigned long long sorr_ios_d3_current_proc_ptr = 0;
 volatile int sorr_ios_d3_last_proc_status = 0;
 volatile int sorr_ios_d3_last_proc_frame_percent = 0;
 volatile int sorr_ios_d3_last_proc_code_offset = 0;
 char sorr_ios_d3_last_proc_name[64] = "none";
 char sorr_ios_d3_last_created_proc_name[64] = "none";
 char sorr_ios_d3_last_destroyed_proc_name[64] = "none";
+char sorr_ios_d3_last_lifecycle_event[384] = "lifecycle=none";
+char sorr_ios_d3_last_family_unlink[768] = "family=none";
+char sorr_ios_d3_last_render_event[768] = "render=none";
 char sorr_ios_d3_runtime_snapshot[2048] = "snapshot=uninitialized";
 char sorr_ios_d3_lifecycle_events[1536] = "events=none";
 char sorr_ios_d3_visible_event_log_path[1024] = "";
@@ -406,6 +411,8 @@ static const char * const sorr_ios_d3_watch_proc_names[] = {
     "LAYER_INTRO",
     "MENU",
     "FASE1",
+    "ENEMIGO",
+    "ESCRIBE_ENEMIGO",
     "DESCARGA_SISTEMA",
     "SISTEMA_SONIDO",
     "ASIGNADOR_ENEMIGO",
@@ -563,6 +570,7 @@ static void sorr_ios_d3_note_lifecycle_event( const char * action, const INSTANC
         sorr_ios_d3_instance_created_count,
         sorr_ios_d3_instance_destroyed_count
     );
+    snprintf( sorr_ios_d3_last_lifecycle_event, sizeof( sorr_ios_d3_last_lifecycle_event ), "%s", sorr_ios_d3_event_slots[slot] );
     sorr_ios_d3_rebuild_lifecycle_events();
 
     if ( watch_index >= 0 || ( seq <= 80 ) || ( seq % 100 ) == 0 )
@@ -641,6 +649,7 @@ void sorr_ios_d3_note_family_unlink( const INSTANCE * r,
         sorr_ios_d3_instance_created_count,
         sorr_ios_d3_instance_destroyed_count
     );
+    snprintf( sorr_ios_d3_last_family_unlink, sizeof( sorr_ios_d3_last_family_unlink ), "%s", line );
     sorr_ios_d3_append_visible_event_line( line );
 }
 
@@ -695,6 +704,7 @@ void sorr_ios_d3_note_render_instance_event( const char * action,
         sorr_ios_d3_instance_created_count,
         sorr_ios_d3_instance_destroyed_count
     );
+    snprintf( sorr_ios_d3_last_render_event, sizeof( sorr_ios_d3_last_render_event ), "%s", line );
     sorr_ios_d3_append_visible_event_line( line );
 }
 
@@ -702,10 +712,12 @@ static void sorr_ios_d3_note_instance_run( const INSTANCE * r )
 {
     sorr_ios_d3_instance_run_count++;
     sorr_ios_d3_copy_proc_name( sorr_ios_d3_last_proc_name, sizeof( sorr_ios_d3_last_proc_name ), r );
+    sorr_ios_d3_current_proc_ptr = ( unsigned long long )( uintptr_t )r;
 
     if ( r )
     {
         sorr_ios_d3_last_proc_id = LOCDWORD( r, PROCESS_ID );
+        sorr_ios_d3_last_proc_ptr = ( unsigned long long )( uintptr_t )r;
         sorr_ios_d3_last_proc_status = LOCDWORD( r, STATUS );
         sorr_ios_d3_last_proc_frame_percent = LOCINT32( r, FRAME_PERCENT );
         sorr_ios_d3_last_proc_code_offset = ( r->code && r->codeptr ) ? ( int )( r->codeptr - r->code ) : -1;

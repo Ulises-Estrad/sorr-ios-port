@@ -619,10 +619,15 @@ extern volatile unsigned int sorr_ios_d3_instance_created_count;
 extern volatile unsigned int sorr_ios_d3_instance_destroyed_count;
 extern volatile unsigned int sorr_ios_d3_snapshot_count;
 extern volatile unsigned int sorr_ios_d3_last_proc_id;
+extern volatile unsigned long long sorr_ios_d3_last_proc_ptr;
+extern volatile unsigned long long sorr_ios_d3_current_proc_ptr;
 extern volatile int sorr_ios_d3_last_proc_status;
 extern volatile int sorr_ios_d3_last_proc_frame_percent;
 extern volatile int sorr_ios_d3_last_proc_code_offset;
 extern char sorr_ios_d3_last_proc_name[];
+extern char sorr_ios_d3_last_lifecycle_event[];
+extern char sorr_ios_d3_last_family_unlink[];
+extern char sorr_ios_d3_last_render_event[];
 extern char sorr_ios_d3_runtime_snapshot[];
 extern char sorr_ios_d3_lifecycle_events[];
 extern char sorr_ios_d3_visible_event_log_path[];
@@ -716,7 +721,7 @@ static void sorr_ios_d3_signal_handler(int sig)
         {
             len = snprintf(line,
                            sizeof(line),
-                           "signal=%d ticks=%u stage=%s runtime_loops=%u runtime_frames=%u runtime_runs=%u runtime_last_proc=%s#%u:s%d:f%d:o%d runtime_snapshot=%s runtime_lifecycle=%s\n",
+                           "signal=%d ticks=%u stage=%s runtime_loops=%u runtime_frames=%u runtime_runs=%u runtime_last_proc=%s#%u:s%d:f%d:o%d last_proc_ptr=0x%llx current_proc_ptr=0x%llx last_lifecycle=%s last_family=%s last_render=%s runtime_snapshot=%s runtime_lifecycle=%s\n",
                            sig,
                            SDL_GetTicks(),
                            sorr_ios_d3_stage_name(sorr_ios_d3_stage),
@@ -728,6 +733,11 @@ static void sorr_ios_d3_signal_handler(int sig)
                            sorr_ios_d3_last_proc_status,
                            sorr_ios_d3_last_proc_frame_percent,
                            sorr_ios_d3_last_proc_code_offset,
+                           sorr_ios_d3_last_proc_ptr,
+                           sorr_ios_d3_current_proc_ptr,
+                           sorr_ios_d3_last_lifecycle_event,
+                           sorr_ios_d3_last_family_unlink,
+                           sorr_ios_d3_last_render_event,
                            sorr_ios_d3_runtime_snapshot,
                            sorr_ios_d3_lifecycle_events);
             if (len > 0)
@@ -1610,7 +1620,7 @@ static int sorr_ios_prepare_data_layout(sorr_ios_data_layout *layout)
         sorr_ios_write_text_file(diagnostics_readme_path,
                                  "D3S diagnostics are mirrored here for Files access.\n"
                                  "After an idle crash, reopen SorrIOSShell once, then copy the last lines of ios_d3_runtime_stability_probe.txt.\n"
-                                 "For the five-minute idle issue, include dense_window_start through dense_window_end, runtime_snapshot, runtime_lifecycle, runtime_family_unlink, runtime_render_event, destroy_begin, and signal= lines when present.\n");
+                                 "For the five-minute idle issue, include dense_window_start through dense_window_end, runtime_snapshot, runtime_lifecycle, runtime_family_unlink, runtime_render_event, destroy_begin, last_lifecycle, last_family, last_render, and signal= lines when present.\n");
     }
 
     if (!sorr_ios_create_dir_marker("savegame", layout->savegame_dir) ||

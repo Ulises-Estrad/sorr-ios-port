@@ -1849,3 +1849,26 @@ Result: success
 ```
 
 The simulator shell job also passed in the same run. The device artifact passed the existing IPA layout/signature/forbidden-asset inspection.
+## D3S Enemy/HUD Crash Diagnostic Artifact
+
+The workflow now produces a D3S follow-up artifact aimed at the confirmed `SIGSEGV` in the timed attract/demo gameplay path:
+
+```text
+ios-shell-d3s-enemy-hud-diagnostics-device-arm64
+```
+
+IPA:
+
+```text
+build-products/SorrIOSShell-d3s-enemy-hud-diagnostics-adhoc.ipa
+```
+
+Purpose:
+
+- keep real BGM/SFX enabled,
+- keep the IPA asset-free and continue using the existing D2-staged private data,
+- watch `ENEMIGO` and `ESCRIBE_ENEMIGO` alongside the existing enemy/HUD/effect process set,
+- include `last_lifecycle`, `last_family`, `last_render`, `last_proc_ptr`, and `current_proc_ptr` in signal-handler output,
+- keep render callback guards and watched `runtime_render_event ...` lines.
+
+Expected CI checks remain unchanged: build iphoneos arm64, ad-hoc sign for Sideloadly, package `Payload/SorrIOSShell.app`, inspect Info.plist/architecture/signature, and verify the IPA contains no `SorR.dat`, `data/`, FPG/WAV/OGG/SMK/PNG assets, logs, or prepared data.

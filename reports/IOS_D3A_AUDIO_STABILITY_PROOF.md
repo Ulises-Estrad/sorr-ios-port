@@ -557,3 +557,20 @@ Status: produced successfully.
 - Artifact size: `799927` bytes
 
 The IPA remains asset-free and uses only the D2-staged private data on-device. Use this build to capture the next physical-device log around `LAYER_INTRO`, `INTRO_PRINCIPIO`, `OSCURECE_PANTALLA`, `runtime_render_event`, and `runtime_family_unlink`.
+## D3S Enemy/HUD Crash Diagnostic Target
+
+Latest physical diagnostics captured `signal=11 ticks=275296 stage=runtime-loop`, confirming a bad memory access. Audio remains healthy, and the final context points back into active attract/demo gameplay with `runtime_last_proc=ENEMIGO` and nearby lifecycle/render activity around enemy/HUD/effect processes.
+
+Target artifact:
+
+- `ios-shell-d3s-enemy-hud-diagnostics-device-arm64`
+- `build-products/SorrIOSShell-d3s-enemy-hud-diagnostics-adhoc.ipa`
+
+Added diagnostics:
+
+- explicit watchlist entries for `ENEMIGO` and `ESCRIBE_ENEMIGO`,
+- continued watch coverage for `BARRA_NEGRA`, `BARRA_VIDA1`, `BARRA_SEC_VIDA1`, `MINI_CUADRO1`, `EFECTO_POLVO`, `SOMBRA`, and `ESTIRAMIENTO`,
+- signal-time dump of last lifecycle event, last family unlink, last render event, last process pointer, and current process pointer,
+- existing render callback guards remain enabled.
+
+Manual test: install the IPA with Sideloadly, leave the app foregrounded/untouched until it exits or 10-15 minutes pass, reopen once if needed, then report the last 150-250 lines of `On My iPhone/SorrIOSShell/SORR_DIAGNOSTICS/ios_d3_runtime_stability_probe.txt`.

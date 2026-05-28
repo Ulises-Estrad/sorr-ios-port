@@ -366,3 +366,21 @@ Produced successfully:
 - Simulator job result: success
 
 This is the current recommended physical iPhone diagnostic IPA for the post-demo intro/title-animation exit. It keeps real BGM/SFX enabled, uses the existing D2-staged data, and does not bundle game data/assets in the IPA.
+## D3S Enemy/HUD Crash Diagnostics
+
+Latest physical LAYER_INTRO feedback captured the first concrete fault marker:
+
+```text
+signal=11 ticks=275296 stage=runtime-loop
+```
+
+The crash still lands near runtime_ms ~275000, but the final runtime context now points back into an active attract/demo gameplay path rather than the intro animation itself. The strongest suspects are enemy/HUD/effect process relationships around `ENEMIGO`, `ESCRIBE_ENEMIGO`, `BARRA_NEGRA`, `BARRA_VIDA1`, `BARRA_SEC_VIDA1`, `MINI_CUADRO1`, `EFECTO_POLVO`, `SOMBRA`, and `ESTIRAMIENTO`.
+
+Next artifact target:
+
+- `ios-shell-d3s-enemy-hud-diagnostics-device-arm64`
+- `build-products/SorrIOSShell-d3s-enemy-hud-diagnostics-adhoc.ipa`
+
+This build keeps BGM/SFX enabled and adds `ENEMIGO` and `ESCRIBE_ENEMIGO` to the explicit watchlist. The signal handler now records the last lifecycle event, last family unlink event, last render event, last process pointer, and current process pointer alongside the existing runtime snapshot. The goal is to catch whether an enemy/HUD/effect process is rendering or referencing a process after it has been destroyed.
+
+When testing, report the last 150-250 lines from `Documents/SORR_DIAGNOSTICS/ios_d3_runtime_stability_probe.txt`, especially `signal=11`, `last_lifecycle=`, `last_family=`, `last_render=`, `ENEMIGO`, `ESCRIBE_ENEMIGO`, `BARRA_VIDA1`, `BARRA_SEC_VIDA1`, `MINI_CUADRO1`, `EFECTO_POLVO`, and `runtime_render_event`.

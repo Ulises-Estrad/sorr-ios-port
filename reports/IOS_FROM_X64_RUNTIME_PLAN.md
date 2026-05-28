@@ -687,3 +687,18 @@ The D3S LAYER_INTRO diagnostic IPA was produced successfully:
 - Artifact size: `799927` bytes
 
 Next manual step is physical iPhone testing with the existing D2-staged data. D4a remains blocked until this intro/title-animation diagnostic log identifies the failure point or narrows the exit to a subsystem outside input.
+## D3S Enemy/HUD Crash Follow-Up
+
+The LAYER_INTRO diagnostic build captured a real `SIGSEGV`:
+
+- `signal=11 ticks=275296 stage=runtime-loop`
+- last runtime context near `ENEMIGO`, `ESCRIBE_ENEMIGO`, HUD bars, `EFECTO_POLVO`, and `MINI_CUADRO1`
+- BGM/SFX still healthy
+
+The next D3S artifact stays in stability diagnostics and does not start D4a input. It adds enemy/HUD-specific watch coverage and signal-time dump fields:
+
+- Artifact target: `ios-shell-d3s-enemy-hud-diagnostics-device-arm64`
+- IPA target: `build-products/SorrIOSShell-d3s-enemy-hud-diagnostics-adhoc.ipa`
+- New signal fields: `last_lifecycle`, `last_family`, `last_render`, `last_proc_ptr`, `current_proc_ptr`
+
+The goal is to determine whether the crash is a stale process/render reference during enemy/HUD/effect cleanup or creation in the timed attract/demo gameplay path.
