@@ -1,6 +1,6 @@
 # iOS D3A Audio Stability Proof
 
-Status: Initial D3A audio/stability IPA produced and tested on physical iPhone; follow-up audio-category diagnostic IPA produced by GitHub Actions and ready for physical iPhone test.
+Status: Initial D3A SFX audio/stability IPA produced and tested on physical iPhone; follow-up audio-category diagnostic IPA produced; SDL2_mixer-backed BGM build is in progress.
 
 D3 first render remains complete. D3A is a stability/audio hardening pass for the repeatable foreground idle exit near the five-minute mark.
 
@@ -220,7 +220,7 @@ Game data/assets bundled in IPA: no
 
 ## Expected Result
 
-Best case: the real SDL audio device opens, WAV effects can be queued, music remains inert or silent, and the app idles 10-15 minutes without exiting.
+Best case for the older SFX-only diagnostic build: the real SDL audio device opens, WAV effects can be queued, and the app idles 10-15 minutes without exiting. That endpoint is no longer enough for D3A, because the current target is audible BGM through SDL2_mixer.
 
 Diagnostic case: if the app still exits, the visible log should show whether audio initialized, whether WAV loads/plays are happening, whether unsupported inert handles are stable, and whether the previous retry counters still climb near the 240-300 second window.
 
@@ -260,3 +260,15 @@ Expected physical test:
 6. Leave the app foregrounded and untouched for 10-15 minutes.
 7. If it exits, reopen once and retrieve `On My iPhone/SorrIOSShell/SORR_DIAGNOSTICS/ios_d3_runtime_stability_probe.txt`.
 8. Report the last 40-60 lines, especially `audio_music_last_status`, `audio_music_last_path`, `audio_music_open_ok`, `audio_music_open_fail`, and any `SDL_APP_*` lifecycle markers.
+
+First SDL2_mixer CI result:
+
+```text
+Actions run: 26558533587
+Artifact-producing commit: c733c2a
+Simulator job result: success
+Device job result: failed
+Device artifact uploaded: ios-shell-d3a-music-device-arm64 logs only
+```
+
+Follow-up fix: force SDL2_mixer to configure as a static iOS device build with `BUILD_SHARED_LIBS=OFF`, pass the installed SDL2 CMake package through `SDL2_DIR`, and pass both SDL2 and SDL2_mixer prefixes to the iOS shell configure step.

@@ -141,7 +141,7 @@ Dense logging window: runtime_ms=240000 through runtime_ms=330000 at one-second 
 Game data/assets in IPA: not bundled
 ```
 
-This target does not start D4a touch input. It keeps the D2 data path and D3 render path intact while replacing the pure audio stub with a minimal SDL2 audio backend. WAV effects are loaded through Bennu's virtual file layer and queued to SDL audio; unsupported music/OGG paths receive stable inert handles until SDL2_mixer/codec work is explicitly started later. The follow-up diagnostic build splits the remaining `audio_stub_zero` count into music, WAV, channel-effect, and guarded playback categories.
+This target does not start D4a touch input. It keeps the D2 data path and D3 render path intact while replacing the pure audio stub with a minimal SDL2 audio backend. WAV effects are loaded through Bennu's virtual file layer and queued to SDL audio. That SFX-only path proved useful diagnostically, but it is now superseded by the D3A music target because inert/silent BGM is not an acceptable endpoint.
 
 ## Workflow Summary
 
@@ -1604,3 +1604,15 @@ ad-hoc signature valid
 ```
 
 If the workflow fails, the first likely failure area is SDL2_mixer CMake configuration or static link resolution. The app-side CMake requires `SORR_IOS_SDL2_MIXER_ROOT` for D3 builds because inert/silent BGM is no longer an acceptable D3A endpoint.
+
+First SDL2_mixer D3A CI iteration:
+
+```text
+Actions run: 26558533587
+Artifact-producing commit: c733c2a
+Simulator job result: success
+Device job result: failed
+Device artifact uploaded: ios-shell-d3a-music-device-arm64 logs only
+```
+
+Likely first failure area: SDL2_mixer device configure/static build setup. The follow-up workflow patch forces SDL2_mixer to use a static build with `BUILD_SHARED_LIBS=OFF`, passes the concrete SDL2 CMake package directory through `SDL2_DIR`, and gives the app configure step both SDL2 and SDL2_mixer install prefixes in `CMAKE_PREFIX_PATH`.
