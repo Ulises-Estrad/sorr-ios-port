@@ -1159,6 +1159,16 @@ Cause: mod_sys.c uses UIKit Objective-C code when TARGET_IOS is defined but was 
 Fix: enable OBJC language for the D3 iOS project and set mod_sys.c LANGUAGE OBJC only for the D3 Apple target
 ```
 
+Fourth D3 CI failure:
+
+```text
+Commit: be532ad
+Run: 26546610123
+Failed step: Build unsigned iOS shell app for device
+Cause: mod_m7.c passed int callbacks to gr_new_object even though the render object API carries callback context as void *
+Fix: mode7 callbacks now accept void * context and convert through intptr_t at the callback boundary
+```
+
 Manual D3 test flow:
 
 1. Keep the D2 data staged on the iPhone.

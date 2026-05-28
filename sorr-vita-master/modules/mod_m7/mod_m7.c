@@ -28,6 +28,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 
 #include <math.h>
 
@@ -462,8 +463,9 @@ static int compare_by_distance( const void * ptr1, const void * ptr2 )
                 ptr32 = ( uint32_t * ) ( baseline + (( jump > 0 ) ? dest->pitch : -( int )dest->pitch ) ); \
 
 
-static void draw_mode7( int n, REGION * clip )
+static void draw_mode7( void * what, REGION * clip )
 {
+    int n = ( int )( intptr_t ) what;
     fixed   bmp_x, bmp_y ;
     fixed   base_x,   base_y,   base_z ;
     fixed   camera_x, camera_y, camera_z ;
@@ -878,8 +880,9 @@ static void draw_mode7( int n, REGION * clip )
 
 /* --------------------------------------------------------------------------- */
 
-static int info_mode7( int n, REGION * clip, int * z, int * drawme )
+static int info_mode7( void * what, REGION * clip, int * z, int * drawme )
 {
+    int n = ( int )( intptr_t ) what;
     MODE7_INFO * dat   = &(( MODE7_INFO * ) & GLODWORD( mod_m7, M7STRUCTS ) )[n];
 
     * z = dat->z;
@@ -917,7 +920,7 @@ static int __m7_start( int n, int fileid, int inid, int outid, int region, int h
     mode7_inf[n].region  = region_get( region ) ;
 
     if ( mode7_inf[n].id ) gr_destroy_object( mode7_inf[n].id );
-    mode7_inf[n].id = gr_new_object( dat->z, info_mode7, draw_mode7, n );
+    mode7_inf[n].id = gr_new_object( dat->z, info_mode7, draw_mode7, ( void * )( intptr_t ) n );
 
     return 1;
 }

@@ -89,6 +89,16 @@ Failure: mod_sys.c includes UIKit Objective-C code for TARGET_IOS but was compil
 Fix: enable Objective-C for the D3 iOS project and mark only mod_sys.c as OBJC
 ```
 
+Fourth D3 attempt:
+
+```text
+Commit: be532ad
+Run: 26546610123
+Result: device compile failed
+Failure: mod_m7.c used int callback parameters where the render object API expects void * callback context
+Fix: convert the mode7 render-object callback boundary to void * plus intptr_t casts
+```
+
 The IPA must still contain no:
 
 - `SorR.dat`
