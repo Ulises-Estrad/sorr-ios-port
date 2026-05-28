@@ -655,3 +655,14 @@ Next diagnostic artifact:
 - `build-products/SorrIOSShell-d3s-title-reentry-diagnostics-adhoc.ipa`
 
 This build keeps BGM/SFX enabled and logs the process family unlink path for the suspected title re-entry processes. The key new marker is `runtime_family_unlink`, which records father/son/sibling ids before and after `instance_destroy` updates hierarchy links. The goal is to determine whether `MENU` teardown leaves `INTRO`, trophies, or resolution helper processes with stale parent/child/called-by relationships.
+## D3S Title Re-Entry Artifact Proof
+
+The D3S title re-entry diagnostic IPA was produced successfully:
+
+- Actions run: `26599649375`
+- Commit: `5d63a6d`
+- Artifact: `ios-shell-d3s-title-reentry-diagnostics-device-arm64`
+- IPA: `build-products/SorrIOSShell-d3s-title-reentry-diagnostics-adhoc.ipa`
+- Artifact size: `799257` bytes
+
+Next manual step is physical iPhone testing with the existing D2-staged data. D4a remains blocked until this title re-entry log identifies the failure point or narrows the exit to a subsystem outside input.

@@ -330,3 +330,14 @@ Next artifact target:
 This build keeps BGM/SFX enabled and adds focused watch coverage for `INTRO`, `MENU`, `TROPHIES_CALL`, `TROPHIES_CONTROL`, and `RESOLUCIONX`. It also mirrors `runtime_family_unlink ...` lines into the Files-visible diagnostics log, capturing father/son/sibling ids before and after Bennu unlinks a dying process from the hierarchy.
 
 When testing, report the last 150-200 lines from `Documents/SORR_DIAGNOSTICS/ios_d3_runtime_stability_probe.txt`, especially `runtime_family_unlink`, `runtime_lifecycle ... MENU`, `runtime_lifecycle ... INTRO`, `TROPHIES_CALL`, `TROPHIES_CONTROL`, `RESOLUCIONX`, `runtime_snapshot`, and any `signal=` line.
+## GitHub-Side D3S Title Re-Entry Artifact Proof
+
+Produced successfully:
+
+- Actions run: `26599649375`
+- Commit: `5d63a6d`
+- Artifact: `ios-shell-d3s-title-reentry-diagnostics-device-arm64`
+- IPA: `build-products/SorrIOSShell-d3s-title-reentry-diagnostics-adhoc.ipa`
+- Artifact size: `799257` bytes
+
+This is the current recommended physical iPhone diagnostic IPA for the post-demo return-to-title exit. It keeps real BGM/SFX enabled, uses the existing D2-staged data, and does not bundle game data/assets in the IPA.

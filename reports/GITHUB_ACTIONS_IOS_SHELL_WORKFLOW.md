@@ -1763,6 +1763,18 @@ Purpose:
 - include family ids/validity and called-by id/validity on lifecycle lines.
 
 Expected CI checks remain unchanged: build iphoneos arm64, ad-hoc sign for Sideloadly, package `Payload/SorrIOSShell.app`, inspect Info.plist/architecture/signature, and verify the IPA contains no `SorR.dat`, `data/`, FPG/WAV/OGG/SMK/PNG assets, logs, or prepared data.
+GitHub-side D3S title re-entry artifact proof:
+
+```text
+Actions run: 26599649375
+Commit: 5d63a6d
+Device artifact: ios-shell-d3s-title-reentry-diagnostics-device-arm64
+IPA: build-products/SorrIOSShell-d3s-title-reentry-diagnostics-adhoc.ipa
+Artifact size: 799257 bytes
+Result: success
+```
+
+The simulator shell job also passed in the same run. The device artifact passed the existing IPA layout/signature/forbidden-asset inspection.
 GitHub-side D3S demo teardown artifact proof:
 
 ```text

@@ -517,3 +517,14 @@ Added diagnostics:
 - Files-visible README updated to request `runtime_family_unlink` lines after a crash.
 
 Manual test: install the IPA with Sideloadly, leave the app foregrounded/untouched until it exits or 10-15 minutes pass, reopen once if needed, then report the last 150-200 lines of `On My iPhone/SorrIOSShell/SORR_DIAGNOSTICS/ios_d3_runtime_stability_probe.txt`.
+## GitHub-Side D3S Title Re-Entry Diagnostic Proof
+
+Status: produced successfully.
+
+- Actions run: `26599649375`
+- Artifact-producing commit: `5d63a6d`
+- Device artifact: `ios-shell-d3s-title-reentry-diagnostics-device-arm64`
+- IPA: `build-products/SorrIOSShell-d3s-title-reentry-diagnostics-adhoc.ipa`
+- Artifact size: `799257` bytes
+
+The IPA remains asset-free and uses only the D2-staged private data on-device. Use this build to capture the next physical-device title re-entry log around `MENU`, `INTRO`, `TROPHIES_CALL`, `TROPHIES_CONTROL`, `RESOLUCIONX`, and any `runtime_family_unlink` lines.
