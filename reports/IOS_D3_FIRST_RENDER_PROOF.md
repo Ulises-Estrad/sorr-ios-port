@@ -129,6 +129,16 @@ Failure: mod_draw.c used DRAWING_OBJECT * callback parameters where the render o
 Fix: convert the mod_draw render-object callbacks to void * and cast back to DRAWING_OBJECT * inside the callbacks
 ```
 
+Eighth D3 attempt:
+
+```text
+Commit: 90596ec
+Run: 26547897400
+Result: device compile failed
+Failure: libtext.c used TEXT * callback parameters where the render object API expects void * callback context
+Fix: convert the text render-object callbacks to void * and cast back to TEXT * inside the callbacks
+```
+
 The IPA must still contain no:
 
 - `SorR.dat`

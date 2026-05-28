@@ -1199,6 +1199,16 @@ Cause: mod_draw.c passed DRAWING_OBJECT * callbacks to gr_new_object while the r
 Fix: mod_draw callbacks now accept void * context and cast back to DRAWING_OBJECT * inside the callback body
 ```
 
+Eighth D3 CI failure:
+
+```text
+Commit: 90596ec
+Run: 26547897400
+Failed step: Build unsigned iOS shell app for device
+Cause: libtext.c passed TEXT * callbacks to gr_new_object while the render object API expects void * callback context
+Fix: text callbacks now accept void * context and cast back to TEXT * inside the callback body
+```
+
 Manual D3 test flow:
 
 1. Keep the D2 data staged on the iPhone.
