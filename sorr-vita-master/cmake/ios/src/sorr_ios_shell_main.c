@@ -617,6 +617,24 @@ extern volatile unsigned int sorr_ios_audio_wav_load_fail_count;
 extern volatile unsigned int sorr_ios_audio_wav_play_count;
 extern volatile unsigned int sorr_ios_audio_inert_handle_count;
 extern volatile unsigned int sorr_ios_audio_queue_clear_count;
+extern volatile unsigned int sorr_ios_audio_music_load_attempt_count;
+extern volatile unsigned int sorr_ios_audio_music_open_ok_count;
+extern volatile unsigned int sorr_ios_audio_music_open_fail_count;
+extern volatile unsigned int sorr_ios_audio_live_handle_count;
+extern volatile unsigned int sorr_ios_audio_live_wav_count;
+extern volatile unsigned int sorr_ios_audio_live_inert_wav_count;
+extern volatile unsigned int sorr_ios_audio_live_music_count;
+extern volatile unsigned int sorr_ios_audio_max_live_handle_count;
+extern volatile unsigned int sorr_ios_audio_zero_music_play_count;
+extern volatile unsigned int sorr_ios_audio_zero_music_control_count;
+extern volatile unsigned int sorr_ios_audio_zero_music_query_count;
+extern volatile unsigned int sorr_ios_audio_zero_wav_control_count;
+extern volatile unsigned int sorr_ios_audio_zero_wav_query_count;
+extern volatile unsigned int sorr_ios_audio_zero_wav_volume_count;
+extern volatile unsigned int sorr_ios_audio_zero_channel_effect_count;
+extern volatile unsigned int sorr_ios_audio_zero_play_wav_guard_count;
+extern char sorr_ios_audio_last_music_path[];
+extern char sorr_ios_audio_last_music_status[];
 
 #define SORR_IOS_D3_HEARTBEAT_NORMAL_MS 10000u
 #define SORR_IOS_D3_HEARTBEAT_DENSE_MS 1000u
@@ -671,7 +689,7 @@ static void sorr_ios_d3_append_log_file(const char *path, const char *line)
 
 static void sorr_ios_d3_log(const sorr_ios_data_layout *layout, const char *format, ...)
 {
-    char line[2048];
+    char line[4096];
     va_list args;
 
     if (!format)
@@ -697,7 +715,7 @@ static void sorr_ios_d3_log(const sorr_ios_data_layout *layout, const char *form
 
 static void sorr_ios_d3_stability_log(const sorr_ios_data_layout *layout, const char *format, ...)
 {
-    char line[2048];
+    char line[4096];
     va_list args;
 
     if (!format)
@@ -822,7 +840,7 @@ static Uint32 sorr_ios_d3_heartbeat_timer(Uint32 interval, void *param)
     }
 
     sorr_ios_d3_stability_log(layout,
-                              "heartbeat=%u ticks=%u runtime_ms=%u interval_next_ms=%u stage=%s rss_bytes=%llu frame_count=%u last_frame_ticks=%d frame_ms=%.3f fps_count=%d fps_init=%d max_jump=%d jump=%d instances=%d render_objects=%d opened_files=%d x_files=%d max_x_files=%d audio_stub_zero=%u audio_stub_minus_one=%u audio_init_attempts=%u audio_init_ok=%u audio_init_fail=%u audio_wav_load_ok=%u audio_wav_load_fail=%u audio_wav_play=%u audio_inert_handles=%u audio_queue_clears=%u",
+                              "heartbeat=%u ticks=%u runtime_ms=%u interval_next_ms=%u stage=%s rss_bytes=%llu frame_count=%u last_frame_ticks=%d frame_ms=%.3f fps_count=%d fps_init=%d max_jump=%d jump=%d instances=%d render_objects=%d opened_files=%d x_files=%d max_x_files=%d audio_stub_zero=%u audio_stub_minus_one=%u audio_init_attempts=%u audio_init_ok=%u audio_init_fail=%u audio_wav_load_ok=%u audio_wav_load_fail=%u audio_wav_play=%u audio_inert_handles=%u audio_queue_clears=%u audio_music_load_attempts=%u audio_music_open_ok=%u audio_music_open_fail=%u audio_live_handles=%u audio_live_wav=%u audio_live_inert_wav=%u audio_live_music=%u audio_max_live_handles=%u audio_zero_music_play=%u audio_zero_music_control=%u audio_zero_music_query=%u audio_zero_wav_control=%u audio_zero_wav_query=%u audio_zero_wav_volume=%u audio_zero_channel_effect=%u audio_zero_play_wav_guard=%u audio_music_last_status=%s audio_music_last_path=%s",
                               heartbeat,
                               ticks,
                               runtime_ms,
@@ -850,7 +868,25 @@ static Uint32 sorr_ios_d3_heartbeat_timer(Uint32 interval, void *param)
                               sorr_ios_audio_wav_load_fail_count,
                               sorr_ios_audio_wav_play_count,
                               sorr_ios_audio_inert_handle_count,
-                              sorr_ios_audio_queue_clear_count);
+                              sorr_ios_audio_queue_clear_count,
+                              sorr_ios_audio_music_load_attempt_count,
+                              sorr_ios_audio_music_open_ok_count,
+                              sorr_ios_audio_music_open_fail_count,
+                              sorr_ios_audio_live_handle_count,
+                              sorr_ios_audio_live_wav_count,
+                              sorr_ios_audio_live_inert_wav_count,
+                              sorr_ios_audio_live_music_count,
+                              sorr_ios_audio_max_live_handle_count,
+                              sorr_ios_audio_zero_music_play_count,
+                              sorr_ios_audio_zero_music_control_count,
+                              sorr_ios_audio_zero_music_query_count,
+                              sorr_ios_audio_zero_wav_control_count,
+                              sorr_ios_audio_zero_wav_query_count,
+                              sorr_ios_audio_zero_wav_volume_count,
+                              sorr_ios_audio_zero_channel_effect_count,
+                              sorr_ios_audio_zero_play_wav_guard_count,
+                              sorr_ios_audio_last_music_status,
+                              sorr_ios_audio_last_music_path);
     return next_interval;
 }
 

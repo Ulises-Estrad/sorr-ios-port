@@ -130,18 +130,18 @@ Physical import/storage result: superseded by completed SORR_IMPORT proof
 
 Updated D2 `SORR_IMPORT` physical proof is complete.
 
-Current D3A audio/stability target:
+Current D3A audio/stability diagnostic target:
 
 ```text
-Artifact: ios-shell-d3a-audio-device-arm64
-IPA inside artifact: build-products/SorrIOSShell-d3a-audio-adhoc.ipa
-Purpose: physical-device first-render stability diagnostics with minimal real SDL audio
+Artifact: ios-shell-d3a-audio-diagnostics-device-arm64
+IPA inside artifact: build-products/SorrIOSShell-d3a-audio-diagnostics-adhoc.ipa
+Purpose: physical-device first-render stability diagnostics with minimal real SDL audio, named audio no-op counters, and music/BGM file-open diagnostics
 Diagnostics path on phone: On My iPhone/SorrIOSShell/SORR_DIAGNOSTICS/ios_d3_runtime_stability_probe.txt
 Dense logging window: runtime_ms=240000 through runtime_ms=330000 at one-second cadence
 Game data/assets in IPA: not bundled
 ```
 
-This target does not start D4a touch input. It keeps the D2 data path and D3 render path intact while replacing the pure audio stub with a minimal SDL2 audio backend. WAV effects are loaded through Bennu's virtual file layer and queued to SDL audio; unsupported music/OGG paths receive stable inert handles until SDL2_mixer/codec work is explicitly started later.
+This target does not start D4a touch input. It keeps the D2 data path and D3 render path intact while replacing the pure audio stub with a minimal SDL2 audio backend. WAV effects are loaded through Bennu's virtual file layer and queued to SDL audio; unsupported music/OGG paths receive stable inert handles until SDL2_mixer/codec work is explicitly started later. The follow-up diagnostic build splits the remaining `audio_stub_zero` count into music, WAV, channel-effect, and guarded playback categories.
 
 ## Workflow Summary
 
@@ -1494,18 +1494,19 @@ The next device artifact therefore pivots from a pure audio stub to a minimal SD
 - WAV data is converted to the opened device format and queued with `SDL_QueueAudio`,
 - unsupported song/music paths are assigned stable inert handles instead of repeated hard failures,
 - D3S visible diagnostics remain enabled,
-- heartbeat lines include audio init/load/play/inert-handle counters.
+- heartbeat lines include audio init/load/play/inert-handle counters,
+- follow-up heartbeat lines include named audio zero categories, live audio handle counts, and last music/BGM file-open status/path.
 
 Artifact target:
 
 ```text
-ios-shell-d3a-audio-device-arm64
+ios-shell-d3a-audio-diagnostics-device-arm64
 ```
 
 IPA target:
 
 ```text
-build-products/SorrIOSShell-d3a-audio-adhoc.ipa
+build-products/SorrIOSShell-d3a-audio-diagnostics-adhoc.ipa
 ```
 
 First D3A CI failure:
@@ -1530,12 +1531,26 @@ Simulator job result: success
 Game data/assets bundled in IPA: no
 ```
 
-Manual D3A test:
+Initial physical D3A result:
+
+```text
+SFX audio init: ok
+WAV loads: audio_wav_load_ok=122 audio_wav_load_fail=0
+WAV playback: audio_wav_play=304
+audio_stub_minus_one: 0
+audio_stub_zero: still climbing
+Last marker before exit: heartbeat=49 ticks=274472 runtime_ms=273127
+RSS near last marker: approximately 145 MB
+Result: still exits around five minutes
+```
+
+Manual D3A diagnostic test:
 
 1. Keep the D2-staged data on the iPhone.
-2. Install `build-products/SorrIOSShell-d3a-audio-adhoc.ipa` with Sideloadly.
-3. Launch `SorrIOSShell` and confirm real SoRR rendering still appears.
-4. Note whether audio is audible. WAV effects may work; music may remain silent until SDL2_mixer/OGG/Vorbis is added.
-5. Leave the app foregrounded and untouched for 10-15 minutes.
-6. If it exits, reopen once and retrieve `On My iPhone/SorrIOSShell/SORR_DIAGNOSTICS/ios_d3_runtime_stability_probe.txt`.
-7. Report the last 40-60 lines, including audio counters and any `SDL_APP_*` lifecycle markers.
+2. If the staged data may be missing BGM, regenerate the local-only `out/local-only/SORR_IMPORT.zip` with `tools/create_d2_import_package.ps1`; the helper now verifies `SORR_IMPORT/mod/music/1.ogg`.
+3. Install `build-products/SorrIOSShell-d3a-audio-diagnostics-adhoc.ipa` with Sideloadly.
+4. Launch `SorrIOSShell` and confirm real SoRR rendering still appears.
+5. Note whether audio is audible. WAV effects may work; music may remain silent until SDL2_mixer/OGG/Vorbis is added.
+6. Leave the app foregrounded and untouched for 10-15 minutes.
+7. If it exits, reopen once and retrieve `On My iPhone/SorrIOSShell/SORR_DIAGNOSTICS/ios_d3_runtime_stability_probe.txt`.
+8. Report the last 40-60 lines, including named audio counters, `audio_music_last_*`, and any `SDL_APP_*` lifecycle markers.

@@ -89,11 +89,13 @@ The iPhone is configured not to auto-lock, so normal auto-lock is not the lead t
 Current D3A audio/stability artifact target:
 
 ```text
-Artifact: ios-shell-d3a-audio-device-arm64
-IPA: build-products/SorrIOSShell-d3a-audio-adhoc.ipa
+Artifact: ios-shell-d3a-audio-diagnostics-device-arm64
+IPA: build-products/SorrIOSShell-d3a-audio-diagnostics-adhoc.ipa
 Diagnostics: On My iPhone/SorrIOSShell/SORR_DIAGNOSTICS/ios_d3_runtime_stability_probe.txt
-Audio scope: minimal real SDL audio, WAV effect decode/queue, inert handles for unsupported music
+Audio scope: minimal real SDL audio, WAV effect decode/queue, inert handles for unsupported music, named audio no-op counters, music/BGM file-open diagnostics
 ```
+
+Initial D3A physical test confirmed SFX audio initializes and plays, but the app still exits around five minutes. The next diagnostic artifact remains a D3 stability/audio hardening pass and does not start D4a touch controls.
 
 GitHub-side D3S idle-window artifact proof:
 

@@ -359,7 +359,7 @@ Game data/assets bundled in IPA: no
 
 D3A audio/stability update:
 
-The idle-window diagnostics still showed a repeatable foreground exit near five minutes. Memory and file counters were not the obvious cause, while audio stub counters rose steadily during the 240-300 second window. The next D3A artifact keeps the same D2-staged data and D3 render path, but restores a minimal SDL2 audio backend for iOS:
+The idle-window diagnostics still showed a repeatable foreground exit near five minutes. Memory and file counters were not the obvious cause, while audio stub counters rose steadily during the 240-300 second window. The first D3A artifact restored a minimal SDL2 audio backend for iOS:
 
 - opens the real SDL audio device,
 - loads WAV effects through Bennu `file_open`,
@@ -370,11 +370,11 @@ The idle-window diagnostics still showed a repeatable foreground exit near five 
 Artifact target:
 
 ```text
-ios-shell-d3a-audio-device-arm64
-build-products/SorrIOSShell-d3a-audio-adhoc.ipa
+ios-shell-d3a-audio-diagnostics-device-arm64
+build-products/SorrIOSShell-d3a-audio-diagnostics-adhoc.ipa
 ```
 
-Install through the same Windows + Sideloadly route. Leave the app foregrounded and untouched for 10-15 minutes. If it exits, reopen it once, then retrieve the last 40-60 lines from:
+The follow-up diagnostic artifact keeps that SFX audio path and adds named audio no-op categories, music/BGM file-open diagnostics, and live audio handle counters. Install through the same Windows + Sideloadly route. Leave the app foregrounded and untouched for 10-15 minutes. If it exits, reopen it once, then retrieve the last 40-60 lines from:
 
 ```text
 On My iPhone/SorrIOSShell/SORR_DIAGNOSTICS/ios_d3_runtime_stability_probe.txt
@@ -393,5 +393,7 @@ Artifact-producing commit: d6785c7
 Device job result: success
 Simulator job result: success
 Game data/assets bundled in IPA: no
-Physical idle result: pending user test
+Physical idle result: initial D3A audio pass still exited around five minutes
+SFX result: audio_init_ok=1, audio_wav_load_ok=122, audio_wav_play=304
+Next artifact: ios-shell-d3a-audio-diagnostics-device-arm64
 ```

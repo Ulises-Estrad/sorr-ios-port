@@ -1,6 +1,6 @@
 # iOS D3 Stability Follow-Up
 
-Status: D3A minimal real-audio stability IPA produced by GitHub Actions; physical iPhone idle test pending.
+Status: D3A minimal real-audio IPA produced and physically tested; follow-up audio-category diagnostic IPA in progress.
 
 D3 first render remains complete. This pass hardens the already-rendering D3 build after a repeatable physical-device idle exit was observed at about five minutes.
 
@@ -51,6 +51,22 @@ The idle-window log did not show an obvious memory or file-handle spike, but the
 
 This is still not full SDL2_mixer/OGG/Vorbis support. Music may remain silent. The test goal is stability and avoiding repeated broken/stubbed audio failures before D4a touch input.
 
+Initial physical D3A result:
+
+```text
+audio_init_attempts=1
+audio_init_ok=1
+audio_init_fail=0
+audio_wav_load_ok=122
+audio_wav_load_fail=0
+audio_wav_play=304
+audio_stub_minus_one=0
+heartbeat=49 ticks=274472 runtime_ms=273127
+rss_bytes approximately 145 MB
+```
+
+The app still exited around five minutes, so the next diagnostic pass keeps real SFX audio but splits the remaining `audio_stub_zero` calls into named categories and logs BGM/music file-open attempts.
+
 ## Stability Log
 
 The local-only iPhone log is:
@@ -89,7 +105,7 @@ Important markers:
 - `runtime loop start ticks=... dense_start_ms=240000 dense_end_ms=330000`
 - `first_frame_detected ticks=... runtime_ms=... frame_count=...`
 - `dense_window_start ticks=... runtime_ms=... stage=runtime-loop`
-- `heartbeat=N ticks=... runtime_ms=... interval_next_ms=... stage=runtime-loop rss_bytes=... frame_count=... instances=... render_objects=... opened_files=... audio_stub_zero=... audio_stub_minus_one=... audio_init_attempts=... audio_init_ok=... audio_init_fail=... audio_wav_load_ok=... audio_wav_load_fail=... audio_wav_play=... audio_inert_handles=... audio_queue_clears=...`
+- `heartbeat=N ticks=... runtime_ms=... interval_next_ms=... stage=runtime-loop rss_bytes=... frame_count=... instances=... render_objects=... opened_files=... audio_stub_zero=... audio_stub_minus_one=... audio_init_attempts=... audio_init_ok=... audio_init_fail=... audio_wav_load_ok=... audio_wav_load_fail=... audio_wav_play=... audio_inert_handles=... audio_queue_clears=... audio_music_load_attempts=... audio_music_open_ok=... audio_music_open_fail=... audio_live_handles=... audio_live_wav=... audio_live_inert_wav=... audio_live_music=... audio_max_live_handles=... audio_zero_music_play=... audio_zero_music_control=... audio_zero_music_query=... audio_zero_wav_control=... audio_zero_wav_query=... audio_zero_wav_volume=... audio_zero_channel_effect=... audio_zero_play_wav_guard=... audio_music_last_status=... audio_music_last_path=...`
 - `dense_window_end ticks=... runtime_ms=... stage=runtime-loop`
 - `event=SDL_APP_WILLENTERBACKGROUND`
 - `event=SDL_APP_DIDENTERBACKGROUND`
@@ -136,12 +152,12 @@ Focus: one-second diagnostics during runtime_ms=240000..330000
 Game data/assets bundled in IPA: no
 ```
 
-Current D3A audio/stability target:
+Current D3A audio/stability diagnostic target:
 
 ```text
-Artifact: ios-shell-d3a-audio-device-arm64
-IPA: build-products/SorrIOSShell-d3a-audio-adhoc.ipa
-Focus: minimal real SDL audio backend plus the existing 240000..330000 ms dense diagnostics
+Artifact: ios-shell-d3a-audio-diagnostics-device-arm64
+IPA: build-products/SorrIOSShell-d3a-audio-diagnostics-adhoc.ipa
+Focus: minimal real SDL audio backend, named audio no-op categories, BGM file-open diagnostics, and the existing 240000..330000 ms dense diagnostics
 Game data/assets bundled in IPA: no
 ```
 
@@ -156,6 +172,16 @@ Artifact-producing commit: d6785c7
 Device job result: success
 Simulator job result: success
 Game data/assets bundled in IPA: no
+```
+
+Initial D3A physical test result:
+
+```text
+SFX audio init/load/play counters: working
+audio_stub_minus_one: no longer climbing
+audio_stub_zero: still climbing
+Foreground idle result: still exits around five minutes
+Likely next evidence needed: named audio zero category and music/BGM file-open counters
 ```
 
 GitHub-side D3S idle-window diagnostics artifact proof:
@@ -174,18 +200,19 @@ Game data/assets bundled in IPA: no
 ## Manual iPhone Test
 
 1. Keep the D2-staged data on the iPhone.
-2. Download `ios-shell-d3a-audio-device-arm64` from GitHub Actions.
-3. Extract the artifact on Windows.
-4. Install `build-products/SorrIOSShell-d3a-audio-adhoc.ipa` through Sideloadly.
-5. Open `SorrIOSShell`.
-6. Confirm the real SoRR render still appears.
-7. Note whether any audio is audible.
-8. Leave the app foregrounded and untouched until it exits or 10-15 minutes pass.
-9. If it exits, reopen it once.
-10. Open Files: `On My iPhone -> SorrIOSShell -> SORR_DIAGNOSTICS`.
-11. Copy or screenshot the last 40-60 lines of `ios_d3_runtime_stability_probe.txt`.
-12. If present, include the block from `dense_window_start` through `dense_window_end`.
-13. Do not start D4a controls until this pass is reviewed.
+2. If the staged data may be missing BGM, regenerate the local-only import package with `powershell -ExecutionPolicy Bypass -File tools\create_d2_import_package.ps1` and refresh the D2 import through Files. The helper now verifies `SORR_IMPORT/mod/music/1.ogg`.
+3. Download `ios-shell-d3a-audio-diagnostics-device-arm64` from GitHub Actions.
+4. Extract the artifact on Windows.
+5. Install `build-products/SorrIOSShell-d3a-audio-diagnostics-adhoc.ipa` through Sideloadly.
+6. Open `SorrIOSShell`.
+7. Confirm the real SoRR render still appears.
+8. Note whether any audio is audible.
+9. Leave the app foregrounded and untouched until it exits or 10-15 minutes pass.
+10. If it exits, reopen it once.
+11. Open Files: `On My iPhone -> SorrIOSShell -> SORR_DIAGNOSTICS`.
+12. Copy or screenshot the last 40-60 lines of `ios_d3_runtime_stability_probe.txt`.
+13. If present, include the block from `dense_window_start` through `dense_window_end`, especially the `audio_zero_*` and `audio_music_last_*` fields.
+14. Do not start D4a controls until this pass is reviewed.
 
 ## Expected Results
 

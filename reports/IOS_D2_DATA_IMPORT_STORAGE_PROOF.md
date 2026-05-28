@@ -198,6 +198,7 @@ The helper searches known local SoRR data roots, prefers the prepared `sorr-vita
 ```text
 SORR_IMPORT/SorR.dat
 SORR_IMPORT/mod/system.txt
+SORR_IMPORT/mod/music/1.ogg
 ```
 
 Current local package proof:
@@ -211,6 +212,19 @@ Required entries verified: yes
 ```
 
 This zip is local-only. Do not commit it, upload it, attach it to GitHub Actions, or bundle it into the IPA. `.gitignore` excludes `out/`, `out/local-only/`, `*.zip`, `SorR.dat`, `data/`, and the known game asset extensions.
+
+D3A helper refresh:
+
+```text
+Source root: sorr-vita-master/data
+Source music/BGM files found: 237
+Staged music/BGM files: 237
+Zip: out/local-only/SORR_IMPORT.zip
+SHA256: 261190316E0D539546596738333D6752D69E209FBB8E6B7BF61B0B1DDBAB8A7D
+Required entries verified: SorR.dat, mod/system.txt, mod/music/1.ogg
+```
+
+This refresh does not redefine the completed D2 physical proof. It only makes the local helper safer for D3A by ensuring the private import package includes the prepared BGM/music folder when the user refreshes the iPhone's staged data.
 
 ## Expected Visible Status
 

@@ -1,6 +1,6 @@
 # iOS D3A Audio Stability Proof
 
-Status: D3A audio/stability IPA produced by GitHub Actions; physical iPhone idle test pending.
+Status: Initial D3A audio/stability IPA produced by GitHub Actions and tested on physical iPhone; follow-up audio-category diagnostic IPA in progress.
 
 D3 first render remains complete. D3A is a stability/audio hardening pass for the repeatable foreground idle exit near the five-minute mark.
 
@@ -37,6 +37,29 @@ heartbeat=49 audio_stub_zero=13113 audio_stub_minus_one=308
 
 D3A therefore replaces the pure iOS audio stub with a minimal SDL2 audio backend.
 
+## Initial Physical D3A Result
+
+The first D3A audio IPA was installed and tested on the physical iPhone. It still rendered and ran the real SoRR runtime from D2-staged data, and the visible diagnostics confirmed the minimal real SFX path is active:
+
+```text
+audio_init_attempts=1
+audio_init_ok=1
+audio_init_fail=0
+audio_wav_load_ok=122
+audio_wav_load_fail=0
+audio_wav_play=304
+audio_stub_minus_one=0
+```
+
+The app still exited in the same approximate five-minute foreground idle window:
+
+```text
+heartbeat=49 ticks=274472 runtime_ms=273127
+rss_bytes approximately 145 MB
+```
+
+This means minimal real SFX audio works, but it did not fix the idle exit by itself. The remaining suspicious signals are the still-rising `audio_stub_zero` counter, missing or inert music/BGM behavior, and resource growth around the timed 240-300 second idle/demo window.
+
 ## D3A Audio Backend
 
 The iOS `mod_sound` replacement now:
@@ -72,23 +95,58 @@ Heartbeat lines now include:
 - `audio_wav_play`
 - `audio_inert_handles`
 - `audio_queue_clears`
+- `audio_music_load_attempts`
+- `audio_music_open_ok`
+- `audio_music_open_fail`
+- `audio_live_handles`
+- `audio_live_wav`
+- `audio_live_inert_wav`
+- `audio_live_music`
+- `audio_max_live_handles`
+- `audio_zero_music_play`
+- `audio_zero_music_control`
+- `audio_zero_music_query`
+- `audio_zero_wav_control`
+- `audio_zero_wav_query`
+- `audio_zero_wav_volume`
+- `audio_zero_channel_effect`
+- `audio_zero_play_wav_guard`
+- `audio_music_last_status`
+- `audio_music_last_path`
 - legacy `audio_stub_zero`
 - legacy `audio_stub_minus_one`
 
-The expected improvement is that `audio_stub_minus_one` stops rising. `audio_stub_zero` may still increase for intentional compatibility no-ops such as unsupported music operations.
+The follow-up diagnostic build splits `audio_stub_zero` into named categories so the next physical run can distinguish music play/control/query calls, WAV control/query/volume calls, channel effects, and guarded `PLAY_WAV` no-ops. It also logs the last music path and whether Bennu's file layer can open it.
+
+## Local-Only Music Import Validation
+
+The local-only Windows helper now validates that the import package includes prepared BGM/music data under `mod/music`. It refuses a source root with no `mod/music` audio files and verifies this ZIP entry in addition to `SorR.dat` and `mod/system.txt`:
+
+```text
+SORR_IMPORT/mod/music/1.ogg
+```
+
+The regenerated local-only package from `sorr-vita-master/data` contains 237 music/BGM files:
+
+```text
+Zip: out/local-only/SORR_IMPORT.zip
+SHA256: 261190316E0D539546596738333D6752D69E209FBB8E6B7BF61B0B1DDBAB8A7D
+```
+
+This ZIP remains local-only. Do not commit, upload, attach, or bundle it.
 
 ## Artifact Target
 
 GitHub Actions device artifact:
 
 ```text
-ios-shell-d3a-audio-device-arm64
+ios-shell-d3a-audio-diagnostics-device-arm64
 ```
 
 IPA inside artifact:
 
 ```text
-build-products/SorrIOSShell-d3a-audio-adhoc.ipa
+build-products/SorrIOSShell-d3a-audio-diagnostics-adhoc.ipa
 ```
 
 The workflow keeps the no-assets-in-IPA inspection:
@@ -120,20 +178,32 @@ Game data/assets bundled in IPA: no
 
 This is not a physical stability pass yet. It is the installable D3A diagnostic build for the next iPhone test.
 
+## Follow-Up Diagnostic Target
+
+The next D3A diagnostic IPA keeps the same D2 data path and D3 render path but adds named audio zero categories, music file-open diagnostics, and live audio handle counters.
+
+```text
+Artifact: ios-shell-d3a-audio-diagnostics-device-arm64
+IPA: build-products/SorrIOSShell-d3a-audio-diagnostics-adhoc.ipa
+Purpose: identify which remaining audio no-op path climbs near the 240-300 second idle window
+Game data/assets bundled in IPA: no
+```
+
 ## Manual iPhone Test
 
 1. Keep the D2-staged data on the iPhone.
-2. Download `ios-shell-d3a-audio-device-arm64` from GitHub Actions.
-3. Extract the artifact on Windows.
-4. Install `build-products/SorrIOSShell-d3a-audio-adhoc.ipa` through Sideloadly.
-5. Open `SorrIOSShell`.
-6. Confirm the real SoRR render still appears.
-7. Note whether any audio is audible.
-8. Leave the app foregrounded and untouched for 10-15 minutes.
-9. If it exits, reopen it once.
-10. Open Files: `On My iPhone -> SorrIOSShell -> SORR_DIAGNOSTICS`.
-11. Copy or screenshot the last 40-60 lines of `ios_d3_runtime_stability_probe.txt`.
-12. Include any `SDL_APP_*`, `dense_window_start`, `dense_window_end`, and heartbeat lines with the new audio counters.
+2. If the iPhone data may lack `mod/music`, regenerate the local-only import package on Windows with `powershell -ExecutionPolicy Bypass -File tools\create_d2_import_package.ps1`, then transfer/extract the updated `out/local-only/SORR_IMPORT.zip` through the existing D2 Files route.
+3. Download `ios-shell-d3a-audio-diagnostics-device-arm64` from GitHub Actions.
+4. Extract the artifact on Windows.
+5. Install `build-products/SorrIOSShell-d3a-audio-diagnostics-adhoc.ipa` through Sideloadly.
+6. Open `SorrIOSShell`.
+7. Confirm the real SoRR render still appears.
+8. Note whether any audio is audible.
+9. Leave the app foregrounded and untouched for 10-15 minutes.
+10. If it exits, reopen it once.
+11. Open Files: `On My iPhone -> SorrIOSShell -> SORR_DIAGNOSTICS`.
+12. Copy or screenshot the last 40-60 lines of `ios_d3_runtime_stability_probe.txt`.
+13. Include any `SDL_APP_*`, `dense_window_start`, `dense_window_end`, and heartbeat lines with the named audio counters and `audio_music_last_*` fields.
 
 ## Expected Result
 

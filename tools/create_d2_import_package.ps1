@@ -38,6 +38,35 @@ function Test-SorrDataRoot {
            (Test-Path -LiteralPath $systemTxt -PathType Leaf)
 }
 
+function Get-SorrMusicFiles {
+    param([string]$Path)
+
+    $musicRoot = Join-Path $Path "mod\music"
+    $audioExtensions = @(".ogg", ".wav", ".mp3", ".mod", ".xm", ".it", ".s3m", ".mid")
+    if (-not (Test-Path -LiteralPath $musicRoot -PathType Container)) {
+        return @()
+    }
+
+    return @(Get-ChildItem -LiteralPath $musicRoot -Recurse -File -ErrorAction SilentlyContinue |
+        Where-Object { $audioExtensions -contains $_.Extension.ToLowerInvariant() })
+}
+
+function Test-SorrMusicData {
+    param([string]$Path)
+    return (Get-SorrMusicFiles $Path).Count -gt 0
+}
+
+function Test-IgnoredSourceCandidate {
+    param(
+        [string]$RepoRoot,
+        [string]$Path
+    )
+
+    $full = Get-FullPath $Path
+    $localOnly = (Get-FullPath (Join-Path $RepoRoot "out\local-only")).TrimEnd("\", "/") + [System.IO.Path]::DirectorySeparatorChar
+    return $full.StartsWith($localOnly, [System.StringComparison]::OrdinalIgnoreCase)
+}
+
 function Get-PreferenceScore {
     param(
         [string]$RepoRoot,
@@ -50,13 +79,14 @@ function Get-PreferenceScore {
     $timingX64 = Get-FullPath (Join-Path $RepoRoot "out\timing-x64-data")
     $timing32 = Get-FullPath (Join-Path $RepoRoot "out\timing-32-data")
     $downloads = Get-FullPath (Join-Path $HOME "Downloads\SORRv52_rev550\SORRv52")
+    $repoPrefix = (Get-FullPath $RepoRoot).TrimEnd("\", "/") + [System.IO.Path]::DirectorySeparatorChar
 
     if ($full -ieq $prepared) { return 0 }
     if ($full -ieq $x64) { return 10 }
     if ($full -ieq $timingX64) { return 20 }
     if ($full -ieq $timing32) { return 30 }
     if ($full -ieq $downloads) { return 50 }
-    if ($full -like (Get-FullPath (Join-Path $RepoRoot "*"))) { return 80 }
+    if ($full.StartsWith($repoPrefix, [System.StringComparison]::OrdinalIgnoreCase)) { return 80 }
     return 100
 }
 
@@ -82,7 +112,7 @@ function Find-SorrDataRoots {
 
         if (Test-SorrDataRoot $root) {
             $full = Get-FullPath $root
-            if (-not $seen.ContainsKey($full)) {
+            if (-not (Test-IgnoredSourceCandidate $RepoRoot $full) -and -not $seen.ContainsKey($full)) {
                 $seen[$full] = $true
                 $results += $full
             }
@@ -91,7 +121,9 @@ function Find-SorrDataRoots {
         Get-ChildItem -LiteralPath $root -Recurse -Filter SorR.dat -File -ErrorAction SilentlyContinue |
             ForEach-Object {
                 $candidate = Get-FullPath $_.DirectoryName
-                if (-not $seen.ContainsKey($candidate) -and (Test-SorrDataRoot $candidate)) {
+                if (-not (Test-IgnoredSourceCandidate $RepoRoot $candidate) -and
+                    -not $seen.ContainsKey($candidate) -and
+                    (Test-SorrDataRoot $candidate)) {
                     $seen[$candidate] = $true
                     $results += $candidate
                 }
@@ -112,6 +144,9 @@ if ($SourceRoot) {
     if (-not (Test-SorrDataRoot $source)) {
         throw "SourceRoot does not contain both SorR.dat and mod/system.txt: $source"
     }
+    if (-not (Test-SorrMusicData $source)) {
+        throw "SourceRoot does not contain mod/music audio files. D3A expects prepared BGM/music files: $source"
+    }
     $candidates = @($source)
 } else {
     $candidates = Find-SorrDataRoots $repoRoot |
@@ -131,6 +166,11 @@ foreach ($candidate in $candidates) {
     Write-Host ("{0} score={1} {2}" -f $mark, $score, $candidate)
 }
 Write-Host "Using source root: $source"
+$sourceMusicFiles = Get-SorrMusicFiles $source
+if (-not $sourceMusicFiles -or $sourceMusicFiles.Count -eq 0) {
+    throw "Chosen source root has no mod/music audio files. Re-run prepare.py or choose the prepared data root: $source"
+}
+Write-Host ("Source music/BGM files found: {0}" -f $sourceMusicFiles.Count)
 
 if (-not (Test-Path -LiteralPath $outputRoot)) {
     New-Item -ItemType Directory -Path $outputRoot | Out-Null
@@ -155,6 +195,12 @@ foreach ($required in $requiredStaged) {
         throw "Required staged file missing: $required"
     }
 }
+
+$stagedMusicFiles = Get-SorrMusicFiles $stagingRoot
+if (-not $stagedMusicFiles -or $stagedMusicFiles.Count -eq 0) {
+    throw "Required staged music/BGM files missing under SORR_IMPORT/mod/music"
+}
+Write-Host ("Staged music/BGM files: {0}" -f $stagedMusicFiles.Count)
 
 if (Test-Path -LiteralPath $zipPath) {
     Remove-Item -LiteralPath $zipPath -Force
@@ -198,7 +244,8 @@ try {
     $entries = $zip.Entries | ForEach-Object { $_.FullName }
     $requiredEntries = @(
         "SORR_IMPORT/SorR.dat",
-        "SORR_IMPORT/mod/system.txt"
+        "SORR_IMPORT/mod/system.txt",
+        "SORR_IMPORT/mod/music/1.ogg"
     )
 
     foreach ($entry in $requiredEntries) {

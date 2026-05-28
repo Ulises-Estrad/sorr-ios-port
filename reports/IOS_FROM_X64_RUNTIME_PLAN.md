@@ -203,13 +203,13 @@ This is the first milestone that should exercise the game data on iOS.
 
 Current immediate action is D3A audio/stability hardening before D4a touch input.
 
-D3 physical first render is complete, but the rendered app exits after about five foreground idle minutes. The latest dense heartbeat diagnostics did not show an obvious memory or file-handle spike; the strongest suspicious signal was steadily rising audio-stub counters during the 240-300 second window. The next build keeps the D2 data path and D3 render path unchanged while replacing the pure iOS audio stub with a minimal SDL2 audio backend.
+D3 physical first render is complete, but the rendered app exits after about five foreground idle minutes. The latest dense heartbeat diagnostics did not show an obvious file-handle spike. The first D3A audio pass proved real SDL SFX audio can initialize, load WAV effects, and queue playback, but the app still exited around the same five-minute window. The next build keeps the D2 data path and D3 render path unchanged while adding named audio no-op counters and music/BGM file-open diagnostics.
 
 ```text
-Artifact target: ios-shell-d3a-audio-device-arm64
-IPA target: build-products/SorrIOSShell-d3a-audio-adhoc.ipa
+Artifact target: ios-shell-d3a-audio-diagnostics-device-arm64
+IPA target: build-products/SorrIOSShell-d3a-audio-diagnostics-adhoc.ipa
 Diagnostics path: On My iPhone/SorrIOSShell/SORR_DIAGNOSTICS/ios_d3_runtime_stability_probe.txt
-Audio scope: SDL audio device init, WAV decode/queue through Bennu file_open, inert handles for unsupported music/OGG
+Audio scope: SDL audio device init, WAV decode/queue through Bennu file_open, inert handles for unsupported music/OGG, named audio zero categories, live audio handle counters, last music/BGM file-open status/path
 No D4a touch input yet
 No game data/assets bundled in IPA
 ```
@@ -481,8 +481,12 @@ Artifact-producing commit: d6785c7
 Device job result: success
 Simulator job result: success
 Game data/assets bundled in IPA: no
-Physical idle result: pending user test
+Physical idle result: initial D3A audio pass still exited around five minutes
+SFX result: audio_init_ok=1, audio_wav_load_ok=122, audio_wav_play=304
+Next diagnostic target: ios-shell-d3a-audio-diagnostics-device-arm64
 ```
+
+The local-only import helper now validates `SORR_IMPORT/mod/music/1.ogg` and found 237 prepared music/BGM files in `sorr-vita-master/data`. If the phone's staged D2 data is stale or missing BGM, refresh it with the regenerated local-only `out/local-only/SORR_IMPORT.zip`; do not commit or upload that ZIP.
 
 ## Out Of Scope For This Plan
 
