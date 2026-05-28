@@ -666,3 +666,13 @@ The D3S title re-entry diagnostic IPA was produced successfully:
 - Artifact size: `799257` bytes
 
 Next manual step is physical iPhone testing with the existing D2-staged data. D4a remains blocked until this title re-entry log identifies the failure point or narrows the exit to a subsystem outside input.
+## D3S LAYER_INTRO Follow-Up
+
+The latest D3S phone log shows title re-entry progressing beyond `MENU` and trophies cleanup, with the final suspicious state around `LAYER_INTRO` and `INTRO_PRINCIPIO`. D3 first render and D3A audio remain achieved; D4a fixed touch input stays blocked while the stability issue is narrowed.
+
+Next diagnostic artifact:
+
+- `ios-shell-d3s-layer-intro-diagnostics-device-arm64`
+- `build-products/SorrIOSShell-d3s-layer-intro-diagnostics-adhoc.ipa`
+
+This build keeps BGM/SFX enabled and adds render-object diagnostics for the intro animation path. It logs watched render-object create/destroy events, heartbeat render object create/destroy totals, invalid render-callback guards, and the existing family unlink/lifecycle markers. The goal is to determine whether `LAYER_INTRO`, `INTRO_PRINCIPIO`, or `OSCURECE_PANTALLA` leaves a stale render object or process relationship shortly before termination.

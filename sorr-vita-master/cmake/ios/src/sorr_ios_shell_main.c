@@ -609,6 +609,9 @@ extern int x_files_count;
 extern int max_x_files;
 extern volatile int sorr_ios_d3_live_instance_count;
 extern volatile int sorr_ios_d3_render_object_count;
+extern volatile unsigned int sorr_ios_d3_render_instance_object_created_count;
+extern volatile unsigned int sorr_ios_d3_render_instance_object_destroyed_count;
+extern volatile unsigned int sorr_ios_d3_render_invalid_callback_count;
 extern volatile unsigned int sorr_ios_d3_instance_go_loop_count;
 extern volatile unsigned int sorr_ios_d3_frame_complete_count;
 extern volatile unsigned int sorr_ios_d3_instance_run_count;
@@ -933,7 +936,7 @@ static Uint32 sorr_ios_d3_heartbeat_timer(Uint32 interval, void *param)
     }
 
     sorr_ios_d3_stability_log(layout,
-                              "heartbeat=%u ticks=%u runtime_ms=%u interval_next_ms=%u stage=%s rss_bytes=%llu frame_count=%u last_frame_ticks=%d frame_ms=%.3f fps_count=%d fps_init=%d max_jump=%d jump=%d instances=%d render_objects=%d opened_files=%d x_files=%d max_x_files=%d runtime_loops=%u runtime_frames=%u runtime_runs=%u runtime_created=%u runtime_destroyed=%u runtime_snapshots=%u runtime_last_proc=%s#%u:s%d:f%d:o%d audio_stub_zero=%u audio_stub_minus_one=%u audio_init_attempts=%u audio_init_ok=%u audio_init_fail=%u audio_wav_load_ok=%u audio_wav_load_fail=%u audio_wav_play=%u audio_inert_handles=%u audio_queue_clears=%u audio_music_load_attempts=%u audio_music_open_ok=%u audio_music_open_fail=%u audio_music_mem_ok=%u audio_music_mem_fail=%u audio_music_play_attempts=%u audio_music_play_ok=%u audio_music_play_fail=%u audio_music_controls=%u audio_music_queries=%u audio_music_free=%u audio_music_halt=%u audio_music_playing=%u audio_music_last_handle=%llu audio_music_last_ptr=0x%llx audio_music_last_bytes=%llu audio_music_total_bytes=%llu audio_live_handles=%u audio_live_wav=%u audio_live_inert_wav=%u audio_live_music=%u audio_max_live_handles=%u audio_zero_music_play=%u audio_zero_music_control=%u audio_zero_music_query=%u audio_zero_wav_control=%u audio_zero_wav_query=%u audio_zero_wav_volume=%u audio_zero_channel_effect=%u audio_zero_play_wav_guard=%u audio_music_last_status=%s audio_music_last_path=%s runtime_snapshot=%s runtime_lifecycle=%s",
+                              "heartbeat=%u ticks=%u runtime_ms=%u interval_next_ms=%u stage=%s rss_bytes=%llu frame_count=%u last_frame_ticks=%d frame_ms=%.3f fps_count=%d fps_init=%d max_jump=%d jump=%d instances=%d render_objects=%d render_object_creates=%u render_object_destroys=%u render_invalid_callbacks=%u opened_files=%d x_files=%d max_x_files=%d runtime_loops=%u runtime_frames=%u runtime_runs=%u runtime_created=%u runtime_destroyed=%u runtime_snapshots=%u runtime_last_proc=%s#%u:s%d:f%d:o%d audio_stub_zero=%u audio_stub_minus_one=%u audio_init_attempts=%u audio_init_ok=%u audio_init_fail=%u audio_wav_load_ok=%u audio_wav_load_fail=%u audio_wav_play=%u audio_inert_handles=%u audio_queue_clears=%u audio_music_load_attempts=%u audio_music_open_ok=%u audio_music_open_fail=%u audio_music_mem_ok=%u audio_music_mem_fail=%u audio_music_play_attempts=%u audio_music_play_ok=%u audio_music_play_fail=%u audio_music_controls=%u audio_music_queries=%u audio_music_free=%u audio_music_halt=%u audio_music_playing=%u audio_music_last_handle=%llu audio_music_last_ptr=0x%llx audio_music_last_bytes=%llu audio_music_total_bytes=%llu audio_live_handles=%u audio_live_wav=%u audio_live_inert_wav=%u audio_live_music=%u audio_max_live_handles=%u audio_zero_music_play=%u audio_zero_music_control=%u audio_zero_music_query=%u audio_zero_wav_control=%u audio_zero_wav_query=%u audio_zero_wav_volume=%u audio_zero_channel_effect=%u audio_zero_play_wav_guard=%u audio_music_last_status=%s audio_music_last_path=%s runtime_snapshot=%s runtime_lifecycle=%s",
                               heartbeat,
                               ticks,
                               runtime_ms,
@@ -949,6 +952,9 @@ static Uint32 sorr_ios_d3_heartbeat_timer(Uint32 interval, void *param)
                               jump,
                               sorr_ios_d3_live_instance_count,
                               sorr_ios_d3_render_object_count,
+                              sorr_ios_d3_render_instance_object_created_count,
+                              sorr_ios_d3_render_instance_object_destroyed_count,
+                              sorr_ios_d3_render_invalid_callback_count,
                               opened_files,
                               x_files_count,
                               max_x_files,
@@ -1604,7 +1610,7 @@ static int sorr_ios_prepare_data_layout(sorr_ios_data_layout *layout)
         sorr_ios_write_text_file(diagnostics_readme_path,
                                  "D3S diagnostics are mirrored here for Files access.\n"
                                  "After an idle crash, reopen SorrIOSShell once, then copy the last lines of ios_d3_runtime_stability_probe.txt.\n"
-                                 "For the five-minute idle issue, include dense_window_start through dense_window_end, runtime_snapshot, runtime_lifecycle, runtime_family_unlink, destroy_begin, and signal= lines when present.\n");
+                                 "For the five-minute idle issue, include dense_window_start through dense_window_end, runtime_snapshot, runtime_lifecycle, runtime_family_unlink, runtime_render_event, destroy_begin, and signal= lines when present.\n");
     }
 
     if (!sorr_ios_create_dir_marker("savegame", layout->savegame_dir) ||

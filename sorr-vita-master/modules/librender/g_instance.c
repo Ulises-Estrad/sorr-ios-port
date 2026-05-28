@@ -51,6 +51,17 @@ extern PALETTE * modmap_x64_palette_from_handle( int handle, const char * op );
 #define LIBRENDER_X64_PALETTE_FROM_HANDLE(handle,op) (( PALETTE * )( handle ))
 #endif
 
+#ifdef SORR_IOS_D3_FIRST_RENDER
+void sorr_ios_d3_note_render_instance_event( const char * action,
+                                             const INSTANCE * r,
+                                             int object_id,
+                                             int fileid,
+                                             int graphid,
+                                             int paletteid,
+                                             int xgraph,
+                                             int status );
+#endif
+
 /* --------------------------------------------------------------------------- */
 /*
  *  FUNCTION : instance_graph
@@ -216,6 +227,14 @@ void draw_instance( void * what, REGION * clip )
     int x, y, r ;
     /* Difference with draw_instance_at to here */
 
+#ifdef SORR_IOS_D3_FIRST_RENDER
+    if ( !i || !instance_exists( i ) )
+    {
+        sorr_ios_d3_note_render_instance_event( "render_draw_dead", i, 0, 0, 0, 0, 0, 0 );
+        return;
+    }
+#endif
+
 #if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
     map = instance_graph( i ) ;
 #else
@@ -299,6 +318,14 @@ int draw_instance_info( void * what, REGION * region, int * z, int * drawme )
     GRAPH * graph;
 
     * drawme = 0;
+
+#ifdef SORR_IOS_D3_FIRST_RENDER
+    if ( !i || !instance_exists( i ) )
+    {
+        sorr_ios_d3_note_render_instance_event( "render_info_dead", i, 0, 0, 0, 0, 0, 0 );
+        return 0;
+    }
+#endif
 
     graph = instance_graph( i );
 #if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
@@ -414,6 +441,16 @@ void __bgdexport( librender, instance_create_hook )( INSTANCE * r )
 {
     /* COORZ is 0 when a new instance is created */
     LOCDWORD( librender, r, OBJECTID ) = gr_new_object( /* LOCINT32( librender, r, COORDZ ) */ 0, draw_instance_info, draw_instance, r );
+#ifdef SORR_IOS_D3_FIRST_RENDER
+    sorr_ios_d3_note_render_instance_event( "render_object_create",
+                                            r,
+                                            LOCDWORD( librender, r, OBJECTID ),
+                                            LOCDWORD( librender, r, FILEID ),
+                                            LOCDWORD( librender, r, GRAPHID ),
+                                            LOCDWORD( librender, r, PALETTEID ),
+                                            LOCDWORD( librender, r, XGRAPH ),
+                                            LOCDWORD( librender, r, STATUS ) );
+#endif
 }
 
 /*
@@ -428,5 +465,15 @@ void __bgdexport( librender, instance_create_hook )( INSTANCE * r )
 
 void __bgdexport( librender, instance_destroy_hook )( INSTANCE * r )
 {
+#ifdef SORR_IOS_D3_FIRST_RENDER
+    sorr_ios_d3_note_render_instance_event( "render_object_destroy",
+                                            r,
+                                            LOCDWORD( librender, r, OBJECTID ),
+                                            LOCDWORD( librender, r, FILEID ),
+                                            LOCDWORD( librender, r, GRAPHID ),
+                                            LOCDWORD( librender, r, PALETTEID ),
+                                            LOCDWORD( librender, r, XGRAPH ),
+                                            LOCDWORD( librender, r, STATUS ) );
+#endif
     if ( LOCDWORD( librender, r, OBJECTID ) ) gr_destroy_object( LOCDWORD( librender, r, OBJECTID ) );
 }

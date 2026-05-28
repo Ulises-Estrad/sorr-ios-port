@@ -384,6 +384,9 @@ volatile unsigned int sorr_ios_d3_frame_complete_count = 0;
 volatile unsigned int sorr_ios_d3_instance_run_count = 0;
 volatile unsigned int sorr_ios_d3_instance_created_count = 0;
 volatile unsigned int sorr_ios_d3_instance_destroyed_count = 0;
+volatile unsigned int sorr_ios_d3_render_instance_object_created_count = 0;
+volatile unsigned int sorr_ios_d3_render_instance_object_destroyed_count = 0;
+volatile unsigned int sorr_ios_d3_render_invalid_callback_count = 0;
 volatile unsigned int sorr_ios_d3_snapshot_count = 0;
 volatile unsigned int sorr_ios_d3_last_proc_id = 0;
 volatile int sorr_ios_d3_last_proc_status = 0;
@@ -399,6 +402,8 @@ char sorr_ios_d3_visible_event_log_path[1024] = "";
 static const char * const sorr_ios_d3_watch_proc_names[] = {
     "CONTROLADOR",
     "INTRO",
+    "INTRO_PRINCIPIO",
+    "LAYER_INTRO",
     "MENU",
     "FASE1",
     "DESCARGA_SISTEMA",
@@ -633,6 +638,60 @@ void sorr_ios_d3_note_family_unlink( const INSTANCE * r,
         bigbro_id ? ( instance_get( bigbro_id ) != NULL ) : 0,
         smallbro_id ? ( instance_get( smallbro_id ) != NULL ) : 0,
         watch_index,
+        sorr_ios_d3_instance_created_count,
+        sorr_ios_d3_instance_destroyed_count
+    );
+    sorr_ios_d3_append_visible_event_line( line );
+}
+
+void sorr_ios_d3_note_render_instance_event( const char * action,
+                                             const INSTANCE * r,
+                                             int object_id,
+                                             int fileid,
+                                             int graphid,
+                                             int paletteid,
+                                             int xgraph,
+                                             int status )
+{
+    int exists = r ? instance_exists( ( INSTANCE * )r ) : 0;
+    const char * name = ( exists && r->proc && r->proc->name ) ? r->proc->name : "dead";
+    uint32_t pid = exists ? LOCDWORD( r, PROCESS_ID ) : 0;
+    int watch_index = exists ? sorr_ios_d3_watch_proc_index( name ) : -1;
+    char line[768];
+
+    if ( action && strcmp( action, "render_object_create" ) == 0 )
+        sorr_ios_d3_render_instance_object_created_count++;
+    else if ( action && strcmp( action, "render_object_destroy" ) == 0 )
+        sorr_ios_d3_render_instance_object_destroyed_count++;
+    else if ( !exists )
+        sorr_ios_d3_render_invalid_callback_count++;
+
+    if ( exists )
+    {
+        status = LOCDWORD( r, STATUS );
+    }
+
+    if ( watch_index < 0 && exists ) return;
+
+    snprintf(
+        line,
+        sizeof( line ),
+        "runtime_render_event action=%s inst=%p exists=%d %s#%u object=%d file=%d graph=%d palette=%d xgraph=%d status=%d watch=%d render_create=%u render_destroy=%u render_invalid=%u created=%u destroyed=%u",
+        action ? action : "event",
+        ( const void * )r,
+        exists,
+        name,
+        pid,
+        object_id,
+        fileid,
+        graphid,
+        paletteid,
+        xgraph,
+        status,
+        watch_index,
+        sorr_ios_d3_render_instance_object_created_count,
+        sorr_ios_d3_render_instance_object_destroyed_count,
+        sorr_ios_d3_render_invalid_callback_count,
         sorr_ios_d3_instance_created_count,
         sorr_ios_d3_instance_destroyed_count
     );

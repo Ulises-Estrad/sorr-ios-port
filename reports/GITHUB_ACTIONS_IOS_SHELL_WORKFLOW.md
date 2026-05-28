@@ -1775,6 +1775,30 @@ Result: success
 ```
 
 The simulator shell job also passed in the same run. The device artifact passed the existing IPA layout/signature/forbidden-asset inspection.
+## D3S LAYER_INTRO Diagnostic Artifact
+
+The workflow now produces a D3S follow-up artifact aimed at the intro/title animation process set seen after demo teardown:
+
+```text
+ios-shell-d3s-layer-intro-diagnostics-device-arm64
+```
+
+IPA:
+
+```text
+build-products/SorrIOSShell-d3s-layer-intro-diagnostics-adhoc.ipa
+```
+
+Purpose:
+
+- keep real BGM/SFX enabled,
+- keep the IPA asset-free and continue using the existing D2-staged private data,
+- watch `LAYER_INTRO` and `INTRO_PRINCIPIO` alongside the existing title re-entry processes,
+- log render-object create/destroy counts and watched `runtime_render_event ...` lines,
+- log if a render callback fires after its backing `INSTANCE *` is no longer live,
+- keep `runtime_family_unlink ...`, `destroy_begin`, and post-unlink `destroy` lifecycle diagnostics.
+
+Expected CI checks remain unchanged: build iphoneos arm64, ad-hoc sign for Sideloadly, package `Payload/SorrIOSShell.app`, inspect Info.plist/architecture/signature, and verify the IPA contains no `SorR.dat`, `data/`, FPG/WAV/OGG/SMK/PNG assets, logs, or prepared data.
 GitHub-side D3S demo teardown artifact proof:
 
 ```text

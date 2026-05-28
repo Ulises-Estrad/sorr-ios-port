@@ -528,3 +528,21 @@ Status: produced successfully.
 - Artifact size: `799257` bytes
 
 The IPA remains asset-free and uses only the D2-staged private data on-device. Use this build to capture the next physical-device title re-entry log around `MENU`, `INTRO`, `TROPHIES_CALL`, `TROPHIES_CONTROL`, `RESOLUCIONX`, and any `runtime_family_unlink` lines.
+## D3S LAYER_INTRO Diagnostic Target
+
+Latest physical D3S feedback points beyond menu/trophies teardown and toward the intro/title animation path: `runtime_last_proc=LAYER_INTRO`, `last_create=LAYER_INTRO`, `last_destroy=OSCURECE_PANTALLA`, with `LAYER_INTRO` and `INTRO_PRINCIPIO` live in the final sample. BGM and SFX remain healthy.
+
+Target artifact:
+
+- `ios-shell-d3s-layer-intro-diagnostics-device-arm64`
+- `build-products/SorrIOSShell-d3s-layer-intro-diagnostics-adhoc.ipa`
+
+Added diagnostics:
+
+- explicit watchlist entries for `LAYER_INTRO` and `INTRO_PRINCIPIO`,
+- render-object create/destroy counters in heartbeat lines,
+- direct `runtime_render_event ...` lines for watched process render-object create/destroy,
+- guard logging for render callbacks whose backing process pointer is no longer live,
+- continued family unlink and lifecycle diagnostics for title re-entry processes.
+
+Manual test: install the IPA with Sideloadly, leave the app foregrounded/untouched until it exits or 10-15 minutes pass, reopen once if needed, then report the last 150-200 lines of `On My iPhone/SorrIOSShell/SORR_DIAGNOSTICS/ios_d3_runtime_stability_probe.txt`.
