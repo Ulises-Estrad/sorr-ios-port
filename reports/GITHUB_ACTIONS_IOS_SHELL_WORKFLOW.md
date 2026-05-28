@@ -1469,3 +1469,16 @@ Manual D3S idle-window test:
 5. Open Files: `On My iPhone -> SorrIOSShell -> SORR_DIAGNOSTICS`.
 6. Copy or screenshot the last 40-60 lines of `ios_d3_runtime_stability_probe.txt`.
 7. Include the `dense_window_start` through `dense_window_end` block when present.
+
+D3S idle-window artifact proof:
+
+```text
+Actions run: 26553120903
+Device artifact: ios-shell-d3s-idle-window-device-arm64
+Artifact size: 677186 bytes
+IPA: build-products/SorrIOSShell-d3s-idle-window-adhoc.ipa
+IPA size: 601806 bytes
+Artifact-producing commit: f6b4347
+Device job result: success
+Game data/assets bundled in IPA: no
+```

@@ -1,6 +1,6 @@
 # iOS D3 Stability Follow-Up
 
-Status: idle-window diagnostics in progress.
+Status: idle-window diagnostics IPA produced by GitHub Actions.
 
 D3 first render remains complete. This pass hardens the already-rendering D3 build after a repeatable physical-device idle exit was observed at about five minutes.
 
@@ -120,6 +120,19 @@ Current idle-window diagnostic target:
 Artifact: ios-shell-d3s-idle-window-device-arm64
 IPA: build-products/SorrIOSShell-d3s-idle-window-adhoc.ipa
 Focus: one-second diagnostics during runtime_ms=240000..330000
+Game data/assets bundled in IPA: no
+```
+
+GitHub-side D3S idle-window diagnostics artifact proof:
+
+```text
+Actions run: 26553120903
+Device artifact: ios-shell-d3s-idle-window-device-arm64
+Artifact size: 677186 bytes
+IPA: build-products/SorrIOSShell-d3s-idle-window-adhoc.ipa
+IPA size: 601806 bytes
+Artifact-producing commit: f6b4347
+Device job result: success
 Game data/assets bundled in IPA: no
 ```
 

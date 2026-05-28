@@ -343,3 +343,16 @@ On My iPhone/SorrIOSShell/SORR_DIAGNOSTICS/ios_d3_runtime_stability_probe.txt
 ```
 
 If present, include the block from `dense_window_start` through `dense_window_end`.
+
+GitHub-side D3S idle-window artifact proof:
+
+```text
+Actions run: 26553120903
+Artifact: ios-shell-d3s-idle-window-device-arm64
+Artifact size: 677186 bytes
+IPA: build-products/SorrIOSShell-d3s-idle-window-adhoc.ipa
+IPA size: 601806 bytes
+Artifact-producing commit: f6b4347
+Device job result: success
+Game data/assets bundled in IPA: no
+```
