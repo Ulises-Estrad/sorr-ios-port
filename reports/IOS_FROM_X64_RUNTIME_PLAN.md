@@ -624,3 +624,13 @@ The D3S attract lifecycle diagnostic IPA was produced successfully:
 - Artifact size: `800173` bytes
 
 Next manual step is physical iPhone testing with the existing D2-staged data. D4a fixed touch input remains blocked until the D3S idle exit is understood or narrowed to a non-control subsystem.
+## D3S Demo Teardown Follow-Up
+
+Latest physical D3S diagnostics point at an attract/demo gameplay cleanup and title/menu re-entry transition rather than passive idle or audio failure. D3 first render and D3A audio remain achieved; D4a touch input stays blocked while this D3S stability issue is narrowed.
+
+Next diagnostic artifact:
+
+- `ios-shell-d3s-demo-teardown-diagnostics-device-arm64`
+- `build-products/SorrIOSShell-d3s-demo-teardown-diagnostics-adhoc.ipa`
+
+This build keeps BGM/SFX enabled and instruments process lifecycle around `FASE1`, `DESCARGA_SISTEMA`, `SISTEMA_SONIDO`, `ASIGNADOR_ENEMIGO`, HUD/effect teardown, and title/menu re-entry processes. It compares `destroy_begin` state before hierarchy updates against post-unlink `destroy` state to look for stale process ids, caller pointers, sibling links, or a cleanup burst immediately before exit.

@@ -71,6 +71,7 @@ INSTANCE * first_instance = NULL ;
 #ifdef SORR_IOS_D3_FIRST_RENDER
 volatile int sorr_ios_d3_live_instance_count = 0;
 void sorr_ios_d3_note_instance_create( const INSTANCE * r );
+void sorr_ios_d3_note_instance_destroy_begin( const INSTANCE * r );
 void sorr_ios_d3_note_instance_destroy( const INSTANCE * r );
 #endif
 
@@ -615,6 +616,10 @@ void instance_destroy( INSTANCE * r )
 {
     INSTANCE * father, * bigbro, * smallbro;
     int n ;
+
+#ifdef SORR_IOS_D3_FIRST_RENDER
+    sorr_ios_d3_note_instance_destroy_begin( r );
+#endif
 
     LOCDWORD( r, STATUS ) = STATUS_RUNNING;
 

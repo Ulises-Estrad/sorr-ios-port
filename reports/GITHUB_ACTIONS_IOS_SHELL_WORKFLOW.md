@@ -1740,3 +1740,26 @@ Result: success
 ```
 
 The simulator shell job also passed in the same run. The device artifact was uploaded after the no-assets-in-IPA inspection and remains suitable for Sideloadly re-sign/install testing.
+## D3S Demo Teardown Diagnostic Artifact
+
+The workflow now produces a D3S follow-up artifact aimed at the attract/demo scene cleanup and title/menu re-entry transition:
+
+```text
+ios-shell-d3s-demo-teardown-diagnostics-device-arm64
+```
+
+IPA:
+
+```text
+build-products/SorrIOSShell-d3s-demo-teardown-diagnostics-adhoc.ipa
+```
+
+Purpose:
+
+- keep real BGM/SFX enabled,
+- keep the IPA asset-free and continue using the existing D2-staged private data,
+- expand process lifecycle diagnostics to `FASE1`, `DESCARGA_SISTEMA`, `SISTEMA_SONIDO`, `ASIGNADOR_ENEMIGO`, HUD/effect teardown processes, and title/menu re-entry processes,
+- log `destroy_begin` before hierarchy/sibling links are updated and `destroy` after unlink for comparison,
+- include family ids/validity and called-by id/validity on lifecycle lines.
+
+Expected CI checks remain unchanged: build iphoneos arm64, ad-hoc sign for Sideloadly, package `Payload/SorrIOSShell.app`, inspect Info.plist/architecture/signature, and verify the IPA contains no `SorR.dat`, `data/`, FPG/WAV/OGG/SMK/PNG assets, logs, or prepared data.

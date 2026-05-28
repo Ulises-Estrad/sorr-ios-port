@@ -1604,7 +1604,7 @@ static int sorr_ios_prepare_data_layout(sorr_ios_data_layout *layout)
         sorr_ios_write_text_file(diagnostics_readme_path,
                                  "D3S diagnostics are mirrored here for Files access.\n"
                                  "After an idle crash, reopen SorrIOSShell once, then copy the last lines of ios_d3_runtime_stability_probe.txt.\n"
-                                 "For the five-minute idle issue, include dense_window_start through dense_window_end, runtime_snapshot, runtime_lifecycle, and signal= lines when present.\n");
+                                 "For the five-minute idle issue, include dense_window_start through dense_window_end, runtime_snapshot, runtime_lifecycle, destroy_begin, and signal= lines when present.\n");
     }
 
     if (!sorr_ios_create_dir_marker("savegame", layout->savegame_dir) ||

@@ -470,3 +470,22 @@ Status: produced successfully.
 The IPA remains asset-free and uses only the D2-staged private data on-device. It keeps real BGM/SFX enabled and adds watchlist process counts, recent create/destroy lifecycle events, direct `runtime_lifecycle ...` mirror lines, and catchable fatal-signal context to the Files-visible D3S diagnostics log.
 
 Physical test instruction: install the IPA with Sideloadly, launch with the existing D2-staged data, leave foregrounded/untouched for 10-15 minutes or until it exits, reopen once if it exits, then retrieve `On My iPhone/SorrIOSShell/SORR_DIAGNOSTICS/ios_d3_runtime_stability_probe.txt`. Report the last 80-120 lines, especially entries after `runtime_ms=240000`, `watch=`, `runtime_lifecycle`, and any `signal=` line.
+## D3S Demo Teardown Diagnostic Target
+
+Latest on-device D3S diagnostics show the remaining exit coincides with attract/demo gameplay cleanup and a title/menu re-entry, while BGM and SFX remain healthy. The next build keeps audio enabled and instruments the transition more directly.
+
+Target artifact:
+
+- `ios-shell-d3s-demo-teardown-diagnostics-device-arm64`
+- `build-products/SorrIOSShell-d3s-demo-teardown-diagnostics-adhoc.ipa`
+
+Added diagnostics:
+
+- expanded watchlist: `FASE1`, `DESCARGA_SISTEMA`, `SISTEMA_SONIDO`, `ASIGNADOR_ENEMIGO`, existing HUD/effect processes, and title/menu re-entry processes,
+- `destroy_begin` lifecycle events before hierarchy and sibling pointers are rewritten,
+- post-unlink `destroy` lifecycle events for comparison,
+- family pointer ids and validity: father, son, small brother, big brother,
+- `called_by` id and validity,
+- priority/status/frame/code-offset context on watched lifecycle events.
+
+Manual test: install the IPA with Sideloadly, leave the app foregrounded/untouched until it exits or 10-15 minutes pass, reopen once if needed, then report the last 100-150 lines of `On My iPhone/SorrIOSShell/SORR_DIAGNOSTICS/ios_d3_runtime_stability_probe.txt`.

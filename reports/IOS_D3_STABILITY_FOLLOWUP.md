@@ -295,3 +295,15 @@ Produced successfully:
 - Artifact size: `800173` bytes
 
 This is the next on-device diagnostic build for the five-minute D3S exit. It keeps BGM and SFX enabled, does not bundle game data/assets, and should be tested with the existing D2-staged private data.
+## D3S Demo Teardown Diagnostics
+
+Latest physical attract/lifecycle feedback narrows the five-minute exit further: the app appears to be tearing down an attract/demo gameplay scene and returning toward title/menu, not sitting in a passive idle state. The visible log showed destruction of gameplay/demo systems such as `FASE1`, `DESCARGA_SISTEMA`, `SISTEMA_SONIDO`, `ASIGNADOR_ENEMIGO`, HUD bars/name panels, and dust effects, followed by title/menu-ish processes including `TITULO`, `TROPHIES_CONTROL`, `PERSONAJES`, `CUADRO`, and `OSCURECE_PANTALLA`.
+
+Next artifact target:
+
+- `ios-shell-d3s-demo-teardown-diagnostics-device-arm64`
+- `build-products/SorrIOSShell-d3s-demo-teardown-diagnostics-adhoc.ipa`
+
+This build keeps BGM/SFX enabled and expands the process watchlist to cover the demo teardown and title re-entry process names. It also logs `destroy_begin` before Bennu rewrites hierarchy/sibling links, then keeps the existing post-unlink `destroy` marker. Each lifecycle line now includes father/son/sibling ids, whether those ids resolve, called-by id/validity, priority, status, frame percent, and code offset. The goal is to catch a bad family link, stale caller pointer, or specific process lifecycle burst at the transition.
+
+When testing, report the last 100-150 lines from `Documents/SORR_DIAGNOSTICS/ios_d3_runtime_stability_probe.txt`, especially `runtime_lifecycle ... destroy_begin`, matching `destroy` lines, `watch=`, `runtime_snapshot`, and any `signal=` line.

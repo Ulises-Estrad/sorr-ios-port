@@ -398,6 +398,10 @@ char sorr_ios_d3_visible_event_log_path[1024] = "";
 
 static const char * const sorr_ios_d3_watch_proc_names[] = {
     "CONTROLADOR",
+    "FASE1",
+    "DESCARGA_SISTEMA",
+    "SISTEMA_SONIDO",
+    "ASIGNADOR_ENEMIGO",
     "BARRA_NEGRA",
     "MELODIA",
     "SOMBRA",
@@ -406,11 +410,16 @@ static const char * const sorr_ios_d3_watch_proc_names[] = {
     "BARRA_VIDA1",
     "EFECTO_POLVO",
     "LETRA_NOMBRE",
-    "MINI_CUADRO1"
+    "MINI_CUADRO1",
+    "TITULO",
+    "TROPHIES_CONTROL",
+    "PERSONAJES",
+    "CUADRO",
+    "OSCURECE_PANTALLA"
 };
 #define SORR_IOS_D3_WATCH_PROC_COUNT ( sizeof( sorr_ios_d3_watch_proc_names ) / sizeof( sorr_ios_d3_watch_proc_names[0] ) )
 #define SORR_IOS_D3_EVENT_SLOT_COUNT 12
-#define SORR_IOS_D3_EVENT_SLOT_SIZE 160
+#define SORR_IOS_D3_EVENT_SLOT_SIZE 192
 
 static volatile unsigned int sorr_ios_d3_lifecycle_event_seq = 0;
 static volatile unsigned int sorr_ios_d3_watch_create_count[SORR_IOS_D3_WATCH_PROC_COUNT];
@@ -498,27 +507,49 @@ static void sorr_ios_d3_note_lifecycle_event( const char * action, const INSTANC
     int watch_index = sorr_ios_d3_watch_proc_index( name );
     unsigned int seq = ++sorr_ios_d3_lifecycle_event_seq;
     unsigned int slot = sorr_ios_d3_event_slot_pos++ % SORR_IOS_D3_EVENT_SLOT_COUNT;
-    char line[320];
+    uint32_t pid = r ? LOCDWORD( r, PROCESS_ID ) : 0;
+    uint32_t father_id = r ? LOCDWORD( r, FATHER ) : 0;
+    uint32_t son_id = r ? LOCDWORD( r, SON ) : 0;
+    uint32_t smallbro_id = r ? LOCDWORD( r, SMALLBRO ) : 0;
+    uint32_t bigbro_id = r ? LOCDWORD( r, BIGBRO ) : 0;
+    uint32_t called_by_id = ( r && r->called_by ) ? LOCDWORD( r->called_by, PROCESS_ID ) : 0;
+    int father_ok = father_id ? ( instance_get( father_id ) != NULL ) : 0;
+    int son_ok = son_id ? ( instance_get( son_id ) != NULL ) : 0;
+    int smallbro_ok = smallbro_id ? ( instance_get( smallbro_id ) != NULL ) : 0;
+    int bigbro_ok = bigbro_id ? ( instance_get( bigbro_id ) != NULL ) : 0;
+    int called_by_ok = r && r->called_by ? instance_exists( r->called_by ) : 0;
+    char line[384];
 
     if ( watch_index >= 0 )
     {
-        if ( action && action[0] == 'c' )
+        if ( action && strcmp( action, "create" ) == 0 )
             sorr_ios_d3_watch_create_count[watch_index]++;
-        else if ( action && action[0] == 'd' )
+        else if ( action && strcmp( action, "destroy" ) == 0 )
             sorr_ios_d3_watch_destroy_count[watch_index]++;
     }
 
     snprintf(
         sorr_ios_d3_event_slots[slot],
         sizeof( sorr_ios_d3_event_slots[slot] ),
-        "seq=%u %s %s#%u:s%d:f%d:o%d watch=%d created=%u destroyed=%u",
+        "seq=%u %s %s#%u:s%d:f%d:o%d:p%d fam=%u/%u/%u/%u ok=%d/%d/%d/%d cb=%u:%d watch=%d created=%u destroyed=%u",
         seq,
         action ? action : "event",
         name,
-        r ? LOCDWORD( r, PROCESS_ID ) : 0,
+        pid,
         r ? LOCDWORD( r, STATUS ) : 0,
         r ? LOCINT32( r, FRAME_PERCENT ) : 0,
         ( r && r->code && r->codeptr ) ? ( int )( r->codeptr - r->code ) : -1,
+        r ? LOCINT32( r, PRIORITY ) : 0,
+        father_id,
+        son_id,
+        smallbro_id,
+        bigbro_id,
+        father_ok,
+        son_ok,
+        smallbro_ok,
+        bigbro_ok,
+        called_by_id,
+        called_by_ok,
         watch_index,
         sorr_ios_d3_instance_created_count,
         sorr_ios_d3_instance_destroyed_count
@@ -547,6 +578,10 @@ void sorr_ios_d3_note_instance_create( const INSTANCE * r )
     sorr_ios_d3_note_lifecycle_event( "create", r );
 }
 
+void sorr_ios_d3_note_instance_destroy_begin( const INSTANCE * r )
+{
+    sorr_ios_d3_note_lifecycle_event( "destroy_begin", r );
+}
 void sorr_ios_d3_note_instance_destroy( const INSTANCE * r )
 {
     sorr_ios_d3_instance_destroyed_count++;
@@ -620,7 +655,7 @@ static void sorr_ios_d3_update_runtime_snapshot( const char * reason, int loop_c
     unsigned int watch_live[SORR_IOS_D3_WATCH_PROC_COUNT] = { 0 };
     unsigned int n;
     char sample[512];
-    char watch_summary[512];
+    char watch_summary[1024];
     size_t used = 0;
     size_t watch_used = 0;
     char next_snapshot[2048];
