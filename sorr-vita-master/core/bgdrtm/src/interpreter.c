@@ -206,8 +206,13 @@ static int portable_x64_sysproc_get_desktop_size( INSTANCE * r, int * params )
     int * width = ( int * )portable_x64_stack_get_ptr( &params[0] );
     int * height = ( int * )portable_x64_stack_get_ptr( &params[1] );
 
+#if defined(_WIN64)
     if ( width ) *width = GetSystemMetrics( SM_CXSCREEN );
     if ( height ) *height = GetSystemMetrics( SM_CYSCREEN );
+#else
+    if ( width ) *width = 640;
+    if ( height ) *height = 480;
+#endif
 
 #ifdef PORTABLE_RUNTIME_DIAG
     PORTABLE_DIAG_LOG( "SCRIPT", "x64 bridged GET_DESKTOP_SIZE width_ptr=%p height_ptr=%p width=%d height=%d", ( void * )width, ( void * )height, width ? *width : 0, height ? *height : 0 );
@@ -244,7 +249,8 @@ static int portable_x64_sysproc_load_save( int is_save, int * params )
 }
 #endif
 
-#if defined(PORTABLE_RUNTIME_DIAG) && defined(_WIN64)
+#if defined(PORTABLE_RUNTIME_DIAG) && (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
+#if defined(_WIN64)
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif
@@ -262,7 +268,7 @@ static int portable_x64_ptr_looks_readable( const void * ptr )
 
     return 1;
 }
-#elif defined(PORTABLE_RUNTIME_DIAG) && defined(SORR_HOST_POINTER_TABLES)
+#else
 static int portable_x64_ptr_looks_readable( const void * ptr )
 {
     return ptr != NULL;

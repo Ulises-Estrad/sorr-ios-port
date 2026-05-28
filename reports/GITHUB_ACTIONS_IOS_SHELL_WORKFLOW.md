@@ -1239,6 +1239,16 @@ Cause: interpreter.c included windows.h on iOS after the x64 pointer side table 
 Fix: keep VirtualQuery diagnostics under _WIN64 and use a non-Windows non-null fallback for SORR_HOST_POINTER_TABLES
 ```
 
+Twelfth D3 CI failure:
+
+```text
+Commit: 1390351
+Run: 26549118417
+Failed step: Build unsigned iOS shell app for device
+Cause: interpreter.c still called Windows GetSystemMetrics in the GET_DESKTOP_SIZE bridge on iOS, and the portable diagnostic guard was closed before its helper functions
+Fix: use a 640x480 non-Windows fallback for the bridge and keep the diagnostic helper functions inside the outer PORTABLE_RUNTIME_DIAG guard
+```
+
 Manual D3 test flow:
 
 1. Keep the D2 data staged on the iPhone.

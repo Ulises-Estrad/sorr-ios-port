@@ -169,6 +169,16 @@ Failure: interpreter.c included windows.h on iOS after host pointer-table diagno
 Fix: keep Windows VirtualQuery diagnostics under _WIN64; use a non-Windows non-null pointer diagnostic fallback for SORR_HOST_POINTER_TABLES
 ```
 
+Twelfth D3 attempt:
+
+```text
+Commit: 1390351
+Run: 26549118417
+Result: device compile failed
+Failure: interpreter.c still used Windows GetSystemMetrics in the host pointer-table GET_DESKTOP_SIZE bridge, and the diagnostic block closed one preprocessor guard too early
+Fix: use a small non-Windows desktop-size fallback for SORR_HOST_POINTER_TABLES and keep the diagnostic helper functions inside the outer portable diagnostic guard
+```
+
 The IPA must still contain no:
 
 - `SorR.dat`
