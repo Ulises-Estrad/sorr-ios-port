@@ -1801,6 +1801,19 @@ Purpose:
 - emit `runtime_enemigo_lookup_guard ...` lines plus signal/heartbeat `last_lookup` fields.
 
 Expected CI checks remain unchanged: build iphoneos arm64, ad-hoc sign for Sideloadly, package `Payload/SorrIOSShell.app`, inspect Info.plist/architecture/signature, and verify the IPA contains no `SorR.dat`, `data/`, FPG/WAV/OGG/SMK/PNG assets, logs, or prepared data.
+
+GitHub-side D3S ENEMIGO lookup guard artifact proof:
+
+```text
+Actions run: 26605317709
+Patch commit: 562f4f3
+Device artifact: ios-shell-d3s-enemigo-lookup-guard-device-arm64
+IPA: build-products/SorrIOSShell-d3s-enemigo-lookup-guard-adhoc.ipa
+Artifact size: 803744 bytes
+Result: success
+```
+
+The simulator shell job also passed in the same run. The device artifact passed the existing IPA layout/signature/forbidden-asset inspection.
 ## D3S Enemy/HUD Guard Artifact
 
 The workflow now produces a D3S patch artifact aimed at the confirmed `SIGSEGV` after enemy/HUD child-process teardown:

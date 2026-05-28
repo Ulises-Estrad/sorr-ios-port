@@ -455,3 +455,17 @@ Next artifact target:
 - `build-products/SorrIOSShell-d3s-enemigo-lookup-guard-adhoc.ipa`
 
 Testing remains the same: install with Sideloadly, leave the app foregrounded for 10-15 minutes, and report whether it survives past the old five-minute attract/demo crash window. If it still exits, retrieve `Documents/SORR_DIAGNOSTICS/ios_d3_runtime_stability_probe.txt` and report the last 150-250 lines, especially `runtime_enemigo_lookup_guard`, `signal=`, `last_lookup=`, `last_lifecycle=`, `last_family=`, and `last_render=`.
+
+## GitHub-Side D3S ENEMIGO Lookup Guard Artifact Proof
+
+Produced successfully:
+
+- Actions run: `26605317709`
+- Patch commit: `562f4f3`
+- Artifact: `ios-shell-d3s-enemigo-lookup-guard-device-arm64`
+- IPA: `build-products/SorrIOSShell-d3s-enemigo-lookup-guard-adhoc.ipa`
+- Artifact size: `803744` bytes
+- Device job result: success
+- Simulator job result: success
+
+This is the current recommended physical iPhone D3S patch IPA. It keeps real BGM/SFX enabled, uses the existing D2-staged data, does not bundle game data/assets, and should be tested by leaving the app foregrounded for 10-15 minutes.

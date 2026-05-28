@@ -750,3 +750,17 @@ Next patch artifact:
 The patch keeps BGM/SFX enabled and keeps the IPA asset-free. It validates iOS/D3S `instance_get(id)` candidates before returning them, so a dead hash-slot pointer or an id-mismatched process lookup returns `NULL` instead of a stale process pointer. It also adds a recently-destroyed process ring and visible `runtime_enemigo_lookup_guard ...` diagnostics for ENEMIGO/HUD/effect lookup paths.
 
 D4a remains blocked until this D3S guard build either survives past the old five-minute attract/demo crash window or produces new `runtime_enemigo_lookup_guard` / `signal=` breadcrumbs.
+
+## D3S ENEMIGO Lookup Guard Artifact Proof
+
+The D3S ENEMIGO lookup guard IPA was produced successfully:
+
+- Actions run: `26605317709`
+- Patch commit: `562f4f3`
+- Artifact: `ios-shell-d3s-enemigo-lookup-guard-device-arm64`
+- IPA: `build-products/SorrIOSShell-d3s-enemigo-lookup-guard-adhoc.ipa`
+- Artifact size: `803744` bytes
+- Device job result: success
+- Simulator job result: success
+
+Next manual step is physical iPhone testing with the existing D2-staged data. D4a remains blocked until this guard build either survives past the old five-minute window or produces new `runtime_enemigo_lookup_guard` / `signal=` breadcrumbs.
