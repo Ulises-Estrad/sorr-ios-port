@@ -130,18 +130,18 @@ Physical import/storage result: superseded by completed SORR_IMPORT proof
 
 Updated D2 `SORR_IMPORT` physical proof is complete.
 
-Current D3S stability target:
+Current D3A audio/stability target:
 
 ```text
-Artifact: ios-shell-d3s-idle-window-device-arm64
-IPA inside artifact: build-products/SorrIOSShell-d3s-idle-window-adhoc.ipa
-Purpose: physical-device first-render stability diagnostics around the repeatable five-minute idle exit
+Artifact: ios-shell-d3a-audio-device-arm64
+IPA inside artifact: build-products/SorrIOSShell-d3a-audio-adhoc.ipa
+Purpose: physical-device first-render stability diagnostics with minimal real SDL audio
 Diagnostics path on phone: On My iPhone/SorrIOSShell/SORR_DIAGNOSTICS/ios_d3_runtime_stability_probe.txt
 Dense logging window: runtime_ms=240000 through runtime_ms=330000 at one-second cadence
 Game data/assets in IPA: not bundled
 ```
 
-This target does not start D4a touch input. It keeps the D2 data path and D3 render path intact while adding denser runtime counters for the 240-330 second window.
+This target does not start D4a touch input. It keeps the D2 data path and D3 render path intact while replacing the pure audio stub with a minimal SDL2 audio backend. WAV effects are loaded through Bennu's virtual file layer and queued to SDL audio; unsupported music/OGG paths receive stable inert handles until SDL2_mixer/codec work is explicitly started later.
 
 ## Workflow Summary
 
@@ -1482,3 +1482,38 @@ Artifact-producing commit: f6b4347
 Device job result: success
 Game data/assets bundled in IPA: no
 ```
+
+## D3A Minimal Audio Stability Artifact
+
+The D3S idle-window diagnostics still pointed at a repeatable foreground exit near five minutes. Memory and file counters were not the obvious cause, while the audio stub counters rose steadily in the 240-300 second window.
+
+The next device artifact therefore pivots from a pure audio stub to a minimal SDL2 audio backend:
+
+- `SOUND_INIT` opens the real SDL audio device on iOS,
+- `LOAD_WAV` reads through Bennu `file_open` and decodes WAV through SDL,
+- WAV data is converted to the opened device format and queued with `SDL_QueueAudio`,
+- unsupported song/music paths are assigned stable inert handles instead of repeated hard failures,
+- D3S visible diagnostics remain enabled,
+- heartbeat lines include audio init/load/play/inert-handle counters.
+
+Artifact target:
+
+```text
+ios-shell-d3a-audio-device-arm64
+```
+
+IPA target:
+
+```text
+build-products/SorrIOSShell-d3a-audio-adhoc.ipa
+```
+
+Manual D3A test:
+
+1. Keep the D2-staged data on the iPhone.
+2. Install `build-products/SorrIOSShell-d3a-audio-adhoc.ipa` with Sideloadly.
+3. Launch `SorrIOSShell` and confirm real SoRR rendering still appears.
+4. Note whether audio is audible. WAV effects may work; music may remain silent until SDL2_mixer/OGG/Vorbis is added.
+5. Leave the app foregrounded and untouched for 10-15 minutes.
+6. If it exits, reopen once and retrieve `On My iPhone/SorrIOSShell/SORR_DIAGNOSTICS/ios_d3_runtime_stability_probe.txt`.
+7. Report the last 40-60 lines, including audio counters and any `SDL_APP_*` lifecycle markers.

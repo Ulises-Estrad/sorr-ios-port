@@ -306,5 +306,6 @@ if(SORR_IOS_D3_FIRST_RENDER)
 endif()
 
 # The default target remains the shell/data-layout proof. D3 explicitly opts
-# into the portable runtime source list and uses local iOS stubs for audio and
-# PNG so first render can be attempted without bundling codecs or game assets.
+# into the portable runtime source list and uses local iOS replacements for
+# audio and PNG so render/audio probes can run without bundling codecs or game
+# assets into the IPA.

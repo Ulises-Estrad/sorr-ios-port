@@ -86,12 +86,13 @@ heartbeat=27 ticks=270315 stage=runtime-loop rss_bytes=90652672
 
 The iPhone is configured not to auto-lock, so normal auto-lock is not the lead theory. The next D3S IPA adds one-second heartbeat diagnostics from runtime `240000` ms through `330000` ms and logs frame/tick counters, live instance count, render-object count, open file counters, and audio-stub call counters.
 
-Current D3S diagnostic artifact target:
+Current D3A audio/stability artifact target:
 
 ```text
-Artifact: ios-shell-d3s-idle-window-device-arm64
-IPA: build-products/SorrIOSShell-d3s-idle-window-adhoc.ipa
+Artifact: ios-shell-d3a-audio-device-arm64
+IPA: build-products/SorrIOSShell-d3a-audio-adhoc.ipa
 Diagnostics: On My iPhone/SorrIOSShell/SORR_DIAGNOSTICS/ios_d3_runtime_stability_probe.txt
+Audio scope: minimal real SDL audio, WAV effect decode/queue, inert handles for unsupported music
 ```
 
 GitHub-side D3S idle-window artifact proof:

@@ -201,14 +201,15 @@ This is the first milestone that should exercise the game data on iOS.
 
 ## Immediate Next Action
 
-Current immediate action is D3 stability hardening before D4a touch input.
+Current immediate action is D3A audio/stability hardening before D4a touch input.
 
-D3 physical first render is complete, but the rendered app exits after about five foreground idle minutes. The next diagnostic build keeps the D2 data path and D3 render path unchanged while writing Files-visible dense heartbeat diagnostics from runtime `240000` ms through `330000` ms.
+D3 physical first render is complete, but the rendered app exits after about five foreground idle minutes. The latest dense heartbeat diagnostics did not show an obvious memory or file-handle spike; the strongest suspicious signal was steadily rising audio-stub counters during the 240-300 second window. The next build keeps the D2 data path and D3 render path unchanged while replacing the pure iOS audio stub with a minimal SDL2 audio backend.
 
 ```text
-Artifact target: ios-shell-d3s-idle-window-device-arm64
-IPA target: build-products/SorrIOSShell-d3s-idle-window-adhoc.ipa
+Artifact target: ios-shell-d3a-audio-device-arm64
+IPA target: build-products/SorrIOSShell-d3a-audio-adhoc.ipa
 Diagnostics path: On My iPhone/SorrIOSShell/SORR_DIAGNOSTICS/ios_d3_runtime_stability_probe.txt
+Audio scope: SDL audio device init, WAV decode/queue through Bennu file_open, inert handles for unsupported music/OGG
 No D4a touch input yet
 No game data/assets bundled in IPA
 ```

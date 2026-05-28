@@ -609,6 +609,14 @@ extern volatile int sorr_ios_d3_live_instance_count;
 extern volatile int sorr_ios_d3_render_object_count;
 extern volatile unsigned int sorr_ios_sound_stub_zero_count;
 extern volatile unsigned int sorr_ios_sound_stub_minus_one_count;
+extern volatile unsigned int sorr_ios_audio_init_attempt_count;
+extern volatile unsigned int sorr_ios_audio_init_ok_count;
+extern volatile unsigned int sorr_ios_audio_init_fail_count;
+extern volatile unsigned int sorr_ios_audio_wav_load_ok_count;
+extern volatile unsigned int sorr_ios_audio_wav_load_fail_count;
+extern volatile unsigned int sorr_ios_audio_wav_play_count;
+extern volatile unsigned int sorr_ios_audio_inert_handle_count;
+extern volatile unsigned int sorr_ios_audio_queue_clear_count;
 
 #define SORR_IOS_D3_HEARTBEAT_NORMAL_MS 10000u
 #define SORR_IOS_D3_HEARTBEAT_DENSE_MS 1000u
@@ -814,7 +822,7 @@ static Uint32 sorr_ios_d3_heartbeat_timer(Uint32 interval, void *param)
     }
 
     sorr_ios_d3_stability_log(layout,
-                              "heartbeat=%u ticks=%u runtime_ms=%u interval_next_ms=%u stage=%s rss_bytes=%llu frame_count=%u last_frame_ticks=%d frame_ms=%.3f fps_count=%d fps_init=%d max_jump=%d jump=%d instances=%d render_objects=%d opened_files=%d x_files=%d max_x_files=%d audio_stub_zero=%u audio_stub_minus_one=%u",
+                              "heartbeat=%u ticks=%u runtime_ms=%u interval_next_ms=%u stage=%s rss_bytes=%llu frame_count=%u last_frame_ticks=%d frame_ms=%.3f fps_count=%d fps_init=%d max_jump=%d jump=%d instances=%d render_objects=%d opened_files=%d x_files=%d max_x_files=%d audio_stub_zero=%u audio_stub_minus_one=%u audio_init_attempts=%u audio_init_ok=%u audio_init_fail=%u audio_wav_load_ok=%u audio_wav_load_fail=%u audio_wav_play=%u audio_inert_handles=%u audio_queue_clears=%u",
                               heartbeat,
                               ticks,
                               runtime_ms,
@@ -834,7 +842,15 @@ static Uint32 sorr_ios_d3_heartbeat_timer(Uint32 interval, void *param)
                               x_files_count,
                               max_x_files,
                               sorr_ios_sound_stub_zero_count,
-                              sorr_ios_sound_stub_minus_one_count);
+                              sorr_ios_sound_stub_minus_one_count,
+                              sorr_ios_audio_init_attempt_count,
+                              sorr_ios_audio_init_ok_count,
+                              sorr_ios_audio_init_fail_count,
+                              sorr_ios_audio_wav_load_ok_count,
+                              sorr_ios_audio_wav_load_fail_count,
+                              sorr_ios_audio_wav_play_count,
+                              sorr_ios_audio_inert_handle_count,
+                              sorr_ios_audio_queue_clear_count);
     return next_interval;
 }
 
@@ -1070,7 +1086,6 @@ static int sorr_ios_run_d3_first_render(sorr_ios_data_layout *layout,
     }
 
     SDL_setenv("OS_ID", "0", 1);
-    SDL_setenv("SORR_PORTABLE_AUDIO_STUB", "1", 1);
     SDL_setenv("SORR_PORTABLE_PUMP_EVENTS", "1", 1);
     SDL_setenv("SORR_PORTABLE_DIAG", "1", 1);
     SDL_setenv("SORR_PORTABLE_DIAG_FILES", "1", 1);
@@ -1078,7 +1093,6 @@ static int sorr_ios_run_d3_first_render(sorr_ios_data_layout *layout,
     SDL_setenv("SORR_PORTABLE_DIAG_RENDER", "1", 1);
     SDL_setenv("SORR_PORTABLE_DIAG_VIDEO", "1", 1);
     SDL_setenv("SDL_RENDER_DRIVER", "opengles2", 0);
-    SDL_setenv("SDL_AUDIODRIVER", "dummy", 0);
 
     if (chdir(layout->support_root) != 0)
     {

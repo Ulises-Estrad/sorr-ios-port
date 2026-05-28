@@ -1,6 +1,6 @@
 # iOS D3 Stability Follow-Up
 
-Status: idle-window diagnostics IPA produced by GitHub Actions.
+Status: D3A minimal real-audio stability IPA target prepared.
 
 D3 first render remains complete. This pass hardens the already-rendering D3 build after a repeatable physical-device idle exit was observed at about five minutes.
 
@@ -12,7 +12,7 @@ No touch controls, gameplay input, audio polish, SOR2-only pruning, App Store/Te
 
 ## Change Summary
 
-The D3 iOS build now:
+The D3S iOS build now:
 
 - disables the iOS idle timer through SDL before initialization,
 - keeps the D2 data preflight unchanged,
@@ -37,6 +37,19 @@ heartbeat=27 ticks=270315 stage=runtime-loop rss_bytes=90652672
 ```
 
 The phone is configured not to auto-lock. The lifecycle events remain useful evidence, but normal auto-lock is no longer the lead theory. The next diagnostic pass focuses on what changes during the 240-300 second idle window, including menu/attract timers, event/timer behavior, gradual resource growth, and audio-stub retry patterns.
+
+Latest pivot:
+
+The idle-window log did not show an obvious memory or file-handle spike, but the audio stub counters rose steadily through the 240-300 second window. D3A therefore replaces the pure iOS audio stub with a minimal SDL2 audio backend:
+
+- real SDL audio subsystem/device initialization,
+- WAV effect loading through Bennu `file_open`,
+- WAV conversion to the opened SDL device format,
+- WAV playback through `SDL_QueueAudio`,
+- stable inert handles for unsupported music/OGG paths,
+- added audio counters in the same Files-visible heartbeat log.
+
+This is still not full SDL2_mixer/OGG/Vorbis support. Music may remain silent. The test goal is stability and avoiding repeated broken/stubbed audio failures before D4a touch input.
 
 ## Stability Log
 
@@ -76,7 +89,7 @@ Important markers:
 - `runtime loop start ticks=... dense_start_ms=240000 dense_end_ms=330000`
 - `first_frame_detected ticks=... runtime_ms=... frame_count=...`
 - `dense_window_start ticks=... runtime_ms=... stage=runtime-loop`
-- `heartbeat=N ticks=... runtime_ms=... interval_next_ms=... stage=runtime-loop rss_bytes=... frame_count=... instances=... render_objects=... opened_files=... audio_stub_zero=... audio_stub_minus_one=...`
+- `heartbeat=N ticks=... runtime_ms=... interval_next_ms=... stage=runtime-loop rss_bytes=... frame_count=... instances=... render_objects=... opened_files=... audio_stub_zero=... audio_stub_minus_one=... audio_init_attempts=... audio_init_ok=... audio_init_fail=... audio_wav_load_ok=... audio_wav_load_fail=... audio_wav_play=... audio_inert_handles=... audio_queue_clears=...`
 - `dense_window_end ticks=... runtime_ms=... stage=runtime-loop`
 - `event=SDL_APP_WILLENTERBACKGROUND`
 - `event=SDL_APP_DIDENTERBACKGROUND`
@@ -123,6 +136,15 @@ Focus: one-second diagnostics during runtime_ms=240000..330000
 Game data/assets bundled in IPA: no
 ```
 
+Current D3A audio/stability target:
+
+```text
+Artifact: ios-shell-d3a-audio-device-arm64
+IPA: build-products/SorrIOSShell-d3a-audio-adhoc.ipa
+Focus: minimal real SDL audio backend plus the existing 240000..330000 ms dense diagnostics
+Game data/assets bundled in IPA: no
+```
+
 GitHub-side D3S idle-window diagnostics artifact proof:
 
 ```text
@@ -139,19 +161,21 @@ Game data/assets bundled in IPA: no
 ## Manual iPhone Test
 
 1. Keep the D2-staged data on the iPhone.
-2. Download `ios-shell-d3s-idle-window-device-arm64` from GitHub Actions.
+2. Download `ios-shell-d3a-audio-device-arm64` from GitHub Actions.
 3. Extract the artifact on Windows.
-4. Install `build-products/SorrIOSShell-d3s-idle-window-adhoc.ipa` through Sideloadly.
+4. Install `build-products/SorrIOSShell-d3a-audio-adhoc.ipa` through Sideloadly.
 5. Open `SorrIOSShell`.
-6. Leave the app foregrounded and untouched until it exits or 10-15 minutes pass.
-7. If it exits, reopen it once.
-8. Open Files: `On My iPhone -> SorrIOSShell -> SORR_DIAGNOSTICS`.
-9. Copy or screenshot the last 40-60 lines of `ios_d3_runtime_stability_probe.txt`.
-10. If present, include the block from `dense_window_start` through `dense_window_end`.
-11. Do not start D4a controls until this pass is reviewed.
+6. Confirm the real SoRR render still appears.
+7. Note whether any audio is audible.
+8. Leave the app foregrounded and untouched until it exits or 10-15 minutes pass.
+9. If it exits, reopen it once.
+10. Open Files: `On My iPhone -> SorrIOSShell -> SORR_DIAGNOSTICS`.
+11. Copy or screenshot the last 40-60 lines of `ios_d3_runtime_stability_probe.txt`.
+12. If present, include the block from `dense_window_start` through `dense_window_end`.
+13. Do not start D4a controls until this pass is reviewed.
 
 ## Expected Results
 
-Best case: the idle timer fix prevents the five-minute idle exit and the app keeps rendering.
+Best case: the SDL audio device opens, WAV effects can be queued, unsupported music remains inert or silent, and the app keeps rendering for 10-15 minutes.
 
-Diagnostic case: if the app still exits, the next launch's previous marker and dense-window heartbeat block should identify the last runtime stage, frame count, process/object/file/audio-stub counters, lifecycle event, low-memory event, termination event, or runtime return marker before the exit.
+Diagnostic case: if the app still exits, the next launch's previous marker and dense-window heartbeat block should identify the last runtime stage, frame count, process/object/file counters, audio init/load/play/inert-handle counters, lifecycle event, low-memory event, termination event, or runtime return marker before the exit.
