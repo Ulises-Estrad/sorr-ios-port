@@ -466,3 +466,16 @@ build-products/SorrIOSShell-d4a-visible-touch-viewport-adhoc.ipa
 This follow-up keeps the working touch hitboxes and Bennu key injection unchanged. It forces the game-frame background clear to black and resets SDL logical size, viewport, clip rect, scale, and blend state before drawing the visible overlay in full drawable coordinates.
 
 Install through the same Windows + Sideloadly route. Verify that the buttons are visible, the bars are black, the clipped top-right/bottom-middle artifacts are gone, and the controls still operate the game.
+
+GitHub-side artifact proof:
+
+```text
+Actions run: 26608727747
+Patch commit: ec24f1d
+Artifact: ios-shell-d4a-visible-touch-viewport-device-arm64
+IPA: build-products/SorrIOSShell-d4a-visible-touch-viewport-adhoc.ipa
+Artifact size: 812321 bytes
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
+```

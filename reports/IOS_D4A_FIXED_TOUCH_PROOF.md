@@ -174,3 +174,20 @@ Manual test focus:
 4. Confirm the bottom-middle rectangle and top-right half square are gone.
 5. Confirm BGM/SFX and gameplay control still work.
 6. If a crash occurs, reopen once and send `ios_latest_crash_report.txt`.
+
+## D4a Visible Touch / Viewport Artifact Proof
+
+Produced successfully:
+
+```text
+Actions run: 26608727747
+Patch commit: ec24f1d
+Artifact: ios-shell-d4a-visible-touch-viewport-device-arm64
+IPA: build-products/SorrIOSShell-d4a-visible-touch-viewport-adhoc.ipa
+Artifact size: 812321 bytes
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
+```
+
+This is the current D4a physical iPhone test build for the visual overlay and viewport fix. It keeps the already-working touch hitboxes/key injection, BGM/SFX, D2 staged-data path, D3S guards, and crash-report files. It only changes renderer state handling and visible overlay drawing.

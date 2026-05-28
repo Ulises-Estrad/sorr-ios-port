@@ -1900,6 +1900,19 @@ Expected fix:
 - draw the translucent button fills, double outlines, labels, and `D4A TOUCH` marker in full drawable coordinates,
 - restore the previous renderer state after overlay drawing.
 
+D4a visible-touch/viewport GitHub-side artifact proof:
+
+```text
+Actions run: 26608727747
+Patch commit: ec24f1d
+Device artifact: ios-shell-d4a-visible-touch-viewport-device-arm64
+Artifact size: 812321 bytes
+IPA: build-products/SorrIOSShell-d4a-visible-touch-viewport-adhoc.ipa
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
+```
+
 ## D3S Enemy/HUD Guard Artifact
 
 The workflow now produces a D3S patch artifact aimed at the confirmed `SIGSEGV` after enemy/HUD child-process teardown:

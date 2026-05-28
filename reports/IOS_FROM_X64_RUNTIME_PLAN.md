@@ -833,3 +833,16 @@ build-products/SorrIOSShell-d4a-visible-touch-viewport-adhoc.ipa
 ```
 
 This follow-up preserves the working input mappings and Bennu key injection. It forces black clears around the 16:9 game viewport, resets SDL logical size/viewport/clip/scale before overlay drawing, draws visible translucent controls in full drawable coordinates, and restores renderer state afterward. Do not start D4b customization or D5 until this visible-overlay/viewport artifact is tested.
+
+GitHub-side follow-up artifact proof:
+
+```text
+Actions run: 26608727747
+Patch commit: ec24f1d
+Artifact: ios-shell-d4a-visible-touch-viewport-device-arm64
+IPA: build-products/SorrIOSShell-d4a-visible-touch-viewport-adhoc.ipa
+Artifact size: 812321 bytes
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
+```
