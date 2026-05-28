@@ -69,6 +69,16 @@ Failure: vendored tre CMakeLists.txt declared cmake_minimum_required(VERSION 3.4
 Fix: set CMAKE_POLICY_VERSION_MINIMUM=3.5 in the iOS D3 parent CMake before add_subdirectory(tre)
 ```
 
+Second D3 attempt:
+
+```text
+Commit: 1165d12
+Run: 26545953893
+Result: device compile failed
+Failure: strings.c included windows.h after the diagnostic guard was widened for SORR_HOST_POINTER_TABLES
+Fix: keep the Windows VirtualQuery readability probe under _WIN64 and use a non-Windows non-null diagnostic fallback for iOS
+```
+
 The IPA must still contain no:
 
 - `SorR.dat`

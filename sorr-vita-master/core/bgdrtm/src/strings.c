@@ -52,7 +52,7 @@
 #include "portable_diag.h"
 #endif
 
-#if defined(PORTABLE_RUNTIME_DIAG) && (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
+#if defined(PORTABLE_RUNTIME_DIAG) && defined(_WIN64)
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif
@@ -69,6 +69,11 @@ static int portable_x64_string_ptr_looks_readable( const void * ptr )
     if ( mbi.Protect & ( PAGE_NOACCESS | PAGE_GUARD ) ) return 0;
 
     return 1;
+}
+#elif defined(PORTABLE_RUNTIME_DIAG) && defined(SORR_HOST_POINTER_TABLES)
+static int portable_x64_string_ptr_looks_readable( const void * ptr )
+{
+    return ptr != NULL;
 }
 #endif
 /****************************************************************************/

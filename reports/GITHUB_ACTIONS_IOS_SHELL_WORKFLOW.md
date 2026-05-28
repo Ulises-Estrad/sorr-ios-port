@@ -1139,6 +1139,16 @@ Cause: CMake 4 rejected vendored tre's cmake_minimum_required(VERSION 3.4)
 Fix: the iOS D3 parent CMake now sets CMAKE_POLICY_VERSION_MINIMUM=3.5 before add_subdirectory(tre)
 ```
 
+Second D3 CI failure:
+
+```text
+Commit: 1165d12
+Run: 26545953893
+Failed step: Build unsigned iOS shell app for device
+Cause: strings.c included windows.h after the x64 diagnostic guard was generalized for SORR_HOST_POINTER_TABLES
+Fix: Windows-only VirtualQuery diagnostics stay under _WIN64; iOS uses a non-Windows non-null pointer diagnostic fallback
+```
+
 Manual D3 test flow:
 
 1. Keep the D2 data staged on the iPhone.
