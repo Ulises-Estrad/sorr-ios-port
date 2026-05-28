@@ -520,6 +520,21 @@ ios-shell-d3a-music-device-arm64
 build-products/SorrIOSShell-d3a-music-adhoc.ipa
 ```
 
+GitHub-side D3A music artifact proof:
+
+```text
+Actions run: 26559098341
+Artifact: ios-shell-d3a-music-device-arm64
+Artifact size: 791638 bytes
+IPA: build-products/SorrIOSShell-d3a-music-adhoc.ipa
+Artifact-producing commit: 3914295
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
+```
+
+The next manual physical iPhone test should install this IPA through Sideloadly, keep the D2-staged data with `mod/music` in place, confirm real SoRR rendering still appears, confirm whether BGM is audible, and idle foregrounded for 10-15 minutes while preserving diagnostics in `On My iPhone/SorrIOSShell/SORR_DIAGNOSTICS`.
+
 D4a touch input remains blocked until D3A proves audible BGM or reaches a genuine SDL2_mixer/decoder blocker.
 
 ## Out Of Scope For This Plan

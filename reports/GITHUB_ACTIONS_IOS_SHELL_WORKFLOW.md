@@ -1616,3 +1616,26 @@ Device artifact uploaded: ios-shell-d3a-music-device-arm64 logs only
 ```
 
 Likely first failure area: SDL2_mixer device configure/static build setup. The follow-up workflow patch forces SDL2_mixer to use a static build with `BUILD_SHARED_LIBS=OFF`, passes the concrete SDL2 CMake package directory through `SDL2_DIR`, and gives the app configure step both SDL2 and SDL2_mixer install prefixes in `CMAKE_PREFIX_PATH`.
+
+D3A music GitHub-side artifact proof:
+
+```text
+Actions run: 26559098341
+Device artifact: ios-shell-d3a-music-device-arm64
+Artifact size: 791638 bytes
+IPA: build-products/SorrIOSShell-d3a-music-adhoc.ipa
+Artifact-producing commit: 3914295
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
+```
+
+Manual D3A music test:
+
+1. Keep the D2-staged data on the iPhone, including `mod/music`.
+2. Download `ios-shell-d3a-music-device-arm64` from Actions run `26559098341`.
+3. Install `build-products/SorrIOSShell-d3a-music-adhoc.ipa` through Sideloadly.
+4. Launch `SorrIOSShell` and confirm real SoRR rendering still appears.
+5. Confirm whether BGM is audible.
+6. Leave the app foregrounded and untouched for 10-15 minutes.
+7. If it exits, reopen once and retrieve `On My iPhone/SorrIOSShell/SORR_DIAGNOSTICS/ios_d3_runtime_stability_probe.txt`.
