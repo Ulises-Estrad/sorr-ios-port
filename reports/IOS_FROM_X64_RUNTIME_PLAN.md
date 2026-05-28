@@ -821,4 +821,15 @@ Simulator job result: success
 Game data/assets bundled in IPA: no
 ```
 
-Next manual step is physical iPhone testing through Sideloadly with the existing D2-staged data. Do not start D4b customization or D5 until the fixed controls and latest crash-report path are tested.
+Physical D4a testing through Sideloadly confirmed that rendering, BGM, SFX, and the fixed touch hitboxes/key injection work. The user could skip intro, navigate, and control gameplay. The old idle crash was not reproduced while actively using touch input, but D3S remains guarded rather than fully closed.
+
+The remaining D4a issue is visual composition only: touch controls are functional but invisible, pillar bars are white, and clipped overlay artifacts appear near the bottom-middle and top-right.
+
+Follow-up artifact target:
+
+```text
+ios-shell-d4a-visible-touch-viewport-device-arm64
+build-products/SorrIOSShell-d4a-visible-touch-viewport-adhoc.ipa
+```
+
+This follow-up preserves the working input mappings and Bennu key injection. It forces black clears around the 16:9 game viewport, resets SDL logical size/viewport/clip/scale before overlay drawing, draws visible translucent controls in full drawable coordinates, and restores renderer state afterward. Do not start D4b customization or D5 until this visible-overlay/viewport artifact is tested.

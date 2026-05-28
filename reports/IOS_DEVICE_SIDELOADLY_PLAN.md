@@ -451,3 +451,18 @@ Game data/assets bundled in IPA: no
 ```
 
 Use this artifact for the first fixed-touch physical iPhone test.
+
+### D4a Visible Touch / Viewport Follow-Up
+
+Physical testing of the first D4a artifact confirmed the fixed controls work, the game renders, and BGM/SFX work. The remaining issue is visual only: the controls are invisible, side pillar bars are white, and clipped overlay rectangles appear around the viewport.
+
+Next artifact target:
+
+```text
+ios-shell-d4a-visible-touch-viewport-device-arm64
+build-products/SorrIOSShell-d4a-visible-touch-viewport-adhoc.ipa
+```
+
+This follow-up keeps the working touch hitboxes and Bennu key injection unchanged. It forces the game-frame background clear to black and resets SDL logical size, viewport, clip rect, scale, and blend state before drawing the visible overlay in full drawable coordinates.
+
+Install through the same Windows + Sideloadly route. Verify that the buttons are visible, the bars are black, the clipped top-right/bottom-middle artifacts are gone, and the controls still operate the game.

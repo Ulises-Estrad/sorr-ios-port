@@ -23,11 +23,11 @@
 #include "SDL.h"
 
 #ifndef SORR_IOS_BUILD_LABEL
-#define SORR_IOS_BUILD_LABEL "ios-shell-d4a-fixed-touch"
+#define SORR_IOS_BUILD_LABEL "ios-shell-d4a-visible-touch-viewport"
 #endif
 
 #ifndef SORR_IOS_ARTIFACT_LABEL
-#define SORR_IOS_ARTIFACT_LABEL "ios-shell-d4a-fixed-touch-guarded-device-arm64"
+#define SORR_IOS_ARTIFACT_LABEL "ios-shell-d4a-visible-touch-viewport-device-arm64"
 #endif
 
 #ifdef SORR_IOS_D3_FIRST_RENDER
@@ -615,8 +615,22 @@ void sorr_ios_d4a_draw_touch_overlay(SDL_Renderer *renderer)
 {
     int width = 0;
     int height = 0;
+    int old_logical_w = 0;
+    int old_logical_h = 0;
+    float old_scale_x = 1.0f;
+    float old_scale_y = 1.0f;
+    unsigned char old_r = 0;
+    unsigned char old_g = 0;
+    unsigned char old_b = 0;
+    unsigned char old_a = 255;
+    SDL_Rect old_viewport;
+    SDL_Rect old_clip;
+    SDL_bool old_clip_enabled = SDL_FALSE;
     int i;
     SDL_BlendMode old_blend = SDL_BLENDMODE_NONE;
+    int margin;
+    int label_scale;
+    int marker_scale;
 
     if (!renderer)
     {
@@ -629,34 +643,91 @@ void sorr_ios_d4a_draw_touch_overlay(SDL_Renderer *renderer)
     }
 
     SDL_GetRenderDrawBlendMode(renderer, &old_blend);
+    SDL_GetRenderDrawColor(renderer, &old_r, &old_g, &old_b, &old_a);
+    SDL_RenderGetLogicalSize(renderer, &old_logical_w, &old_logical_h);
+    SDL_RenderGetViewport(renderer, &old_viewport);
+    old_clip_enabled = SDL_RenderIsClipEnabled(renderer);
+    SDL_RenderGetClipRect(renderer, &old_clip);
+    SDL_RenderGetScale(renderer, &old_scale_x, &old_scale_y);
+
+    SDL_RenderSetLogicalSize(renderer, 0, 0);
+    SDL_RenderSetViewport(renderer, NULL);
+    SDL_RenderSetClipRect(renderer, NULL);
+    SDL_RenderSetScale(renderer, 1.0f, 1.0f);
     SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+
+    margin = height / 48;
+    if (margin < 10)
+    {
+        margin = 10;
+    }
+    label_scale = height >= 1000 ? 4 : (height >= 700 ? 3 : 2);
+    marker_scale = label_scale > 3 ? 3 : label_scale;
+
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 115);
+    {
+        SDL_Rect marker_bg = {margin, margin, 10 + (int)strlen("D4A TOUCH") * 6 * marker_scale + 10, 10 + 7 * marker_scale + 10};
+        SDL_RenderFillRect(renderer, &marker_bg);
+        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 210);
+        SDL_RenderDrawRect(renderer, &marker_bg);
+        sorr_ios_draw_text(renderer, marker_bg.x + 10, marker_bg.y + 10, marker_scale, "D4A TOUCH");
+    }
 
     for (i = 0; i < SORR_IOS_D4A_TOUCH_BUTTON_COUNT; i++)
     {
         const sorr_ios_d4a_touch_button *button = &sorr_ios_d4a_touch_buttons[i];
         int pressed = sorr_ios_d4a_button_press_count[i] > 0;
         SDL_Rect rect;
+        SDL_Rect inner;
         int label_len = (int)strlen(button->label);
-        int text_w = label_len * 12;
-        int text_h = 14;
+        int text_w = label_len * 6 * label_scale;
+        int text_h = 7 * label_scale;
 
         rect.x = (int)(button->x * (float)width);
         rect.y = (int)(button->y * (float)height);
         rect.w = (int)(button->w * (float)width);
         rect.h = (int)(button->h * (float)height);
 
-        SDL_SetRenderDrawColor(renderer, 20, 26, 34, pressed ? 170 : 105);
+        if (rect.w < 58) rect.w = 58;
+        if (rect.h < 46) rect.h = 46;
+        if (rect.x < margin) rect.x = margin;
+        if (rect.y < margin) rect.y = margin;
+        if (rect.x + rect.w > width - margin) rect.x = width - margin - rect.w;
+        if (rect.y + rect.h > height - margin) rect.y = height - margin - rect.h;
+        if (rect.x < 0) rect.x = 0;
+        if (rect.y < 0) rect.y = 0;
+
+        inner = rect;
+        inner.x += 2;
+        inner.y += 2;
+        inner.w -= 4;
+        inner.h -= 4;
+
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, pressed ? 205 : 145);
         SDL_RenderFillRect(renderer, &rect);
-        SDL_SetRenderDrawColor(renderer, 238, 242, 248, pressed ? 245 : 175);
+        SDL_SetRenderDrawColor(renderer, pressed ? 84 : 255, pressed ? 190 : 255, pressed ? 255 : 255, 245);
         SDL_RenderDrawRect(renderer, &rect);
+        SDL_RenderDrawRect(renderer, &inner);
         sorr_ios_draw_text(renderer,
                            rect.x + (rect.w - text_w) / 2,
                            rect.y + (rect.h - text_h) / 2,
-                           2,
+                           label_scale,
                            button->label);
     }
 
+    if (old_logical_w > 0 && old_logical_h > 0)
+    {
+        SDL_RenderSetLogicalSize(renderer, old_logical_w, old_logical_h);
+    }
+    else
+    {
+        SDL_RenderSetLogicalSize(renderer, 0, 0);
+    }
+    SDL_RenderSetViewport(renderer, &old_viewport);
+    SDL_RenderSetClipRect(renderer, old_clip_enabled ? &old_clip : NULL);
+    SDL_RenderSetScale(renderer, old_scale_x, old_scale_y);
     SDL_SetRenderDrawBlendMode(renderer, old_blend);
+    SDL_SetRenderDrawColor(renderer, old_r, old_g, old_b, old_a);
 }
 #endif
 
@@ -1892,7 +1963,7 @@ static int sorr_ios_run_d3_first_render(sorr_ios_data_layout *layout,
     sorr_ios_status_add("D3 FIRST RENDER PROBE");
     sorr_ios_status_add("DATA APP SUPPORT/SORR");
     sorr_ios_status_add("DIAG FILES SORR_DIAGNOSTICS");
-    sorr_ios_status_add("D4A FIXED TOUCH ENABLED");
+    sorr_ios_status_add("D4A VISIBLE TOUCH ENABLED");
     if (previous_stability_line[0])
     {
         sorr_ios_status_add("PREV STABILITY LOG FOUND");

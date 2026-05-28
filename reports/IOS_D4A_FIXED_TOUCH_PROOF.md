@@ -134,3 +134,43 @@ Game data/assets bundled in IPA: no
 ```
 
 This artifact is the current D4a physical iPhone test build. It keeps real BGM/SFX enabled, keeps the D2-staged data path, keeps D3S guards/diagnostics, and adds the fixed touch overlay plus current-run/latest-crash log files.
+
+## D4a Visual Overlay/Viewport Follow-Up
+
+Physical testing of run `26607711467` confirmed the D4a input bridge is working: touch hitboxes, Bennu key-state injection, rendering, BGM, and SFX all worked on the iPhone. The remaining D4a issue is visual composition only.
+
+Observed visual issues:
+
+- touch controls worked but were not visible,
+- a clipped rectangle appeared near the bottom middle of the screen,
+- a half-clipped square appeared in the top-right,
+- the 16:9 pillar bars were white instead of black.
+
+The follow-up keeps the working touch hitboxes and key mappings unchanged. It only changes overlay rendering and viewport state handling:
+
+- force the game-frame clear color to black before copying the game texture,
+- draw the D4a overlay after the game texture copy and before `SDL_RenderPresent`,
+- reset SDL logical size, viewport, clip rect, scale, and blend mode before drawing the overlay,
+- draw high-contrast translucent button fills, double outlines, readable labels, and a small `D4A TOUCH` marker,
+- restore the previous SDL renderer state after overlay drawing.
+
+Expected follow-up artifact:
+
+```text
+ios-shell-d4a-visible-touch-viewport-device-arm64
+```
+
+Expected IPA inside artifact:
+
+```text
+build-products/SorrIOSShell-d4a-visible-touch-viewport-adhoc.ipa
+```
+
+Manual test focus:
+
+1. Install the follow-up IPA with Sideloadly.
+2. Confirm side bars are black.
+3. Confirm the touch controls are visibly drawn and still match the working hitboxes.
+4. Confirm the bottom-middle rectangle and top-right half square are gone.
+5. Confirm BGM/SFX and gameplay control still work.
+6. If a crash occurs, reopen once and send `ios_latest_crash_report.txt`.

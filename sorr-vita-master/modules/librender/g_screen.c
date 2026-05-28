@@ -185,6 +185,7 @@ void gr_unlock_screen()
     if ( SDL_MUSTLOCK( screen ) ) SDL_UnlockSurface( screen ) ;
     if ( waitvsync ) gr_wait_vsync();
     SDL_UpdateTexture(texture, NULL, screen->pixels, screen->pitch);
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_RenderClear(renderer);
     SDL_RenderCopy(renderer, texture, NULL, NULL);
 #ifdef TARGET_IOS

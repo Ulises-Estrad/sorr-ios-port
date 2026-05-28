@@ -1884,7 +1884,22 @@ Simulator job result: success
 Game data/assets bundled in IPA: no
 ```
 
-This is the current recommended physical iPhone D4a test artifact.
+Physical testing confirmed this artifact renders, plays BGM/SFX, and accepts fixed touch input. The remaining D4a issue is visual composition: controls are functional but invisible, the pillar bars are white, and clipped overlay artifacts appear near the bottom middle and top-right.
+
+The next workflow target keeps the same input bridge and only changes viewport/overlay rendering:
+
+```text
+ios-shell-d4a-visible-touch-viewport-device-arm64
+build-products/SorrIOSShell-d4a-visible-touch-viewport-adhoc.ipa
+```
+
+Expected fix:
+
+- force black game-frame clears before the game texture copy,
+- reset SDL logical size, viewport, clip rect, scale, and blend mode before drawing the overlay,
+- draw the translucent button fills, double outlines, labels, and `D4A TOUCH` marker in full drawable coordinates,
+- restore the previous renderer state after overlay drawing.
+
 ## D3S Enemy/HUD Guard Artifact
 
 The workflow now produces a D3S patch artifact aimed at the confirmed `SIGSEGV` after enemy/HUD child-process teardown:
