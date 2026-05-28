@@ -398,6 +398,27 @@ Device job result: success
 Game data/assets bundled in IPA: no
 ```
 
+D3S visible diagnostics follow-up:
+
+The first stability artifact still exited after about five minutes, and the app-private log was not visible through Files. The D3S diagnostic target now mirrors the stability log to:
+
+```text
+Documents/SORR_DIAGNOSTICS/ios_d3_runtime_stability_probe.txt
+```
+
+Files path:
+
+```text
+On My iPhone/SorrIOSShell/SORR_DIAGNOSTICS/ios_d3_runtime_stability_probe.txt
+```
+
+New artifact target:
+
+```text
+ios-shell-d3s-visible-diagnostics-device-arm64
+build-products/SorrIOSShell-d3s-visible-diagnostics-adhoc.ipa
+```
+
 ## Out Of Scope For This Plan
 
 - SOR2-only pruning.

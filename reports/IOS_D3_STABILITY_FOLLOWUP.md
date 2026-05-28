@@ -1,6 +1,6 @@
 # iOS D3 Stability Follow-Up
 
-Status: diagnostic IPA produced by GitHub Actions.
+Status: visible diagnostics IPA pending GitHub Actions.
 
 D3 first render remains complete. This pass hardens the already-rendering D3 build after a repeatable physical-device idle exit was observed at about five minutes.
 
@@ -18,6 +18,8 @@ The D3 iOS build now:
 - keeps the D2 data preflight unchanged,
 - writes the original first-render probe log,
 - writes a persistent D3 runtime stability log,
+- mirrors the stability log to the Files-visible Documents area,
+- copies the latest app-private stability log to the visible mirror on startup,
 - records the previous stability log's last marker on the next launch,
 - starts a 10-second heartbeat before runtime handoff,
 - logs the current D3 stage and resident memory in each heartbeat,
@@ -30,6 +32,26 @@ The local-only iPhone log is:
 ```text
 Library/Application Support/SORR/logs/ios_d3_runtime_stability_probe.txt
 ```
+
+The same D3S log is mirrored to the app's Files-visible Documents area:
+
+```text
+On My iPhone/SorrIOSShell/SORR_DIAGNOSTICS/ios_d3_runtime_stability_probe.txt
+```
+
+Internal path:
+
+```text
+Documents/SORR_DIAGNOSTICS/ios_d3_runtime_stability_probe.txt
+```
+
+The app also writes:
+
+```text
+Documents/SORR_DIAGNOSTICS/README_D3S_DIAGNOSTICS.txt
+```
+
+This small local file exists only on the phone and makes the diagnostics folder easier to identify in Files.
 
 Important markers:
 
@@ -52,39 +74,29 @@ If the app exits or crashes, reopen it once. The next launch should log and brie
 GitHub Actions device artifact:
 
 ```text
-ios-shell-d3-stability-device-arm64
+ios-shell-d3s-visible-diagnostics-device-arm64
 ```
 
 IPA inside artifact:
 
 ```text
-build-products/SorrIOSShell-d3-stability-adhoc.ipa
+build-products/SorrIOSShell-d3s-visible-diagnostics-adhoc.ipa
 ```
 
 The IPA remains asset-free. The workflow inspection still rejects `SorR.dat`, `data/`, `.fpg`, `.wav`, `.ogg`, `.smk`, and `.png` content.
 
-GitHub-side artifact proof:
-
-```text
-Actions run: 26551315103
-Device artifact: ios-shell-d3-stability-device-arm64
-Artifact size: 675392 bytes
-IPA: build-products/SorrIOSShell-d3-stability-adhoc.ipa
-Artifact-producing commit: a0a401d
-Device job result: success
-Game data/assets bundled in IPA: no
-```
-
 ## Manual iPhone Test
 
 1. Keep the D2-staged data on the iPhone.
-2. Download `ios-shell-d3-stability-device-arm64` from GitHub Actions.
+2. Download `ios-shell-d3s-visible-diagnostics-device-arm64` from GitHub Actions.
 3. Extract the artifact on Windows.
-4. Install `build-products/SorrIOSShell-d3-stability-adhoc.ipa` through Sideloadly.
+4. Install `build-products/SorrIOSShell-d3s-visible-diagnostics-adhoc.ipa` through Sideloadly.
 5. Open `SorrIOSShell`.
-6. Leave the app foregrounded and untouched for at least 7 minutes.
-7. If it exits, reopen it once and read/report the previous stability marker shown or logged.
-8. Do not start D4a controls until this pass is reviewed.
+6. Leave the app foregrounded and untouched until it exits or 10-15 minutes pass.
+7. If it exits, reopen it once.
+8. Open Files: `On My iPhone -> SorrIOSShell -> SORR_DIAGNOSTICS`.
+9. Copy or screenshot the last 20 lines of `ios_d3_runtime_stability_probe.txt`.
+10. Do not start D4a controls until this pass is reviewed.
 
 ## Expected Results
 

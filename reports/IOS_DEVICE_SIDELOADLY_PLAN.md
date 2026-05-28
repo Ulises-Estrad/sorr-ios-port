@@ -293,3 +293,20 @@ The stability build still bundles no game data and writes its diagnostic log loc
 ```text
 Library/Application Support/SORR/logs/ios_d3_runtime_stability_probe.txt
 ```
+
+D3S visible diagnostics update:
+
+The first stability IPA still exited after about five minutes, and the app-private log was not visible through Files. The next D3S artifact mirrors the same log to the app's visible Documents area:
+
+```text
+On My iPhone/SorrIOSShell/SORR_DIAGNOSTICS/ios_d3_runtime_stability_probe.txt
+```
+
+Artifact target:
+
+```text
+ios-shell-d3s-visible-diagnostics-device-arm64
+build-products/SorrIOSShell-d3s-visible-diagnostics-adhoc.ipa
+```
+
+After an idle exit, reopen the app once, then open Files and retrieve the last 20 lines from `SORR_DIAGNOSTICS/ios_d3_runtime_stability_probe.txt`.

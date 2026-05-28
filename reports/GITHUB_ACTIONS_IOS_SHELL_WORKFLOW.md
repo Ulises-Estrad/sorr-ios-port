@@ -1370,3 +1370,42 @@ Artifact-producing commit: a0a401d
 Device job result: success
 Game data/assets bundled in IPA: no
 ```
+
+## D3S Visible Diagnostics Artifact
+
+The first D3 stability artifact still exited after about five minutes, and its private `Application Support` log was not accessible through the iPhone Files app.
+
+The next D3S diagnostic artifact mirrors the same stability log into the app's visible Documents area:
+
+```text
+On My iPhone/SorrIOSShell/SORR_DIAGNOSTICS/ios_d3_runtime_stability_probe.txt
+```
+
+Expected artifact:
+
+```text
+ios-shell-d3s-visible-diagnostics-device-arm64
+```
+
+Expected IPA:
+
+```text
+build-products/SorrIOSShell-d3s-visible-diagnostics-adhoc.ipa
+```
+
+D3S visible diagnostics changes:
+
+- create `Documents/SORR_DIAGNOSTICS`,
+- append every D3S stability marker and heartbeat to the visible mirror,
+- copy the latest app-private stability log to the visible mirror on startup,
+- show `DIAG FILES SORR_DIAGNOSTICS` on the brief pre-runtime status screen,
+- keep the D3 render path and D2-staged data path unchanged.
+
+Manual D3S diagnostic test:
+
+1. Keep D2 data staged on the iPhone.
+2. Install `build-products/SorrIOSShell-d3s-visible-diagnostics-adhoc.ipa` with Sideloadly.
+3. Launch the app and leave it foregrounded and untouched until it exits or 10-15 minutes pass.
+4. If it exits, reopen once.
+5. Open Files: `On My iPhone -> SorrIOSShell -> SORR_DIAGNOSTICS`.
+6. Copy or screenshot the last 20 lines of `ios_d3_runtime_stability_probe.txt`.

@@ -341,6 +341,19 @@ Library/Application Support/SORR/logs/ios_d3_runtime_stability_probe.txt
 
 The stability log records runtime stages, 10-second heartbeats, resident memory, SDL lifecycle events, low-memory events, background/foreground transitions, SDL quit/termination events, and the previous run's last marker on next launch.
 
+Follow-up result: the first stability artifact still exited after about five minutes, and the private `Application Support` stability log was not visible in Files. The D3S visible-diagnostics build therefore mirrors the stability log into:
+
+```text
+On My iPhone/SorrIOSShell/SORR_DIAGNOSTICS/ios_d3_runtime_stability_probe.txt
+```
+
+New D3S diagnostic artifact target:
+
+```text
+ios-shell-d3s-visible-diagnostics-device-arm64
+build-products/SorrIOSShell-d3s-visible-diagnostics-adhoc.ipa
+```
+
 ## Out Of Scope
 
 - touch controls,

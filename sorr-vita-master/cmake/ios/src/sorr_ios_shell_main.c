@@ -85,6 +85,7 @@ typedef struct sorr_ios_data_layout
     char bundle_root[1024];
     char documents_root[1024];
     char documents_import_dir[1024];
+    char documents_diagnostics_dir[1024];
     char support_root[1024];
     char savegame_dir[1024];
     char xbox_dir[1024];
@@ -94,6 +95,7 @@ typedef struct sorr_ios_data_layout
     char d2_probe_path[1024];
     char d3_probe_path[1024];
     char d3_stability_path[1024];
+    char d3_visible_stability_path[1024];
     bool d2_data_ready;
     bool d2_import_seen;
     bool d2_import_failed;
@@ -533,6 +535,53 @@ static int sorr_ios_write_text_file(const char *path, const char *text)
     return 1;
 }
 
+static int sorr_ios_copy_file_contents(const char *src, const char *dst)
+{
+    FILE *in;
+    FILE *out;
+    char buffer[4096];
+    size_t read_count;
+
+    if (!src || !dst || !src[0] || !dst[0])
+    {
+        return 0;
+    }
+
+    in = fopen(src, "rb");
+    if (!in)
+    {
+        return 0;
+    }
+
+    out = fopen(dst, "wb");
+    if (!out)
+    {
+        fclose(in);
+        return 0;
+    }
+
+    while ((read_count = fread(buffer, 1, sizeof(buffer), in)) > 0)
+    {
+        if (fwrite(buffer, 1, read_count, out) != read_count)
+        {
+            fclose(out);
+            fclose(in);
+            return 0;
+        }
+    }
+
+    if (ferror(in))
+    {
+        fclose(out);
+        fclose(in);
+        return 0;
+    }
+
+    fclose(out);
+    fclose(in);
+    return 1;
+}
+
 #ifdef SORR_IOS_D3_FIRST_RENDER
 enum sorr_ios_d3_runtime_stage
 {
@@ -618,6 +667,7 @@ static void sorr_ios_d3_log(const sorr_ios_data_layout *layout, const char *form
 
     sorr_ios_d3_append_log_file(layout->d3_probe_path, line);
     sorr_ios_d3_append_log_file(layout->d3_stability_path, line);
+    sorr_ios_d3_append_log_file(layout->d3_visible_stability_path, line);
 }
 
 static void sorr_ios_d3_stability_log(const sorr_ios_data_layout *layout, const char *format, ...)
@@ -639,6 +689,7 @@ static void sorr_ios_d3_stability_log(const sorr_ios_data_layout *layout, const 
     if (layout)
     {
         sorr_ios_d3_append_log_file(layout->d3_stability_path, line);
+        sorr_ios_d3_append_log_file(layout->d3_visible_stability_path, line);
     }
 }
 
@@ -846,14 +897,21 @@ static int sorr_ios_run_d3_first_render(sorr_ios_data_layout *layout,
         return 1;
     }
 
-    sorr_ios_read_last_nonempty_line(layout->d3_stability_path,
-                                     previous_stability_line,
-                                     sizeof(previous_stability_line));
+    sorr_ios_copy_file_contents(layout->d3_stability_path, layout->d3_visible_stability_path);
+    if (!sorr_ios_read_last_nonempty_line(layout->d3_stability_path,
+                                          previous_stability_line,
+                                          sizeof(previous_stability_line)))
+    {
+        sorr_ios_read_last_nonempty_line(layout->d3_visible_stability_path,
+                                         previous_stability_line,
+                                         sizeof(previous_stability_line));
+    }
 
     remove(layout->d3_probe_path);
     sorr_ios_d3_set_stage(layout, SORR_IOS_D3_STAGE_APP_LAUNCH);
     sorr_ios_d3_log(layout, "probe log path=%s", layout->d3_probe_path);
     sorr_ios_d3_log(layout, "stability log path=%s", layout->d3_stability_path);
+    sorr_ios_d3_log(layout, "visible stability log path=%s", layout->d3_visible_stability_path);
     sorr_ios_d3_log(layout, "app support path=%s", layout->support_root);
     sorr_ios_d3_log(layout, "SorR.dat path=%s", layout->sorr_dat_path);
     if (previous_stability_line[0])
@@ -869,6 +927,7 @@ static int sorr_ios_run_d3_first_render(sorr_ios_data_layout *layout,
     sorr_ios_status_set_waiting();
     sorr_ios_status_add("D3 FIRST RENDER PROBE");
     sorr_ios_status_add("DATA APP SUPPORT/SORR");
+    sorr_ios_status_add("DIAG FILES SORR_DIAGNOSTICS");
     if (previous_stability_line[0])
     {
         sorr_ios_status_add("PREV STABILITY LOG FOUND");
@@ -1012,7 +1071,7 @@ static int sorr_ios_run_d3_first_render(sorr_ios_data_layout *layout,
     {
         sorr_ios_draw_status(*renderer_ref);
         SDL_RenderPresent(*renderer_ref);
-        SDL_Delay(300);
+        SDL_Delay(1000);
         SDL_DestroyRenderer(*renderer_ref);
         *renderer_ref = NULL;
     }
@@ -1190,6 +1249,7 @@ static int sorr_ios_prepare_data_layout(sorr_ios_data_layout *layout)
     char documents_dir[1024];
     char library_dir[1024];
     char app_support_dir[1024];
+    char diagnostics_readme_path[1024];
 
     if (!layout)
     {
@@ -1225,11 +1285,13 @@ static int sorr_ios_prepare_data_layout(sorr_ios_data_layout *layout)
         !sorr_ios_join_path(layout->xbox_dir, sizeof(layout->xbox_dir), layout->support_root, "xbox") ||
         !sorr_ios_join_path(layout->logs_dir, sizeof(layout->logs_dir), layout->support_root, "logs") ||
         !sorr_ios_join_path(layout->documents_import_dir, sizeof(layout->documents_import_dir), layout->documents_root, "SORR_IMPORT") ||
+        !sorr_ios_join_path(layout->documents_diagnostics_dir, sizeof(layout->documents_diagnostics_dir), layout->documents_root, "SORR_DIAGNOSTICS") ||
         !sorr_ios_join_path(layout->sorr_dat_path, sizeof(layout->sorr_dat_path), layout->support_root, "SorR.dat") ||
         !sorr_ios_join_path(layout->required_file_path, sizeof(layout->required_file_path), layout->support_root, "mod/system.txt") ||
         !sorr_ios_join_path(layout->d2_probe_path, sizeof(layout->d2_probe_path), layout->logs_dir, "ios_d2_data_import_probe.txt") ||
         !sorr_ios_join_path(layout->d3_probe_path, sizeof(layout->d3_probe_path), layout->logs_dir, "ios_d3_first_render_probe.txt") ||
-        !sorr_ios_join_path(layout->d3_stability_path, sizeof(layout->d3_stability_path), layout->logs_dir, "ios_d3_runtime_stability_probe.txt"))
+        !sorr_ios_join_path(layout->d3_stability_path, sizeof(layout->d3_stability_path), layout->logs_dir, "ios_d3_runtime_stability_probe.txt") ||
+        !sorr_ios_join_path(layout->d3_visible_stability_path, sizeof(layout->d3_visible_stability_path), layout->documents_diagnostics_dir, "ios_d3_runtime_stability_probe.txt"))
     {
         SDL_Log("SORR iOS shell: data layout path construction failed");
         return 0;
@@ -1238,6 +1300,7 @@ static int sorr_ios_prepare_data_layout(sorr_ios_data_layout *layout)
     if (!sorr_ios_mkdir_if_needed(documents_dir) ||
         !sorr_ios_mkdir_if_needed(layout->documents_root) ||
         !sorr_ios_mkdir_if_needed(layout->documents_import_dir) ||
+        !sorr_ios_mkdir_if_needed(layout->documents_diagnostics_dir) ||
         !sorr_ios_mkdir_if_needed(library_dir) ||
         !sorr_ios_mkdir_if_needed(app_support_dir) ||
         !sorr_ios_mkdir_if_needed(layout->support_root))
@@ -1250,7 +1313,18 @@ static int sorr_ios_prepare_data_layout(sorr_ios_data_layout *layout)
 
     SDL_Log("SORR iOS shell: support root path=%s", layout->support_root);
     SDL_Log("SORR iOS shell: D2 import inbox path=%s", layout->documents_import_dir);
+    SDL_Log("SORR iOS shell: D3 visible diagnostics path=%s", layout->documents_diagnostics_dir);
     SDL_Log("SORR iOS shell: D2 canonical data path=%s", layout->support_root);
+
+    if (sorr_ios_join_path(diagnostics_readme_path,
+                           sizeof(diagnostics_readme_path),
+                           layout->documents_diagnostics_dir,
+                           "README_D3S_DIAGNOSTICS.txt"))
+    {
+        sorr_ios_write_text_file(diagnostics_readme_path,
+                                 "D3S diagnostics are mirrored here for Files access.\n"
+                                 "After an idle crash, reopen SorrIOSShell once, then copy the last lines of ios_d3_runtime_stability_probe.txt.\n");
+    }
 
     if (!sorr_ios_create_dir_marker("savegame", layout->savegame_dir) ||
         !sorr_ios_create_dir_marker("xbox", layout->xbox_dir) ||
