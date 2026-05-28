@@ -418,3 +418,16 @@ Physical test instructions:
 6. If it exits, reopen once.
 7. Retrieve `On My iPhone -> SorrIOSShell -> SORR_DIAGNOSTICS -> ios_d3_runtime_stability_probe.txt`.
 8. Report the last 60-100 lines, especially the dense-window heartbeats and any `SDL_APP_*` lifecycle event line with `runtime_snapshot`.
+
+## GitHub-Side D3S Runtime Window Diagnostic Artifact Proof
+
+```text
+Actions run: 26592326534
+Device artifact: ios-shell-d3s-runtime-window-diagnostics-device-arm64
+Artifact size: 796018 bytes
+IPA: build-products/SorrIOSShell-d3s-runtime-window-diagnostics-adhoc.ipa
+Artifact-producing commit: 7f11519
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
+```

@@ -252,6 +252,19 @@ Artifact target: ios-shell-d3s-runtime-window-diagnostics-device-arm64
 IPA target: build-products/SorrIOSShell-d3s-runtime-window-diagnostics-adhoc.ipa
 Key new fields: runtime_loops, runtime_frames, runtime_runs, runtime_last_proc, runtime_snapshot
 ```
+
+GitHub-side artifact proof:
+
+```text
+Actions run: 26592326534
+Artifact: ios-shell-d3s-runtime-window-diagnostics-device-arm64
+Artifact size: 796018 bytes
+IPA: build-products/SorrIOSShell-d3s-runtime-window-diagnostics-adhoc.ipa
+Artifact-producing commit: 7f11519
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
+```
 14. Do not start D4a controls until this pass is reviewed.
 
 ## Expected Results

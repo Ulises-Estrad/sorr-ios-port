@@ -1692,3 +1692,16 @@ IPA: build-products/SorrIOSShell-d3s-runtime-window-diagnostics-adhoc.ipa
 ```
 
 This build keeps real BGM/SFX enabled and adds interpreter/runtime process snapshots to the Files-visible D3S stability log. It is meant to identify whether a timed attract/demo/menu process or script state change occurs in the 240-300 second window. The no-assets-in-IPA checks remain unchanged.
+
+GitHub-side D3S runtime-window diagnostic artifact proof:
+
+```text
+Actions run: 26592326534
+Device artifact: ios-shell-d3s-runtime-window-diagnostics-device-arm64
+Artifact size: 796018 bytes
+IPA: build-products/SorrIOSShell-d3s-runtime-window-diagnostics-adhoc.ipa
+Artifact-producing commit: 7f11519
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
+```

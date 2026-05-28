@@ -581,6 +581,19 @@ Visible diagnostics: On My iPhone/SorrIOSShell/SORR_DIAGNOSTICS/ios_d3_runtime_s
 
 D4a touch input remains blocked until this D3S runtime-window stability pass has produced a diagnostic result or fix.
 
+GitHub-side D3S runtime-window diagnostic artifact proof:
+
+```text
+Actions run: 26592326534
+Artifact: ios-shell-d3s-runtime-window-diagnostics-device-arm64
+Artifact size: 796018 bytes
+IPA: build-products/SorrIOSShell-d3s-runtime-window-diagnostics-adhoc.ipa
+Artifact-producing commit: 7f11519
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
+```
+
 ## Out Of Scope For This Plan
 
 - SOR2-only pruning.
