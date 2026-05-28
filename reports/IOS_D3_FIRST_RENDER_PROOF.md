@@ -119,6 +119,16 @@ Failure: mod_draw.c could not include libdraw.h because the D3 iOS target missed
 Fix: add modules/libdraw to the D3 iOS target include directories
 ```
 
+Seventh D3 attempt:
+
+```text
+Commit: 766ed3d
+Run: 26547583863
+Result: device compile failed
+Failure: mod_draw.c used DRAWING_OBJECT * callback parameters where the render object API expects void * callback context
+Fix: convert the mod_draw render-object callbacks to void * and cast back to DRAWING_OBJECT * inside the callbacks
+```
+
 The IPA must still contain no:
 
 - `SorR.dat`

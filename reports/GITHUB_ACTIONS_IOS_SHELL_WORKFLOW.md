@@ -1189,6 +1189,16 @@ Cause: mod_draw.c includes libdraw.h, but the D3 iOS target included mod_draw wi
 Fix: add modules/libdraw to the D3 iOS target include directories
 ```
 
+Seventh D3 CI failure:
+
+```text
+Commit: 766ed3d
+Run: 26547583863
+Failed step: Build unsigned iOS shell app for device
+Cause: mod_draw.c passed DRAWING_OBJECT * callbacks to gr_new_object while the render object API expects void * callback context
+Fix: mod_draw callbacks now accept void * context and cast back to DRAWING_OBJECT * inside the callback body
+```
+
 Manual D3 test flow:
 
 1. Keep the D2 data staged on the iPhone.
