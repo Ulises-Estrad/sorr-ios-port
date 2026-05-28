@@ -70,6 +70,8 @@ INSTANCE * first_instance = NULL ;
 
 #ifdef SORR_IOS_D3_FIRST_RENDER
 volatile int sorr_ios_d3_live_instance_count = 0;
+void sorr_ios_d3_note_instance_create( const INSTANCE * r );
+void sorr_ios_d3_note_instance_destroy( const INSTANCE * r );
 #endif
 
 /* Priority lists */
@@ -386,6 +388,7 @@ INSTANCE * instance_duplicate( INSTANCE * father )
 
 #ifdef SORR_IOS_D3_FIRST_RENDER
     sorr_ios_d3_live_instance_count++;
+    sorr_ios_d3_note_instance_create( r );
 #endif
 
     instance_add_to_list_by_id( r, pid );
@@ -506,6 +509,7 @@ INSTANCE * instance_new( PROCDEF * proc, INSTANCE * father )
 
 #ifdef SORR_IOS_D3_FIRST_RENDER
     sorr_ios_d3_live_instance_count++;
+    sorr_ios_d3_note_instance_create( r );
 #endif
 
     instance_add_to_list_by_id( r, pid );
@@ -644,6 +648,7 @@ void instance_destroy( INSTANCE * r )
 
 #ifdef SORR_IOS_D3_FIRST_RENDER
     if ( sorr_ios_d3_live_instance_count > 0 ) sorr_ios_d3_live_instance_count--;
+    sorr_ios_d3_note_instance_destroy( r );
 #endif
 
     /* Remove the instance from all hash lists */

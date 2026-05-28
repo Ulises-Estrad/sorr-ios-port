@@ -342,3 +342,79 @@ Game data/assets bundled in IPA: no
 9. Leave the app foregrounded and untouched for 10-15 minutes.
 10. If it exits, reopen once and retrieve `On My iPhone -> SorrIOSShell -> SORR_DIAGNOSTICS -> ios_d3_runtime_stability_probe.txt`.
 11. Report the last 40-60 lines, especially `audio_music_mem_ok`, `audio_music_play_attempts`, `audio_music_play_ok`, `audio_music_play_fail`, `audio_music_playing`, `audio_music_last_handle`, `audio_music_last_ptr`, `audio_music_last_bytes`, `audio_music_last_status`, and any `SDL_APP_*` lifecycle markers.
+
+## Physical D3A Memory-Backed Music Result
+
+The latest D3A music diagnostics log proves that real audio is no longer the remaining blocker:
+
+```text
+Tested artifact: ios-shell-d3a-music-diagnostics-device-arm64
+Game renders: yes
+BGM: working
+SFX: working
+Music memory path: working
+Music play: working
+Old inert music path: gone
+```
+
+Important log markers:
+
+```text
+audio_music_mem_ok=7
+audio_music_mem_fail=0
+audio_music_play_attempts=6
+audio_music_play_ok=6
+audio_music_play_fail=0
+audio_music_playing=1
+audio_music_last_status=play-ok
+audio_music_last_path=mod/music/9a.ogg
+audio_zero_music_play=0
+audio_zero_music_control=0
+audio_zero_music_query=0
+audio_live_inert_wav=0
+```
+
+The app still reaches the same danger window:
+
+```text
+heartbeat=46 ticks=271380 runtime_ms=270112
+stage=runtime-loop
+audio_music_playing=1
+audio_music_last_status=play-ok
+```
+
+Interpretation: D3A real BGM/SFX is working, and the remaining five-minute exit now looks more likely to be a timed attract/demo/menu/runtime path around 240-300 seconds than a missing or inert audio backend.
+
+## D3S Runtime Window Diagnostic Target
+
+The next D3S build keeps BGM and SFX enabled and adds Files-visible interpreter/runtime snapshots to the existing heartbeat log. It does not disable music and does not add touch controls.
+
+New heartbeat fields include:
+
+- `runtime_loops`, `runtime_frames`, `runtime_runs`
+- `runtime_created`, `runtime_destroyed`, `runtime_snapshots`
+- `runtime_last_proc`
+- `runtime_snapshot` with a bounded sample of active process names, ids, statuses, frame percentages, code offsets, and priorities
+
+Artifact target:
+
+```text
+ios-shell-d3s-runtime-window-diagnostics-device-arm64
+```
+
+IPA target:
+
+```text
+build-products/SorrIOSShell-d3s-runtime-window-diagnostics-adhoc.ipa
+```
+
+Physical test instructions:
+
+1. Keep the D2-staged data on the iPhone, including `mod/music`.
+2. Install `build-products/SorrIOSShell-d3s-runtime-window-diagnostics-adhoc.ipa` with Sideloadly.
+3. Launch `SorrIOSShell`.
+4. Confirm real SoRR rendering appears and BGM/SFX remain active.
+5. Leave the app foregrounded and untouched for 10-15 minutes.
+6. If it exits, reopen once.
+7. Retrieve `On My iPhone -> SorrIOSShell -> SORR_DIAGNOSTICS -> ios_d3_runtime_stability_probe.txt`.
+8. Report the last 60-100 lines, especially the dense-window heartbeats and any `SDL_APP_*` lifecycle event line with `runtime_snapshot`.

@@ -378,6 +378,185 @@ INSTANCE * trace_instance = NULL;
 /* ---------------------------------------------------------------------- */
 
 static INSTANCE * last_instance_run = NULL;
+#ifdef SORR_IOS_D3_FIRST_RENDER
+volatile unsigned int sorr_ios_d3_instance_go_loop_count = 0;
+volatile unsigned int sorr_ios_d3_frame_complete_count = 0;
+volatile unsigned int sorr_ios_d3_instance_run_count = 0;
+volatile unsigned int sorr_ios_d3_instance_created_count = 0;
+volatile unsigned int sorr_ios_d3_instance_destroyed_count = 0;
+volatile unsigned int sorr_ios_d3_snapshot_count = 0;
+volatile unsigned int sorr_ios_d3_last_proc_id = 0;
+volatile int sorr_ios_d3_last_proc_status = 0;
+volatile int sorr_ios_d3_last_proc_frame_percent = 0;
+volatile int sorr_ios_d3_last_proc_code_offset = 0;
+char sorr_ios_d3_last_proc_name[64] = "none";
+char sorr_ios_d3_last_created_proc_name[64] = "none";
+char sorr_ios_d3_last_destroyed_proc_name[64] = "none";
+char sorr_ios_d3_runtime_snapshot[1024] = "snapshot=uninitialized";
+
+static void sorr_ios_d3_copy_proc_name( char * dst, size_t dst_size, const INSTANCE * r )
+{
+    const char * name = ( r && r->proc && r->proc->name ) ? r->proc->name : "null";
+
+    if ( !dst || dst_size == 0 ) return;
+    snprintf( dst, dst_size, "%s", name );
+}
+
+void sorr_ios_d3_note_instance_create( const INSTANCE * r )
+{
+    sorr_ios_d3_instance_created_count++;
+    sorr_ios_d3_copy_proc_name( sorr_ios_d3_last_created_proc_name, sizeof( sorr_ios_d3_last_created_proc_name ), r );
+}
+
+void sorr_ios_d3_note_instance_destroy( const INSTANCE * r )
+{
+    sorr_ios_d3_instance_destroyed_count++;
+    sorr_ios_d3_copy_proc_name( sorr_ios_d3_last_destroyed_proc_name, sizeof( sorr_ios_d3_last_destroyed_proc_name ), r );
+}
+
+static void sorr_ios_d3_note_instance_run( const INSTANCE * r )
+{
+    sorr_ios_d3_instance_run_count++;
+    sorr_ios_d3_copy_proc_name( sorr_ios_d3_last_proc_name, sizeof( sorr_ios_d3_last_proc_name ), r );
+
+    if ( r )
+    {
+        sorr_ios_d3_last_proc_id = LOCDWORD( r, PROCESS_ID );
+        sorr_ios_d3_last_proc_status = LOCDWORD( r, STATUS );
+        sorr_ios_d3_last_proc_frame_percent = LOCINT32( r, FRAME_PERCENT );
+        sorr_ios_d3_last_proc_code_offset = ( r->code && r->codeptr ) ? ( int )( r->codeptr - r->code ) : -1;
+    }
+}
+
+static void sorr_ios_d3_append_sample( char * dst, size_t dst_size, size_t * used, const INSTANCE * r, unsigned int index )
+{
+    int written;
+    int status;
+    int code_offset;
+
+    if ( !dst || !used || *used >= dst_size ) return;
+
+    status = r ? LOCDWORD( r, STATUS ) : 0;
+    code_offset = ( r && r->code && r->codeptr ) ? ( int )( r->codeptr - r->code ) : -1;
+    written = snprintf(
+        dst + *used,
+        dst_size - *used,
+        "%u:%s#%u:s%d:f%d:o%d:p%d;",
+        index,
+        ( r && r->proc && r->proc->name ) ? r->proc->name : "null",
+        r ? LOCDWORD( r, PROCESS_ID ) : 0,
+        status,
+        r ? LOCINT32( r, FRAME_PERCENT ) : 0,
+        code_offset,
+        r ? LOCINT32( r, PRIORITY ) : 0
+    );
+
+    if ( written > 0 )
+    {
+        size_t inc = ( size_t )written;
+        if ( inc >= dst_size - *used )
+        {
+            *used = dst_size - 1;
+        }
+        else
+        {
+            *used += inc;
+        }
+    }
+}
+
+static void sorr_ios_d3_update_runtime_snapshot( const char * reason, int loop_count )
+{
+    INSTANCE * i = first_instance;
+    unsigned int total = 0;
+    unsigned int running = 0;
+    unsigned int waiting = 0;
+    unsigned int sleeping = 0;
+    unsigned int frozen = 0;
+    unsigned int killed = 0;
+    unsigned int dead = 0;
+    unsigned int other = 0;
+    unsigned int sample_count = 0;
+    char sample[512];
+    size_t used = 0;
+    char next_snapshot[1024];
+
+    sample[0] = '\0';
+
+    while ( i )
+    {
+        int status = LOCDWORD( i, STATUS );
+        int base_status = status & ~STATUS_WAITING_MASK;
+
+        total++;
+        if ( status & STATUS_WAITING_MASK )
+        {
+            waiting++;
+        }
+        else if ( base_status == STATUS_RUNNING )
+        {
+            running++;
+        }
+        else if ( base_status == STATUS_SLEEPING )
+        {
+            sleeping++;
+        }
+        else if ( base_status == STATUS_FROZEN )
+        {
+            frozen++;
+        }
+        else if ( base_status == STATUS_KILLED )
+        {
+            killed++;
+        }
+        else if ( base_status == STATUS_DEAD )
+        {
+            dead++;
+        }
+        else
+        {
+            other++;
+        }
+
+        if ( sample_count < 10 )
+        {
+            sorr_ios_d3_append_sample( sample, sizeof( sample ), &used, i, sample_count );
+            sample_count++;
+        }
+
+        i = i->next;
+    }
+
+    sorr_ios_d3_snapshot_count++;
+    snprintf(
+        next_snapshot,
+        sizeof( next_snapshot ),
+        "snap=%u reason=%s loop=%d total=%u run=%u wait=%u sleep=%u frozen=%u killed=%u dead=%u other=%u last=%s#%u:s%d:f%d:o%d created=%u destroyed=%u last_create=%s last_destroy=%s sample=%s",
+        sorr_ios_d3_snapshot_count,
+        reason ? reason : "unknown",
+        loop_count,
+        total,
+        running,
+        waiting,
+        sleeping,
+        frozen,
+        killed,
+        dead,
+        other,
+        sorr_ios_d3_last_proc_name,
+        sorr_ios_d3_last_proc_id,
+        sorr_ios_d3_last_proc_status,
+        sorr_ios_d3_last_proc_frame_percent,
+        sorr_ios_d3_last_proc_code_offset,
+        sorr_ios_d3_instance_created_count,
+        sorr_ios_d3_instance_destroyed_count,
+        sorr_ios_d3_last_created_proc_name,
+        sorr_ios_d3_last_destroyed_proc_name,
+        sample
+    );
+    snprintf( sorr_ios_d3_runtime_snapshot, sizeof( sorr_ios_d3_runtime_snapshot ), "%s", next_snapshot );
+}
+#endif
 
 /* ---------------------------------------------------------------------- */
 
@@ -416,6 +595,13 @@ int instance_go_all()
     while ( first_instance )
     {
         loop_count++;
+#ifdef SORR_IOS_D3_FIRST_RENDER
+        sorr_ios_d3_instance_go_loop_count = ( unsigned int )loop_count;
+        if ( loop_count <= 20 || ( loop_count % 300 ) == 0 )
+        {
+            sorr_ios_d3_update_runtime_snapshot( "loop", loop_count );
+        }
+#endif
         if ( loop_count <= 20 || ( loop_count % 1000 ) == 0 )
             PORTABLE_DIAG_LOG( "LOOP", "instance_go_all loop=%d first_instance=%p last_instance_run=%p", loop_count, first_instance, last_instance_run );
 
@@ -482,6 +668,9 @@ int instance_go_all()
                 if ( loop_count <= 20 )
                     PORTABLE_DIAG_LOG( "SCRIPT", "instance_go_all run loop=%d proc=%s id=%d status=%d frame_percent=%d", loop_count, i->proc ? i->proc->name : "(null)", LOCDWORD( i, PROCESS_ID ), status, LOCINT32( i, FRAME_PERCENT ) );
 
+#ifdef SORR_IOS_D3_FIRST_RENDER
+                sorr_ios_d3_note_instance_run( i );
+#endif
                 instance_go( i );
 
                 if ( force_debug )
@@ -502,6 +691,13 @@ int instance_go_all()
 
             if ( !i_count && !force_debug )
             {
+#ifdef SORR_IOS_D3_FIRST_RENDER
+                sorr_ios_d3_frame_complete_count++;
+                if ( sorr_ios_d3_frame_complete_count <= 20 || ( sorr_ios_d3_frame_complete_count % 30 ) == 0 )
+                {
+                    sorr_ios_d3_update_runtime_snapshot( "frame", loop_count );
+                }
+#endif
                 /* Honors the signal-changed status of the process and
                  * saves so it is used in this loop the next frame
                  */

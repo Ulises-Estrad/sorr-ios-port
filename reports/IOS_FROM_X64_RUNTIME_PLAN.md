@@ -557,7 +557,29 @@ Simulator job result: success
 Game data/assets bundled in IPA: no
 ```
 
-D4a touch input remains blocked until D3A proves audible BGM or reaches a genuine SDL2_mixer/decoder blocker.
+Physical D3A music testing now shows BGM and SFX working from the D2-staged data:
+
+```text
+audio_music_mem_ok=7
+audio_music_play_ok=6
+audio_music_playing=1
+audio_music_last_status=play-ok
+audio_music_last_path=mod/music/9a.ogg
+audio_zero_music_play=0
+audio_zero_music_control=0
+audio_zero_music_query=0
+audio_live_inert_wav=0
+```
+
+The remaining blocker is the old foreground idle exit near the 240-300 second window, not inert or missing music. The next D3S artifact therefore keeps BGM/SFX enabled and adds interpreter/runtime snapshots to determine whether an attract/demo/menu process or script state changes immediately before exit:
+
+```text
+Artifact target: ios-shell-d3s-runtime-window-diagnostics-device-arm64
+IPA target: build-products/SorrIOSShell-d3s-runtime-window-diagnostics-adhoc.ipa
+Visible diagnostics: On My iPhone/SorrIOSShell/SORR_DIAGNOSTICS/ios_d3_runtime_stability_probe.txt
+```
+
+D4a touch input remains blocked until this D3S runtime-window stability pass has produced a diagnostic result or fix.
 
 ## Out Of Scope For This Plan
 

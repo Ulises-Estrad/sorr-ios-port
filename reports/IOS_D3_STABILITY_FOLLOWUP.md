@@ -225,6 +225,33 @@ Game data/assets bundled in IPA: no
 11. Open Files: `On My iPhone -> SorrIOSShell -> SORR_DIAGNOSTICS`.
 12. Copy or screenshot the last 40-60 lines of `ios_d3_runtime_stability_probe.txt`.
 13. If present, include the block from `dense_window_start` through `dense_window_end`, especially the `audio_zero_*` and `audio_music_last_*` fields.
+
+## Latest D3A Audio/Music Triage
+
+The memory-backed SDL2_mixer path now proves BGM and SFX are working on the physical iPhone:
+
+```text
+audio_music_mem_ok=7
+audio_music_mem_fail=0
+audio_music_play_attempts=6
+audio_music_play_ok=6
+audio_music_play_fail=0
+audio_music_playing=1
+audio_music_last_status=play-ok
+audio_music_last_path=mod/music/9a.ogg
+audio_zero_music_play=0
+audio_zero_music_control=0
+audio_zero_music_query=0
+audio_live_inert_wav=0
+```
+
+The app still exits near the old 240-300 second window, so the next diagnostic target shifts from audio to timed runtime/game behavior. The follow-up D3S IPA keeps music enabled and logs interpreter/runtime snapshots in the Files-visible diagnostics:
+
+```text
+Artifact target: ios-shell-d3s-runtime-window-diagnostics-device-arm64
+IPA target: build-products/SorrIOSShell-d3s-runtime-window-diagnostics-adhoc.ipa
+Key new fields: runtime_loops, runtime_frames, runtime_runs, runtime_last_proc, runtime_snapshot
+```
 14. Do not start D4a controls until this pass is reviewed.
 
 ## Expected Results

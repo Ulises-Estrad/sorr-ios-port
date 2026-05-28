@@ -1671,3 +1671,24 @@ Device job result: success
 Simulator job result: success
 Game data/assets bundled in IPA: no
 ```
+
+D3A physical music result from that artifact:
+
+```text
+BGM: working
+SFX: working
+Music memory path: working
+Music play: working
+Old inert music path: gone
+Last dense-window marker: heartbeat=46 ticks=271380 runtime_ms=270112
+Remaining issue: five-minute foreground exit still occurs
+```
+
+The workflow now produces a follow-up D3S runtime-window diagnostic artifact:
+
+```text
+Device artifact: ios-shell-d3s-runtime-window-diagnostics-device-arm64
+IPA: build-products/SorrIOSShell-d3s-runtime-window-diagnostics-adhoc.ipa
+```
+
+This build keeps real BGM/SFX enabled and adds interpreter/runtime process snapshots to the Files-visible D3S stability log. It is meant to identify whether a timed attract/demo/menu process or script state change occurs in the 240-300 second window. The no-assets-in-IPA checks remain unchanged.
