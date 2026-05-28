@@ -46,6 +46,32 @@
 
 /* --------------------------------------------------------------------------- */
 
+#ifdef TARGET_IOS
+static volatile unsigned char sorr_ios_touch_bennu_keys[127];
+
+void sorr_ios_touch_set_bennu_key( int code, int pressed )
+{
+    if ( code < 0 || code >= ( int )sizeof( sorr_ios_touch_bennu_keys ) )
+    {
+        return;
+    }
+
+    sorr_ios_touch_bennu_keys[code] = pressed ? 1 : 0;
+}
+
+int sorr_ios_touch_get_bennu_key( int code )
+{
+    if ( code < 0 || code >= ( int )sizeof( sorr_ios_touch_bennu_keys ) )
+    {
+        return 0;
+    }
+
+    return sorr_ios_touch_bennu_keys[code] ? 1 : 0;
+}
+#endif
+
+/* --------------------------------------------------------------------------- */
+
 #ifdef PORTABLE_RUNTIME_DIAG
 static int portable_input_diag_enabled = -1;
 static unsigned char portable_key_poll_logged[127];
@@ -96,6 +122,11 @@ static _inline int _get_key( int code )
 {
     key_equiv * curr ;
     int found = 0 ;
+
+#ifdef TARGET_IOS
+    if ( code < 0 || code >= 127 ) return 0;
+    if ( sorr_ios_touch_get_bennu_key( code ) ) return 1;
+#endif
 
     if ( !keystate ) return 0;
 

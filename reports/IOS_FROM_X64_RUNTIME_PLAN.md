@@ -764,3 +764,46 @@ The D3S ENEMIGO lookup guard IPA was produced successfully:
 - Simulator job result: success
 
 Next manual step is physical iPhone testing with the existing D2-staged data. D4a remains blocked until this guard build either survives past the old five-minute window or produces new `runtime_enemigo_lookup_guard` / `signal=` breadcrumbs.
+
+## D4a Fixed Touch Pass
+
+D4a now proceeds with fixed touch controls while keeping D3S crash hardening active. The previous ENEMIGO lookup guard found a real stale-HUD lookup class, but the remaining crash still needs a cleaner latest-crash report. D4a therefore includes both:
+
+- fixed on-screen D-pad/action/start/back controls,
+- compact Files-visible crash reporting.
+
+Artifact target:
+
+```text
+ios-shell-d4a-fixed-touch-guarded-device-arm64
+build-products/SorrIOSShell-d4a-fixed-touch-guarded-adhoc.ipa
+```
+
+The D4a control bridge injects the existing keyboard defaults directly into the iOS `mod_key` path:
+
+| Control | Bennu key |
+| --- | --- |
+| Up | `72` |
+| Down | `80` |
+| Left | `75` |
+| Right | `77` |
+| Attack | `46` |
+| Jump | `47` |
+| Special | `45` |
+| Police | `48` |
+| Start/Pause | `28` |
+| Back/Menu | `1` plus fallback `14` |
+
+Crash retrieval after a D4a failure:
+
+```text
+On My iPhone/SorrIOSShell/SORR_DIAGNOSTICS/ios_latest_crash_report.txt
+```
+
+The current-run log remains available at:
+
+```text
+On My iPhone/SorrIOSShell/SORR_DIAGNOSTICS/ios_current_run_stability_log.txt
+```
+
+D4a still does not start D4b customization, D5 gameplay polish, App Store/TestFlight signing, or asset bundling.

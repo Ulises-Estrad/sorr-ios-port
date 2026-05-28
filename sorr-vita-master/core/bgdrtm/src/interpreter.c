@@ -520,6 +520,9 @@ volatile unsigned int sorr_ios_d3_last_lookup_result_id = 0;
 char sorr_ios_d3_last_lookup_event[1024] = "lookup=none";
 char sorr_ios_d3_runtime_snapshot[2048] = "snapshot=uninitialized";
 char sorr_ios_d3_lifecycle_events[1536] = "events=none";
+char sorr_ios_d3_destroyed_ring_snapshot[2048] = "destroyed=none";
+char sorr_ios_d3_family_events[3072] = "family_events=none";
+char sorr_ios_d3_render_events[3072] = "render_events=none";
 char sorr_ios_d3_visible_event_log_path[1024] = "";
 
 static const char * const sorr_ios_d3_watch_proc_names[] = {
@@ -562,6 +565,13 @@ static volatile unsigned int sorr_ios_d3_watch_create_count[SORR_IOS_D3_WATCH_PR
 static volatile unsigned int sorr_ios_d3_watch_destroy_count[SORR_IOS_D3_WATCH_PROC_COUNT];
 static char sorr_ios_d3_event_slots[SORR_IOS_D3_EVENT_SLOT_COUNT][SORR_IOS_D3_EVENT_SLOT_SIZE];
 static unsigned int sorr_ios_d3_event_slot_pos = 0;
+
+#define SORR_IOS_D3_WIDE_EVENT_SLOT_COUNT 8
+#define SORR_IOS_D3_WIDE_EVENT_SLOT_SIZE 384
+static char sorr_ios_d3_family_event_slots[SORR_IOS_D3_WIDE_EVENT_SLOT_COUNT][SORR_IOS_D3_WIDE_EVENT_SLOT_SIZE];
+static unsigned int sorr_ios_d3_family_event_slot_pos = 0;
+static char sorr_ios_d3_render_event_slots[SORR_IOS_D3_WIDE_EVENT_SLOT_COUNT][SORR_IOS_D3_WIDE_EVENT_SLOT_SIZE];
+static unsigned int sorr_ios_d3_render_event_slot_pos = 0;
 
 #define SORR_IOS_D3_DESTROYED_RING_COUNT 64
 
@@ -683,6 +693,82 @@ static void sorr_ios_d3_rebuild_lifecycle_events( void )
     snprintf( sorr_ios_d3_lifecycle_events, sizeof( sorr_ios_d3_lifecycle_events ), "%s", next );
 }
 
+static void sorr_ios_d3_rebuild_wide_event_ring( char slots[SORR_IOS_D3_WIDE_EVENT_SLOT_COUNT][SORR_IOS_D3_WIDE_EVENT_SLOT_SIZE],
+                                                 unsigned int pos,
+                                                 char * out,
+                                                 size_t out_size,
+                                                 const char * empty_label )
+{
+    size_t used = 0;
+    unsigned int n;
+
+    if ( !out || out_size == 0 ) return;
+    out[0] = '\0';
+
+    for ( n = 0; n < SORR_IOS_D3_WIDE_EVENT_SLOT_COUNT; n++ )
+    {
+        unsigned int slot = ( pos + n ) % SORR_IOS_D3_WIDE_EVENT_SLOT_COUNT;
+        if ( slots[slot][0] )
+        {
+            int written = snprintf( out + used, out_size - used, "%s|", slots[slot] );
+            if ( written > 0 )
+            {
+                size_t inc = ( size_t )written;
+                if ( inc >= out_size - used )
+                {
+                    used = out_size - 1;
+                    break;
+                }
+                used += inc;
+            }
+        }
+    }
+
+    if ( used == 0 ) snprintf( out, out_size, "%s", empty_label ? empty_label : "events=none" );
+}
+
+static void sorr_ios_d3_rebuild_destroyed_ring_snapshot( void )
+{
+    size_t used = 0;
+    unsigned int n;
+
+    sorr_ios_d3_destroyed_ring_snapshot[0] = '\0';
+    for ( n = 0; n < 12; n++ )
+    {
+        unsigned int slot = ( sorr_ios_d3_destroyed_ring_pos + SORR_IOS_D3_DESTROYED_RING_COUNT - 12 + n ) % SORR_IOS_D3_DESTROYED_RING_COUNT;
+        const SORR_IOS_D3_DESTROYED_ENTRY * entry = &sorr_ios_d3_destroyed_ring[slot];
+        if ( entry->id )
+        {
+            int written = snprintf( sorr_ios_d3_destroyed_ring_snapshot + used,
+                                    sizeof( sorr_ios_d3_destroyed_ring_snapshot ) - used,
+                                    "%s#%u seq=%u run=%u fam=%u/%u/%u/%u cb=%u|",
+                                    entry->name,
+                                    entry->id,
+                                    entry->destroy_seq,
+                                    entry->destroy_run_count,
+                                    entry->father_id,
+                                    entry->son_id,
+                                    entry->smallbro_id,
+                                    entry->bigbro_id,
+                                    entry->called_by_id );
+            if ( written > 0 )
+            {
+                size_t inc = ( size_t )written;
+                if ( inc >= sizeof( sorr_ios_d3_destroyed_ring_snapshot ) - used )
+                {
+                    used = sizeof( sorr_ios_d3_destroyed_ring_snapshot ) - 1;
+                    break;
+                }
+                used += inc;
+            }
+        }
+    }
+
+    if ( used == 0 ) snprintf( sorr_ios_d3_destroyed_ring_snapshot,
+                               sizeof( sorr_ios_d3_destroyed_ring_snapshot ),
+                               "destroyed=none" );
+}
+
 static void sorr_ios_d3_append_visible_event_line( const char * line )
 {
     FILE * fp;
@@ -784,6 +870,7 @@ static void sorr_ios_d3_record_recent_destroyed( const INSTANCE * r )
     entry->destroy_run_count = sorr_ios_d3_instance_run_count;
     entry->destroy_seq = sorr_ios_d3_instance_destroyed_count + 1;
     sorr_ios_d3_copy_proc_name( entry->name, sizeof( entry->name ), r );
+    sorr_ios_d3_rebuild_destroyed_ring_snapshot();
 }
 
 void sorr_ios_d3_note_instance_lookup( int requested_id, const INSTANCE * candidate, const char * reason )
@@ -906,6 +993,15 @@ void sorr_ios_d3_note_family_unlink( const INSTANCE * r,
         sorr_ios_d3_instance_destroyed_count
     );
     snprintf( sorr_ios_d3_last_family_unlink, sizeof( sorr_ios_d3_last_family_unlink ), "%s", line );
+    snprintf( sorr_ios_d3_family_event_slots[sorr_ios_d3_family_event_slot_pos++ % SORR_IOS_D3_WIDE_EVENT_SLOT_COUNT],
+              SORR_IOS_D3_WIDE_EVENT_SLOT_SIZE,
+              "%s",
+              line );
+    sorr_ios_d3_rebuild_wide_event_ring( sorr_ios_d3_family_event_slots,
+                                         sorr_ios_d3_family_event_slot_pos,
+                                         sorr_ios_d3_family_events,
+                                         sizeof( sorr_ios_d3_family_events ),
+                                         "family_events=none" );
     sorr_ios_d3_append_visible_event_line( line );
 }
 
@@ -961,6 +1057,15 @@ void sorr_ios_d3_note_render_instance_event( const char * action,
         sorr_ios_d3_instance_destroyed_count
     );
     snprintf( sorr_ios_d3_last_render_event, sizeof( sorr_ios_d3_last_render_event ), "%s", line );
+    snprintf( sorr_ios_d3_render_event_slots[sorr_ios_d3_render_event_slot_pos++ % SORR_IOS_D3_WIDE_EVENT_SLOT_COUNT],
+              SORR_IOS_D3_WIDE_EVENT_SLOT_SIZE,
+              "%s",
+              line );
+    sorr_ios_d3_rebuild_wide_event_ring( sorr_ios_d3_render_event_slots,
+                                         sorr_ios_d3_render_event_slot_pos,
+                                         sorr_ios_d3_render_events,
+                                         sizeof( sorr_ios_d3_render_events ),
+                                         "render_events=none" );
     sorr_ios_d3_append_visible_event_line( line );
 }
 
@@ -1000,6 +1105,15 @@ static void sorr_ios_d3_note_stale_pointer_guard( INSTANCE * current,
         sorr_ios_d3_last_proc_id
     );
     snprintf( sorr_ios_d3_last_render_event, sizeof( sorr_ios_d3_last_render_event ), "%s", line );
+    snprintf( sorr_ios_d3_render_event_slots[sorr_ios_d3_render_event_slot_pos++ % SORR_IOS_D3_WIDE_EVENT_SLOT_COUNT],
+              SORR_IOS_D3_WIDE_EVENT_SLOT_SIZE,
+              "%s",
+              line );
+    sorr_ios_d3_rebuild_wide_event_ring( sorr_ios_d3_render_event_slots,
+                                         sorr_ios_d3_render_event_slot_pos,
+                                         sorr_ios_d3_render_events,
+                                         sizeof( sorr_ios_d3_render_events ),
+                                         "render_events=none" );
     sorr_ios_d3_append_visible_event_line( line );
 }
 

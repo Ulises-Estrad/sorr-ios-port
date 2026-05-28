@@ -36,6 +36,10 @@
 #include "portable_diag.h"
 #endif
 
+#ifdef TARGET_IOS
+extern void sorr_ios_d4a_draw_touch_overlay( SDL_Renderer * renderer );
+#endif
+
 /* --------------------------------------------------------------------------- */
 
 static GRAPH * scrbitmap_extra = NULL ;
@@ -183,6 +187,9 @@ void gr_unlock_screen()
     SDL_UpdateTexture(texture, NULL, screen->pixels, screen->pitch);
     SDL_RenderClear(renderer);
     SDL_RenderCopy(renderer, texture, NULL, NULL);
+#ifdef TARGET_IOS
+    sorr_ios_d4a_draw_touch_overlay( renderer );
+#endif
     SDL_RenderPresent(renderer);
     {
         static int present_count = 0;

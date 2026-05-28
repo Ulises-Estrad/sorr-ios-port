@@ -410,3 +410,29 @@ Device job result: success
 Simulator job result: success
 Game data/assets bundled in IPA: no
 ```
+
+## D4a Fixed Touch Install
+
+D4a uses the same Windows + Sideloadly install route and the same D2-staged private data. It adds fixed on-screen controls while keeping BGM/SFX and the D3S stability guards enabled.
+
+Artifact target:
+
+```text
+ios-shell-d4a-fixed-touch-guarded-device-arm64
+build-products/SorrIOSShell-d4a-fixed-touch-guarded-adhoc.ipa
+```
+
+Install/test:
+
+1. Keep the existing `Library/Application Support/SORR` data from D2 on the iPhone.
+2. Download and extract the D4a artifact on Windows.
+3. Install `build-products/SorrIOSShell-d4a-fixed-touch-guarded-adhoc.ipa` with Sideloadly.
+4. Launch `SorrIOSShell`.
+5. Test fixed controls: D-pad, Attack, Jump, Special, Police, Start/Pause, and Back/Menu.
+6. If it crashes, reopen once and retrieve:
+
+```text
+On My iPhone/SorrIOSShell/SORR_DIAGNOSTICS/ios_latest_crash_report.txt
+```
+
+Send `ios_current_run_stability_log.txt` only if more context is needed. The IPA must still contain no `SorR.dat`, `data/`, prepared data, or game assets.

@@ -1814,6 +1814,36 @@ Result: success
 ```
 
 The simulator shell job also passed in the same run. The device artifact passed the existing IPA layout/signature/forbidden-asset inspection.
+
+## D4a Fixed Touch And Crash Reports
+
+The workflow device job now targets the D4a fixed-control IPA:
+
+```text
+ios-shell-d4a-fixed-touch-guarded-device-arm64
+build-products/SorrIOSShell-d4a-fixed-touch-guarded-adhoc.ipa
+```
+
+Purpose:
+
+- keep real BGM/SFX enabled,
+- keep the D2-staged data path,
+- keep the D3S enemy/HUD lookup guards and diagnostics,
+- add fixed on-screen controls,
+- add a compact Files-visible latest crash report,
+- keep the IPA free of `SorR.dat`, `data/`, FPG/WAV/OGG/SMK/PNG assets, logs, and prepared data.
+
+The no-assets-in-IPA checks and ad-hoc Sideloadly packaging flow are unchanged. After a crash, the phone-side report to retrieve is:
+
+```text
+On My iPhone/SorrIOSShell/SORR_DIAGNOSTICS/ios_latest_crash_report.txt
+```
+
+If additional context is needed, also retrieve:
+
+```text
+On My iPhone/SorrIOSShell/SORR_DIAGNOSTICS/ios_current_run_stability_log.txt
+```
 ## D3S Enemy/HUD Guard Artifact
 
 The workflow now produces a D3S patch artifact aimed at the confirmed `SIGSEGV` after enemy/HUD child-process teardown:

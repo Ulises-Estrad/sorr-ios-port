@@ -437,6 +437,23 @@ Produced successfully:
 
 This is the current recommended physical iPhone D3S patch IPA. It keeps real BGM/SFX enabled, uses the existing D2-staged data, does not bundle game data/assets, and should be tested by leaving the app foregrounded for 10-15 minutes.
 
+## D4a Crash Report Handoff
+
+The D3S ENEMIGO lookup guard found a real stale lookup class (`MINI_CUADRO1` requesting destroyed `CUADRO_VIDA1`), but the app still reached a later `SIGSEGV`. D4a therefore keeps the D3S guards and diagnostics active while adding fixed touch controls and better crash-report files.
+
+New D4a target:
+
+- `ios-shell-d4a-fixed-touch-guarded-device-arm64`
+- `build-products/SorrIOSShell-d4a-fixed-touch-guarded-adhoc.ipa`
+
+New Files-visible crash files:
+
+- `Documents/SORR_DIAGNOSTICS/ios_latest_crash_report.txt`
+- `Documents/SORR_DIAGNOSTICS/ios_current_run_stability_log.txt`
+- `Documents/SORR_DIAGNOSTICS/ios_previous_run_stability_log.txt`
+
+After a crash, reopen the app once and send `ios_latest_crash_report.txt` first. The current-run log is only needed if the compact report needs more context.
+
 ## D3S ENEMIGO Lookup Guard Patch
 
 The previous enemy/HUD remote-pointer guard did not trigger before the repeated `SIGSEGV`, so the next patch focuses on process-id lookups rather than stack pointer ownership.

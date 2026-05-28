@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <time.h>
 
 #ifdef _WIN32
 #include <direct.h>
@@ -20,6 +21,14 @@
 #endif
 
 #include "SDL.h"
+
+#ifndef SORR_IOS_BUILD_LABEL
+#define SORR_IOS_BUILD_LABEL "ios-shell-d4a-fixed-touch"
+#endif
+
+#ifndef SORR_IOS_ARTIFACT_LABEL
+#define SORR_IOS_ARTIFACT_LABEL "ios-shell-d4a-fixed-touch-guarded-device-arm64"
+#endif
 
 #ifdef SORR_IOS_D3_FIRST_RENDER
 #if defined(__APPLE__)
@@ -100,10 +109,18 @@ typedef struct sorr_ios_data_layout
     char d3_probe_path[1024];
     char d3_stability_path[1024];
     char d3_visible_stability_path[1024];
+    char d3_current_run_path[1024];
+    char d3_previous_run_path[1024];
+    char d3_latest_crash_report_path[1024];
+    char d3_private_current_run_path[1024];
+    char d3_private_previous_run_path[1024];
+    char d3_private_latest_crash_report_path[1024];
     bool d2_data_ready;
     bool d2_import_seen;
     bool d2_import_failed;
 } sorr_ios_data_layout;
+
+static void sorr_ios_d3_stability_log(const sorr_ios_data_layout *layout, const char *format, ...);
 
 #define SORR_IOS_STATUS_MAX_LINES 16
 #define SORR_IOS_STATUS_LINE_LEN 96
@@ -306,6 +323,326 @@ static void sorr_ios_draw_status(SDL_Renderer *renderer)
         sorr_ios_draw_text(renderer, 24, 24 + i * 29, 3, sorr_ios_status_lines[i]);
     }
 }
+
+#ifdef TARGET_IOS
+void sorr_ios_touch_set_bennu_key(int code, int pressed);
+
+#define SORR_IOS_D4A_TOUCH_BUTTON_COUNT 10
+#define SORR_IOS_D4A_TOUCH_FINGER_COUNT 16
+
+typedef struct sorr_ios_d4a_touch_button
+{
+    const char *name;
+    const char *label;
+    int primary_key;
+    int secondary_key;
+    float x;
+    float y;
+    float w;
+    float h;
+} sorr_ios_d4a_touch_button;
+
+typedef struct sorr_ios_d4a_touch_finger
+{
+    SDL_FingerID finger_id;
+    int button_index;
+    int active;
+} sorr_ios_d4a_touch_finger;
+
+static const sorr_ios_d4a_touch_button sorr_ios_d4a_touch_buttons[SORR_IOS_D4A_TOUCH_BUTTON_COUNT] = {
+    {"Up", "UP", 72, -1, 0.16f, 0.55f, 0.12f, 0.12f},
+    {"Down", "DOWN", 80, -1, 0.16f, 0.84f, 0.12f, 0.12f},
+    {"Left", "LEFT", 75, -1, 0.04f, 0.70f, 0.12f, 0.12f},
+    {"Right", "RIGHT", 77, -1, 0.28f, 0.70f, 0.12f, 0.12f},
+    {"Attack", "ATK", 46, -1, 0.74f, 0.64f, 0.11f, 0.13f},
+    {"Jump", "JUMP", 47, -1, 0.87f, 0.64f, 0.11f, 0.13f},
+    {"Special", "SPC", 45, -1, 0.74f, 0.80f, 0.11f, 0.13f},
+    {"Police", "POL", 48, -1, 0.87f, 0.80f, 0.11f, 0.13f},
+    {"Start", "START", 28, -1, 0.42f, 0.03f, 0.14f, 0.08f},
+    {"Back", "BACK", 1, 14, 0.58f, 0.03f, 0.14f, 0.08f}
+};
+
+static int sorr_ios_d4a_button_press_count[SORR_IOS_D4A_TOUCH_BUTTON_COUNT];
+static sorr_ios_d4a_touch_finger sorr_ios_d4a_touch_fingers[SORR_IOS_D4A_TOUCH_FINGER_COUNT];
+static const sorr_ios_data_layout *sorr_ios_d4a_active_layout = NULL;
+
+static void sorr_ios_d4a_set_active_layout(const sorr_ios_data_layout *layout)
+{
+    sorr_ios_d4a_active_layout = layout;
+}
+
+static void sorr_ios_d4a_touch_log(const char *format, ...)
+{
+    char line[384];
+    va_list args;
+
+    if (!format)
+    {
+        return;
+    }
+
+    va_start(args, format);
+    vsnprintf(line, sizeof(line), format, args);
+    va_end(args);
+
+    SDL_Log("SORR iOS shell: D4a %s", line);
+    if (sorr_ios_d4a_active_layout)
+    {
+        sorr_ios_d3_stability_log(sorr_ios_d4a_active_layout, "%s", line);
+    }
+}
+
+static int sorr_ios_d4a_button_for_point(float x, float y)
+{
+    int i;
+
+    for (i = 0; i < SORR_IOS_D4A_TOUCH_BUTTON_COUNT; i++)
+    {
+        const sorr_ios_d4a_touch_button *button = &sorr_ios_d4a_touch_buttons[i];
+        if (x >= button->x && x <= button->x + button->w &&
+            y >= button->y && y <= button->y + button->h)
+        {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+static int sorr_ios_d4a_find_finger(SDL_FingerID finger_id)
+{
+    int i;
+
+    for (i = 0; i < SORR_IOS_D4A_TOUCH_FINGER_COUNT; i++)
+    {
+        if (sorr_ios_d4a_touch_fingers[i].active &&
+            sorr_ios_d4a_touch_fingers[i].finger_id == finger_id)
+        {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+static int sorr_ios_d4a_alloc_finger(SDL_FingerID finger_id)
+{
+    int i;
+
+    for (i = 0; i < SORR_IOS_D4A_TOUCH_FINGER_COUNT; i++)
+    {
+        if (!sorr_ios_d4a_touch_fingers[i].active)
+        {
+            sorr_ios_d4a_touch_fingers[i].active = 1;
+            sorr_ios_d4a_touch_fingers[i].finger_id = finger_id;
+            sorr_ios_d4a_touch_fingers[i].button_index = -1;
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+static void sorr_ios_d4a_set_button(int button_index, int pressed, const char *reason)
+{
+    const sorr_ios_d4a_touch_button *button;
+    int was_pressed;
+    int now_pressed;
+
+    if (button_index < 0 || button_index >= SORR_IOS_D4A_TOUCH_BUTTON_COUNT)
+    {
+        return;
+    }
+
+    button = &sorr_ios_d4a_touch_buttons[button_index];
+    was_pressed = sorr_ios_d4a_button_press_count[button_index] > 0;
+    if (pressed)
+    {
+        sorr_ios_d4a_button_press_count[button_index]++;
+    }
+    else if (sorr_ios_d4a_button_press_count[button_index] > 0)
+    {
+        sorr_ios_d4a_button_press_count[button_index]--;
+    }
+    now_pressed = sorr_ios_d4a_button_press_count[button_index] > 0;
+
+    if (was_pressed == now_pressed)
+    {
+        return;
+    }
+
+    sorr_ios_touch_set_bennu_key(button->primary_key, now_pressed);
+    if (button->secondary_key >= 0)
+    {
+        sorr_ios_touch_set_bennu_key(button->secondary_key, now_pressed);
+    }
+
+    sorr_ios_d4a_touch_log("touch button=%s action=%s key=%d fallback=%d path=bennu reason=%s",
+                           button->name,
+                           now_pressed ? "down" : "up",
+                           button->primary_key,
+                           button->secondary_key,
+                           reason ? reason : "touch");
+}
+
+static void sorr_ios_d4a_release_all(const char *reason)
+{
+    int i;
+
+    for (i = 0; i < SORR_IOS_D4A_TOUCH_FINGER_COUNT; i++)
+    {
+        sorr_ios_d4a_touch_fingers[i].active = 0;
+        sorr_ios_d4a_touch_fingers[i].button_index = -1;
+    }
+
+    for (i = 0; i < SORR_IOS_D4A_TOUCH_BUTTON_COUNT; i++)
+    {
+        while (sorr_ios_d4a_button_press_count[i] > 0)
+        {
+            sorr_ios_d4a_set_button(i, 0, reason ? reason : "release-all");
+        }
+    }
+}
+
+static void sorr_ios_d4a_update_finger(SDL_FingerID finger_id, float x, float y, int is_down, const char *reason)
+{
+    int finger_slot = sorr_ios_d4a_find_finger(finger_id);
+    int new_button = is_down ? sorr_ios_d4a_button_for_point(x, y) : -1;
+    int old_button = -1;
+
+    if (finger_slot < 0 && is_down)
+    {
+        finger_slot = sorr_ios_d4a_alloc_finger(finger_id);
+    }
+    if (finger_slot < 0)
+    {
+        return;
+    }
+
+    old_button = sorr_ios_d4a_touch_fingers[finger_slot].button_index;
+    if (old_button != new_button)
+    {
+        if (old_button >= 0)
+        {
+            sorr_ios_d4a_set_button(old_button, 0, reason);
+        }
+        if (new_button >= 0)
+        {
+            sorr_ios_d4a_set_button(new_button, 1, reason);
+        }
+        sorr_ios_d4a_touch_fingers[finger_slot].button_index = new_button;
+    }
+
+    if (!is_down)
+    {
+        sorr_ios_d4a_touch_fingers[finger_slot].active = 0;
+        sorr_ios_d4a_touch_fingers[finger_slot].button_index = -1;
+    }
+}
+
+void sorr_ios_d4a_process_sdl_event(const SDL_Event *event)
+{
+    float x = 0.0f;
+    float y = 0.0f;
+
+    if (!event)
+    {
+        return;
+    }
+
+    switch (event->type)
+    {
+        case SDL_FINGERDOWN:
+        case SDL_FINGERMOTION:
+        case SDL_FINGERUP:
+            x = event->tfinger.x;
+            y = event->tfinger.y;
+            sorr_ios_d4a_update_finger(event->tfinger.fingerId,
+                                       x,
+                                       y,
+                                       event->type != SDL_FINGERUP,
+                                       event->type == SDL_FINGERMOTION ? "move" : "touch");
+            break;
+        case SDL_MOUSEBUTTONDOWN:
+        case SDL_MOUSEBUTTONUP:
+        {
+            SDL_Window *focus = SDL_GetMouseFocus();
+            int width = 1;
+            int height = 1;
+            if (focus)
+            {
+                SDL_GetWindowSize(focus, &width, &height);
+            }
+            if (width <= 0) width = 1;
+            if (height <= 0) height = 1;
+            x = (float)event->button.x / (float)width;
+            y = (float)event->button.y / (float)height;
+            sorr_ios_d4a_update_finger((SDL_FingerID)-1,
+                                       x,
+                                       y,
+                                       event->type == SDL_MOUSEBUTTONDOWN,
+                                       "mouse");
+            break;
+        }
+        case SDL_APP_WILLENTERBACKGROUND:
+        case SDL_APP_DIDENTERBACKGROUND:
+        case SDL_APP_TERMINATING:
+        case SDL_QUIT:
+            sorr_ios_d4a_release_all("lifecycle");
+            break;
+        default:
+            break;
+    }
+}
+
+void sorr_ios_d4a_draw_touch_overlay(SDL_Renderer *renderer)
+{
+    int width = 0;
+    int height = 0;
+    int i;
+    SDL_BlendMode old_blend = SDL_BLENDMODE_NONE;
+
+    if (!renderer)
+    {
+        return;
+    }
+
+    if (SDL_GetRendererOutputSize(renderer, &width, &height) != 0 || width <= 0 || height <= 0)
+    {
+        return;
+    }
+
+    SDL_GetRenderDrawBlendMode(renderer, &old_blend);
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+
+    for (i = 0; i < SORR_IOS_D4A_TOUCH_BUTTON_COUNT; i++)
+    {
+        const sorr_ios_d4a_touch_button *button = &sorr_ios_d4a_touch_buttons[i];
+        int pressed = sorr_ios_d4a_button_press_count[i] > 0;
+        SDL_Rect rect;
+        int label_len = (int)strlen(button->label);
+        int text_w = label_len * 12;
+        int text_h = 14;
+
+        rect.x = (int)(button->x * (float)width);
+        rect.y = (int)(button->y * (float)height);
+        rect.w = (int)(button->w * (float)width);
+        rect.h = (int)(button->h * (float)height);
+
+        SDL_SetRenderDrawColor(renderer, 20, 26, 34, pressed ? 170 : 105);
+        SDL_RenderFillRect(renderer, &rect);
+        SDL_SetRenderDrawColor(renderer, 238, 242, 248, pressed ? 245 : 175);
+        SDL_RenderDrawRect(renderer, &rect);
+        sorr_ios_draw_text(renderer,
+                           rect.x + (rect.w - text_w) / 2,
+                           rect.y + (rect.h - text_h) / 2,
+                           2,
+                           button->label);
+    }
+
+    SDL_SetRenderDrawBlendMode(renderer, old_blend);
+}
+#endif
 
 static const char *sorr_ios_import_layout_name(sorr_ios_import_layout layout)
 {
@@ -634,6 +971,9 @@ extern volatile unsigned int sorr_ios_d3_last_lookup_result_id;
 extern char sorr_ios_d3_last_lookup_event[];
 extern char sorr_ios_d3_runtime_snapshot[];
 extern char sorr_ios_d3_lifecycle_events[];
+extern char sorr_ios_d3_destroyed_ring_snapshot[];
+extern char sorr_ios_d3_family_events[];
+extern char sorr_ios_d3_render_events[];
 extern char sorr_ios_d3_visible_event_log_path[];
 extern volatile unsigned int sorr_ios_sound_stub_zero_count;
 extern volatile unsigned int sorr_ios_sound_stub_minus_one_count;
@@ -708,58 +1048,231 @@ static const char *sorr_ios_d3_stage_name(int stage)
     }
 }
 
+static char sorr_ios_d4a_run_id[96] = "run-unset";
+static unsigned int sorr_ios_d4a_run_number = 0;
+
 #ifndef _WIN32
 static char sorr_ios_d3_signal_log_path[1024];
+static char sorr_ios_d4a_signal_current_run_path[1024];
+static char sorr_ios_d4a_signal_private_current_run_path[1024];
+static char sorr_ios_d4a_signal_latest_crash_path[1024];
+static char sorr_ios_d4a_signal_private_latest_crash_path[1024];
+#define SORR_IOS_D4A_RECENT_LOG_COUNT 80
+#define SORR_IOS_D4A_RECENT_LOG_LINE 512
+static char sorr_ios_d4a_recent_log_lines[SORR_IOS_D4A_RECENT_LOG_COUNT][SORR_IOS_D4A_RECENT_LOG_LINE];
+static unsigned int sorr_ios_d4a_recent_log_pos = 0;
+static unsigned int sorr_ios_d4a_recent_log_count = 0;
 
-static void sorr_ios_d3_signal_handler(int sig)
+static void sorr_ios_d4a_recent_log_reset(void)
+{
+    memset(sorr_ios_d4a_recent_log_lines, 0, sizeof(sorr_ios_d4a_recent_log_lines));
+    sorr_ios_d4a_recent_log_pos = 0;
+    sorr_ios_d4a_recent_log_count = 0;
+}
+
+static void sorr_ios_d4a_recent_log_add(const char *line)
+{
+    if (!line)
+    {
+        return;
+    }
+
+    snprintf(sorr_ios_d4a_recent_log_lines[sorr_ios_d4a_recent_log_pos],
+             sizeof(sorr_ios_d4a_recent_log_lines[sorr_ios_d4a_recent_log_pos]),
+             "%s",
+             line);
+    sorr_ios_d4a_recent_log_pos = (sorr_ios_d4a_recent_log_pos + 1) % SORR_IOS_D4A_RECENT_LOG_COUNT;
+    if (sorr_ios_d4a_recent_log_count < SORR_IOS_D4A_RECENT_LOG_COUNT)
+    {
+        sorr_ios_d4a_recent_log_count++;
+    }
+}
+
+static void sorr_ios_signal_write_all(int fd, const char *text)
+{
+    size_t len;
+    const char *ptr;
+
+    if (fd < 0 || !text)
+    {
+        return;
+    }
+
+    ptr = text;
+    len = strlen(text);
+    while (len > 0)
+    {
+        ssize_t wrote = write(fd, ptr, len);
+        if (wrote <= 0)
+        {
+            return;
+        }
+        ptr += wrote;
+        len -= (size_t)wrote;
+    }
+}
+
+static void sorr_ios_signal_write_format(int fd, const char *format, ...)
+{
+    char line[4096];
+    va_list args;
+    int len;
+
+    if (fd < 0 || !format)
+    {
+        return;
+    }
+
+    va_start(args, format);
+    len = vsnprintf(line, sizeof(line), format, args);
+    va_end(args);
+    if (len <= 0)
+    {
+        return;
+    }
+
+    if ((size_t)len >= sizeof(line))
+    {
+        len = (int)sizeof(line) - 1;
+    }
+    (void)write(fd, line, (size_t)len);
+}
+
+static void sorr_ios_d4a_write_crash_report_fd(int fd, int sig)
+{
+    Uint32 ticks = SDL_GetTicks();
+    Uint32 loop_start = sorr_ios_d3_runtime_loop_start_ticks;
+    Uint32 runtime_ms = loop_start ? ticks - loop_start : 0;
+    unsigned int i;
+
+    if (fd < 0)
+    {
+        return;
+    }
+
+    sorr_ios_signal_write_format(fd,
+                                 "SORR IOS LATEST CRASH REPORT\n"
+                                 "build=%s\n"
+                                 "artifact=%s\n"
+                                 "run_id=%s\n"
+                                 "run_number=%u\n"
+                                 "signal=%d\n"
+                                 "ticks=%u\n"
+                                 "runtime_ms=%u\n"
+                                 "stage=%s\n"
+                                 "current_process=%s#%u:s%d:f%d:o%d\n"
+                                 "runtime_last_proc=%s#%u:s%d:f%d:o%d\n"
+                                 "current_proc_ptr=0x%llx\n"
+                                 "last_proc_ptr=0x%llx\n"
+                                 "last_lookup_id=%u\n"
+                                 "last_lookup_result=%u\n"
+                                 "lookup_guards=%u\n"
+                                 "last_lookup=%s\n",
+                                 SORR_IOS_BUILD_LABEL,
+                                 SORR_IOS_ARTIFACT_LABEL,
+                                 sorr_ios_d4a_run_id,
+                                 sorr_ios_d4a_run_number,
+                                 sig,
+                                 ticks,
+                                 runtime_ms,
+                                 sorr_ios_d3_stage_name(sorr_ios_d3_stage),
+                                 sorr_ios_d3_last_proc_name,
+                                 sorr_ios_d3_last_proc_id,
+                                 sorr_ios_d3_last_proc_status,
+                                 sorr_ios_d3_last_proc_frame_percent,
+                                 sorr_ios_d3_last_proc_code_offset,
+                                 sorr_ios_d3_last_proc_name,
+                                 sorr_ios_d3_last_proc_id,
+                                 sorr_ios_d3_last_proc_status,
+                                 sorr_ios_d3_last_proc_frame_percent,
+                                 sorr_ios_d3_last_proc_code_offset,
+                                 sorr_ios_d3_current_proc_ptr,
+                                 sorr_ios_d3_last_proc_ptr,
+                                 sorr_ios_d3_last_lookup_id,
+                                 sorr_ios_d3_last_lookup_result_id,
+                                 sorr_ios_d3_lookup_guard_count,
+                                 sorr_ios_d3_last_lookup_event);
+    sorr_ios_signal_write_format(fd, "last_lifecycle=%s\n", sorr_ios_d3_last_lifecycle_event);
+    sorr_ios_signal_write_format(fd, "last_family=%s\n", sorr_ios_d3_last_family_unlink);
+    sorr_ios_signal_write_format(fd, "last_render=%s\n", sorr_ios_d3_last_render_event);
+    sorr_ios_signal_write_format(fd, "recent_destroyed_process_ring=%s\n", sorr_ios_d3_destroyed_ring_snapshot);
+    sorr_ios_signal_write_format(fd, "recent_runtime_lifecycle_ring=%s\n", sorr_ios_d3_lifecycle_events);
+    sorr_ios_signal_write_format(fd, "recent_runtime_family_unlink_ring=%s\n", sorr_ios_d3_family_events);
+    sorr_ios_signal_write_format(fd, "recent_runtime_render_event_ring=%s\n", sorr_ios_d3_render_events);
+    sorr_ios_signal_write_format(fd, "latest_runtime_snapshot=%s\n", sorr_ios_d3_runtime_snapshot);
+    sorr_ios_signal_write_all(fd, "current_launch_recent_log_tail:\n");
+
+    for (i = 0; i < sorr_ios_d4a_recent_log_count; i++)
+    {
+        unsigned int slot = (sorr_ios_d4a_recent_log_pos + SORR_IOS_D4A_RECENT_LOG_COUNT - sorr_ios_d4a_recent_log_count + i) % SORR_IOS_D4A_RECENT_LOG_COUNT;
+        if (sorr_ios_d4a_recent_log_lines[slot][0])
+        {
+            sorr_ios_signal_write_all(fd, sorr_ios_d4a_recent_log_lines[slot]);
+            sorr_ios_signal_write_all(fd, "\n");
+        }
+    }
+}
+
+static void sorr_ios_d4a_write_latest_crash_report(const char *path, int sig)
 {
     int fd;
 
-    if (sorr_ios_d3_signal_log_path[0])
+    if (!path || !path[0])
     {
-        char line[4096];
-        int len;
-
-        fd = open(sorr_ios_d3_signal_log_path, O_WRONLY | O_CREAT | O_APPEND, 0644);
-        if (fd >= 0)
-        {
-            len = snprintf(line,
-                           sizeof(line),
-                           "signal=%d ticks=%u stage=%s runtime_loops=%u runtime_frames=%u runtime_runs=%u runtime_last_proc=%s#%u:s%d:f%d:o%d last_proc_ptr=0x%llx current_proc_ptr=0x%llx lookup_guards=%u last_lookup_id=%u last_lookup_result=%u last_lookup=%s last_lifecycle=%s last_family=%s last_render=%s runtime_snapshot=%s runtime_lifecycle=%s\n",
-                           sig,
-                           SDL_GetTicks(),
-                           sorr_ios_d3_stage_name(sorr_ios_d3_stage),
-                           sorr_ios_d3_instance_go_loop_count,
-                           sorr_ios_d3_frame_complete_count,
-                           sorr_ios_d3_instance_run_count,
-                           sorr_ios_d3_last_proc_name,
-                           sorr_ios_d3_last_proc_id,
-                           sorr_ios_d3_last_proc_status,
-                           sorr_ios_d3_last_proc_frame_percent,
-                           sorr_ios_d3_last_proc_code_offset,
-                           sorr_ios_d3_last_proc_ptr,
-                           sorr_ios_d3_current_proc_ptr,
-                           sorr_ios_d3_lookup_guard_count,
-                           sorr_ios_d3_last_lookup_id,
-                           sorr_ios_d3_last_lookup_result_id,
-                           sorr_ios_d3_last_lookup_event,
-                           sorr_ios_d3_last_lifecycle_event,
-                           sorr_ios_d3_last_family_unlink,
-                           sorr_ios_d3_last_render_event,
-                           sorr_ios_d3_runtime_snapshot,
-                           sorr_ios_d3_lifecycle_events);
-            if (len > 0)
-            {
-                size_t write_len = (size_t)len;
-                if (write_len >= sizeof(line))
-                {
-                    write_len = sizeof(line) - 1;
-                }
-                (void)write(fd, line, write_len);
-            }
-            close(fd);
-        }
+        return;
     }
+
+    fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    if (fd < 0)
+    {
+        return;
+    }
+    sorr_ios_d4a_write_crash_report_fd(fd, sig);
+    fsync(fd);
+    close(fd);
+}
+
+static void sorr_ios_d4a_append_signal_marker(const char *path, int sig)
+{
+    int fd;
+    Uint32 ticks = SDL_GetTicks();
+    Uint32 loop_start = sorr_ios_d3_runtime_loop_start_ticks;
+    Uint32 runtime_ms = loop_start ? ticks - loop_start : 0;
+
+    if (!path || !path[0])
+    {
+        return;
+    }
+
+    fd = open(path, O_WRONLY | O_CREAT | O_APPEND, 0644);
+    if (fd < 0)
+    {
+        return;
+    }
+    sorr_ios_signal_write_format(fd,
+                                 "signal=%d ticks=%u runtime_ms=%u stage=%s run_id=%s current=%s#%u ptr=0x%llx lookup_guards=%u last_lookup_id=%u last_lookup_result=%u latest_crash_report=ios_latest_crash_report.txt\n",
+                                 sig,
+                                 ticks,
+                                 runtime_ms,
+                                 sorr_ios_d3_stage_name(sorr_ios_d3_stage),
+                                 sorr_ios_d4a_run_id,
+                                 sorr_ios_d3_last_proc_name,
+                                 sorr_ios_d3_last_proc_id,
+                                 sorr_ios_d3_current_proc_ptr,
+                                 sorr_ios_d3_lookup_guard_count,
+                                 sorr_ios_d3_last_lookup_id,
+                                 sorr_ios_d3_last_lookup_result_id);
+    fsync(fd);
+    close(fd);
+}
+
+static void sorr_ios_d3_signal_handler(int sig)
+{
+    sorr_ios_d4a_append_signal_marker(sorr_ios_d3_signal_log_path, sig);
+    sorr_ios_d4a_append_signal_marker(sorr_ios_d4a_signal_current_run_path, sig);
+    sorr_ios_d4a_append_signal_marker(sorr_ios_d4a_signal_private_current_run_path, sig);
+    sorr_ios_d4a_write_latest_crash_report(sorr_ios_d4a_signal_latest_crash_path, sig);
+    sorr_ios_d4a_write_latest_crash_report(sorr_ios_d4a_signal_private_latest_crash_path, sig);
 
     signal(sig, SIG_DFL);
     raise(sig);
@@ -801,6 +1314,119 @@ static void sorr_ios_d3_append_log_file(const char *path, const char *line)
     fclose(fp);
 }
 
+static void sorr_ios_d4a_configure_crash_paths(const sorr_ios_data_layout *layout)
+{
+#ifndef _WIN32
+    if (!layout)
+    {
+        return;
+    }
+
+    snprintf(sorr_ios_d3_signal_log_path,
+             sizeof(sorr_ios_d3_signal_log_path),
+             "%s",
+             layout->d3_visible_stability_path);
+    snprintf(sorr_ios_d4a_signal_current_run_path,
+             sizeof(sorr_ios_d4a_signal_current_run_path),
+             "%s",
+             layout->d3_current_run_path);
+    snprintf(sorr_ios_d4a_signal_private_current_run_path,
+             sizeof(sorr_ios_d4a_signal_private_current_run_path),
+             "%s",
+             layout->d3_private_current_run_path);
+    snprintf(sorr_ios_d4a_signal_latest_crash_path,
+             sizeof(sorr_ios_d4a_signal_latest_crash_path),
+             "%s",
+             layout->d3_latest_crash_report_path);
+    snprintf(sorr_ios_d4a_signal_private_latest_crash_path,
+             sizeof(sorr_ios_d4a_signal_private_latest_crash_path),
+             "%s",
+             layout->d3_private_latest_crash_report_path);
+#else
+    (void)layout;
+#endif
+}
+
+static unsigned int sorr_ios_d4a_next_run_number(const sorr_ios_data_layout *layout)
+{
+    char counter_path[1024];
+    FILE *fp;
+    unsigned int value = 0;
+
+    if (!layout || !sorr_ios_join_path(counter_path,
+                                       sizeof(counter_path),
+                                       layout->documents_diagnostics_dir,
+                                       "ios_run_counter.txt"))
+    {
+        return 0;
+    }
+
+    fp = fopen(counter_path, "rb");
+    if (fp)
+    {
+        if (fscanf(fp, "%u", &value) != 1)
+        {
+            value = 0;
+        }
+        fclose(fp);
+    }
+
+    value++;
+    fp = fopen(counter_path, "wb");
+    if (fp)
+    {
+        fprintf(fp, "%u\n", value);
+        fclose(fp);
+    }
+
+    return value;
+}
+
+static void sorr_ios_d4a_prepare_run_logs(const sorr_ios_data_layout *layout)
+{
+    char delimiter[512];
+    time_t now;
+    unsigned int ticks;
+
+    if (!layout)
+    {
+        return;
+    }
+
+    ticks = SDL_GetTicks();
+    now = time(NULL);
+    sorr_ios_d4a_run_number = sorr_ios_d4a_next_run_number(layout);
+    snprintf(sorr_ios_d4a_run_id,
+             sizeof(sorr_ios_d4a_run_id),
+             "%ld-%u-%u",
+             (long)now,
+             ticks,
+             sorr_ios_d4a_run_number);
+
+#ifndef _WIN32
+    sorr_ios_d4a_recent_log_reset();
+#endif
+    sorr_ios_d4a_configure_crash_paths(layout);
+
+    remove(layout->d3_previous_run_path);
+    rename(layout->d3_current_run_path, layout->d3_previous_run_path);
+    remove(layout->d3_private_previous_run_path);
+    rename(layout->d3_private_current_run_path, layout->d3_private_previous_run_path);
+
+    snprintf(delimiter,
+             sizeof(delimiter),
+             "===== SORR IOS RUN %s build=%s artifact=%s run_number=%u ticks=%u =====",
+             sorr_ios_d4a_run_id,
+             SORR_IOS_BUILD_LABEL,
+             SORR_IOS_ARTIFACT_LABEL,
+             sorr_ios_d4a_run_number,
+             ticks);
+    sorr_ios_d3_append_log_file(layout->d3_current_run_path, delimiter);
+    sorr_ios_d3_append_log_file(layout->d3_private_current_run_path, delimiter);
+    sorr_ios_d3_append_log_file(layout->d3_visible_stability_path, delimiter);
+    sorr_ios_d3_append_log_file(layout->d3_stability_path, delimiter);
+}
+
 static void sorr_ios_d3_log(const sorr_ios_data_layout *layout, const char *format, ...)
 {
     char line[8192];
@@ -825,6 +1451,11 @@ static void sorr_ios_d3_log(const sorr_ios_data_layout *layout, const char *form
     sorr_ios_d3_append_log_file(layout->d3_probe_path, line);
     sorr_ios_d3_append_log_file(layout->d3_stability_path, line);
     sorr_ios_d3_append_log_file(layout->d3_visible_stability_path, line);
+    sorr_ios_d3_append_log_file(layout->d3_current_run_path, line);
+    sorr_ios_d3_append_log_file(layout->d3_private_current_run_path, line);
+#ifndef _WIN32
+    sorr_ios_d4a_recent_log_add(line);
+#endif
 }
 
 static void sorr_ios_d3_stability_log(const sorr_ios_data_layout *layout, const char *format, ...)
@@ -847,7 +1478,12 @@ static void sorr_ios_d3_stability_log(const sorr_ios_data_layout *layout, const 
     {
         sorr_ios_d3_append_log_file(layout->d3_stability_path, line);
         sorr_ios_d3_append_log_file(layout->d3_visible_stability_path, line);
+        sorr_ios_d3_append_log_file(layout->d3_current_run_path, line);
+        sorr_ios_d3_append_log_file(layout->d3_private_current_run_path, line);
     }
+#ifndef _WIN32
+    sorr_ios_d4a_recent_log_add(line);
+#endif
 }
 
 static void sorr_ios_d3_set_stage(const sorr_ios_data_layout *layout, int stage)
@@ -1070,6 +1706,8 @@ static int sorr_ios_d3_event_watch(void *userdata, SDL_Event *event)
         return 0;
     }
 
+    sorr_ios_d4a_process_sdl_event(event);
+
     switch (event->type)
     {
         case SDL_QUIT:
@@ -1189,8 +1827,9 @@ static int sorr_ios_run_d3_first_render(sorr_ios_data_layout *layout,
         return 1;
     }
 
+    sorr_ios_d4a_set_active_layout(layout);
     sorr_ios_copy_file_contents(layout->d3_stability_path, layout->d3_visible_stability_path);
-    if (!sorr_ios_read_last_nonempty_line(layout->d3_stability_path,
+    if (!sorr_ios_read_last_nonempty_line(layout->d3_previous_run_path,
                                           previous_stability_line,
                                           sizeof(previous_stability_line)))
     {
@@ -1204,10 +1843,13 @@ static int sorr_ios_run_d3_first_render(sorr_ios_data_layout *layout,
     sorr_ios_d3_log(layout, "probe log path=%s", layout->d3_probe_path);
     sorr_ios_d3_log(layout, "stability log path=%s", layout->d3_stability_path);
     sorr_ios_d3_log(layout, "visible stability log path=%s", layout->d3_visible_stability_path);
+    sorr_ios_d3_log(layout, "current run log path=%s", layout->d3_current_run_path);
+    sorr_ios_d3_log(layout, "previous run log path=%s", layout->d3_previous_run_path);
+    sorr_ios_d3_log(layout, "latest crash report path=%s", layout->d3_latest_crash_report_path);
     snprintf(sorr_ios_d3_visible_event_log_path,
              1024,
              "%s",
-             layout->d3_visible_stability_path);
+             layout->d3_current_run_path);
 #ifndef _WIN32
     sorr_ios_d3_install_signal_handlers(layout->d3_visible_stability_path);
 #endif
@@ -1227,6 +1869,7 @@ static int sorr_ios_run_d3_first_render(sorr_ios_data_layout *layout,
     sorr_ios_status_add("D3 FIRST RENDER PROBE");
     sorr_ios_status_add("DATA APP SUPPORT/SORR");
     sorr_ios_status_add("DIAG FILES SORR_DIAGNOSTICS");
+    sorr_ios_status_add("D4A FIXED TOUCH ENABLED");
     if (previous_stability_line[0])
     {
         sorr_ios_status_add("PREV STABILITY LOG FOUND");
@@ -1599,7 +2242,13 @@ static int sorr_ios_prepare_data_layout(sorr_ios_data_layout *layout)
         !sorr_ios_join_path(layout->d2_probe_path, sizeof(layout->d2_probe_path), layout->logs_dir, "ios_d2_data_import_probe.txt") ||
         !sorr_ios_join_path(layout->d3_probe_path, sizeof(layout->d3_probe_path), layout->logs_dir, "ios_d3_first_render_probe.txt") ||
         !sorr_ios_join_path(layout->d3_stability_path, sizeof(layout->d3_stability_path), layout->logs_dir, "ios_d3_runtime_stability_probe.txt") ||
-        !sorr_ios_join_path(layout->d3_visible_stability_path, sizeof(layout->d3_visible_stability_path), layout->documents_diagnostics_dir, "ios_d3_runtime_stability_probe.txt"))
+        !sorr_ios_join_path(layout->d3_visible_stability_path, sizeof(layout->d3_visible_stability_path), layout->documents_diagnostics_dir, "ios_d3_runtime_stability_probe.txt") ||
+        !sorr_ios_join_path(layout->d3_current_run_path, sizeof(layout->d3_current_run_path), layout->documents_diagnostics_dir, "ios_current_run_stability_log.txt") ||
+        !sorr_ios_join_path(layout->d3_previous_run_path, sizeof(layout->d3_previous_run_path), layout->documents_diagnostics_dir, "ios_previous_run_stability_log.txt") ||
+        !sorr_ios_join_path(layout->d3_latest_crash_report_path, sizeof(layout->d3_latest_crash_report_path), layout->documents_diagnostics_dir, "ios_latest_crash_report.txt") ||
+        !sorr_ios_join_path(layout->d3_private_current_run_path, sizeof(layout->d3_private_current_run_path), layout->logs_dir, "ios_current_run_stability_log.txt") ||
+        !sorr_ios_join_path(layout->d3_private_previous_run_path, sizeof(layout->d3_private_previous_run_path), layout->logs_dir, "ios_previous_run_stability_log.txt") ||
+        !sorr_ios_join_path(layout->d3_private_latest_crash_report_path, sizeof(layout->d3_private_latest_crash_report_path), layout->logs_dir, "ios_latest_crash_report.txt"))
     {
         SDL_Log("SORR iOS shell: data layout path construction failed");
         return 0;
@@ -1631,8 +2280,9 @@ static int sorr_ios_prepare_data_layout(sorr_ios_data_layout *layout)
     {
         sorr_ios_write_text_file(diagnostics_readme_path,
                                  "D3S diagnostics are mirrored here for Files access.\n"
-                                 "After an idle crash, reopen SorrIOSShell once, then copy the last lines of ios_d3_runtime_stability_probe.txt.\n"
-                                 "For the five-minute idle issue, include dense_window_start through dense_window_end, runtime_snapshot, runtime_lifecycle, runtime_family_unlink, runtime_render_event, runtime_enemigo_lookup_guard, destroy_begin, last_lifecycle, last_family, last_render, and signal= lines when present.\n");
+                                 "For D4a crashes, reopen SorrIOSShell once and send ios_latest_crash_report.txt.\n"
+                                 "If more context is needed, also send ios_current_run_stability_log.txt.\n"
+                                 "ios_previous_run_stability_log.txt contains the prior launch, and ios_d3_runtime_stability_probe.txt remains the full rolling log.\n");
     }
 
     if (!sorr_ios_create_dir_marker("savegame", layout->savegame_dir) ||
@@ -1641,6 +2291,8 @@ static int sorr_ios_prepare_data_layout(sorr_ios_data_layout *layout)
     {
         return 0;
     }
+
+    sorr_ios_d4a_prepare_run_logs(layout);
 
     return sorr_ios_write_read_probe(layout->logs_dir);
 }
@@ -2084,6 +2736,7 @@ int main(int argc, char *argv[])
         SDL_Quit();
         return 1;
     }
+    sorr_ios_d4a_set_active_layout(&data_layout);
     sorr_ios_run_d2_probe(&data_layout);
     last_d2_probe_ticks = SDL_GetTicks();
 
@@ -2143,6 +2796,7 @@ int main(int argc, char *argv[])
         SDL_Event event;
         while (SDL_PollEvent(&event))
         {
+            sorr_ios_d4a_process_sdl_event(&event);
             if (event.type == SDL_QUIT)
             {
                 running = false;
@@ -2180,6 +2834,7 @@ int main(int argc, char *argv[])
         if (renderer)
         {
             sorr_ios_draw_status(renderer);
+            sorr_ios_d4a_draw_touch_overlay(renderer);
             SDL_RenderPresent(renderer);
         }
         SDL_Delay(16);
