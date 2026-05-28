@@ -79,6 +79,16 @@ Failure: strings.c included windows.h after the diagnostic guard was widened for
 Fix: keep the Windows VirtualQuery readability probe under _WIN64 and use a non-Windows non-null diagnostic fallback for iOS
 ```
 
+Third D3 attempt:
+
+```text
+Commit: 888c629
+Run: 26546307412
+Result: device compile failed
+Failure: mod_sys.c includes UIKit Objective-C code for TARGET_IOS but was compiled as C
+Fix: enable Objective-C for the D3 iOS project and mark only mod_sys.c as OBJC
+```
+
 The IPA must still contain no:
 
 - `SorR.dat`

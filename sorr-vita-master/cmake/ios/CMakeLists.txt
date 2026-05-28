@@ -18,6 +18,9 @@ endif()
 
 if(SORR_IOS_D3_FIRST_RENDER)
   set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
+  if(APPLE)
+    enable_language(OBJC)
+  endif()
   add_subdirectory("${SORR_ROOT}/3rdparty/tre" "${CMAKE_BINARY_DIR}/tre-ios")
 
   set(SORR_IOS_RUNTIME_SOURCE_FILES
@@ -104,6 +107,10 @@ else()
     ${SORR_ROOT}/core/bgdrtm/src/fmath.c
     ${SORR_ROOT}/core/bgdrtm/src/misc.c
     ${SORR_ROOT}/core/bgdrtm/src/strings.c)
+endif()
+
+if(SORR_IOS_D3_FIRST_RENDER AND APPLE)
+  set_source_files_properties("${SORR_ROOT}/modules/mod_sys/mod_sys.c" PROPERTIES LANGUAGE OBJC)
 endif()
 
 add_executable(SorrIOSShell MACOSX_BUNDLE

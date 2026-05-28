@@ -1149,6 +1149,16 @@ Cause: strings.c included windows.h after the x64 diagnostic guard was generaliz
 Fix: Windows-only VirtualQuery diagnostics stay under _WIN64; iOS uses a non-Windows non-null pointer diagnostic fallback
 ```
 
+Third D3 CI failure:
+
+```text
+Commit: 888c629
+Run: 26546307412
+Failed step: Build unsigned iOS shell app for device
+Cause: mod_sys.c uses UIKit Objective-C code when TARGET_IOS is defined but was compiled as C
+Fix: enable OBJC language for the D3 iOS project and set mod_sys.c LANGUAGE OBJC only for the D3 Apple target
+```
+
 Manual D3 test flow:
 
 1. Keep the D2 data staged on the iPhone.
