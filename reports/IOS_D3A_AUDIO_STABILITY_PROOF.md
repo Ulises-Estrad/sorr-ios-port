@@ -457,3 +457,16 @@ Manual test:
 4. Reopen once if it exits.
 5. In Files, open `On My iPhone/SorrIOSShell/SORR_DIAGNOSTICS/ios_d3_runtime_stability_probe.txt`.
 6. Report the last 80-120 lines, especially `dense_window_start`, heartbeats after `runtime_ms=240000`, `runtime_snapshot`, `runtime_lifecycle`, `runtime_lifecycle ...`, and any `signal=` line.
+## GitHub-Side D3S Attract Lifecycle Diagnostic Proof
+
+Status: produced successfully.
+
+- Actions run: `26595939671`
+- Artifact-producing commit: `f0553b4`
+- Device artifact: `ios-shell-d3s-attract-lifecycle-diagnostics-device-arm64`
+- IPA: `build-products/SorrIOSShell-d3s-attract-lifecycle-diagnostics-adhoc.ipa`
+- Artifact size: `800173` bytes
+
+The IPA remains asset-free and uses only the D2-staged private data on-device. It keeps real BGM/SFX enabled and adds watchlist process counts, recent create/destroy lifecycle events, direct `runtime_lifecycle ...` mirror lines, and catchable fatal-signal context to the Files-visible D3S diagnostics log.
+
+Physical test instruction: install the IPA with Sideloadly, launch with the existing D2-staged data, leave foregrounded/untouched for 10-15 minutes or until it exits, reopen once if it exits, then retrieve `On My iPhone/SorrIOSShell/SORR_DIAGNOSTICS/ios_d3_runtime_stability_probe.txt`. Report the last 80-120 lines, especially entries after `runtime_ms=240000`, `watch=`, `runtime_lifecycle`, and any `signal=` line.

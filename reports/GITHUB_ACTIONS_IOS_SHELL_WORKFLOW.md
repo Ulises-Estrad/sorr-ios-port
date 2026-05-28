@@ -1728,3 +1728,15 @@ Purpose:
 - append fatal signal context to `Documents/SORR_DIAGNOSTICS/ios_d3_runtime_stability_probe.txt` when the signal is catchable.
 
 Expected CI checks remain unchanged: build the iphoneos arm64 app, ad-hoc sign it for Sideloadly, package `Payload/SorrIOSShell.app`, inspect Info.plist/architecture/signature, and verify that no `SorR.dat`, `data/`, FPG/WAV/OGG/SMK/PNG assets, logs, or prepared data are present in the IPA.
+GitHub-side D3S attract lifecycle artifact proof:
+
+```text
+Actions run: 26595939671
+Commit: f0553b4
+Device artifact: ios-shell-d3s-attract-lifecycle-diagnostics-device-arm64
+IPA: build-products/SorrIOSShell-d3s-attract-lifecycle-diagnostics-adhoc.ipa
+Artifact size: 800173 bytes
+Result: success
+```
+
+The simulator shell job also passed in the same run. The device artifact was uploaded after the no-assets-in-IPA inspection and remains suitable for Sideloadly re-sign/install testing.

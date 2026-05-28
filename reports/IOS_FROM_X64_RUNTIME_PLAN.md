@@ -613,3 +613,14 @@ The next D3S build does not start D4a controls. It keeps BGM/SFX enabled and add
 - Log path: `Documents/SORR_DIAGNOSTICS/ios_d3_runtime_stability_probe.txt`
 
 The intended output is a clearer answer to whether the exit occurs during a specific attract/demo transition, process create/destroy burst, invalid process state, or catchable fatal signal. D4a fixed touch input should stay blocked until this D3S pass produces a result or a narrow fix.
+## D3S Attract Lifecycle Artifact Proof
+
+The D3S attract lifecycle diagnostic IPA was produced successfully:
+
+- Actions run: `26595939671`
+- Commit: `f0553b4`
+- Artifact: `ios-shell-d3s-attract-lifecycle-diagnostics-device-arm64`
+- IPA: `build-products/SorrIOSShell-d3s-attract-lifecycle-diagnostics-adhoc.ipa`
+- Artifact size: `800173` bytes
+
+Next manual step is physical iPhone testing with the existing D2-staged data. D4a fixed touch input remains blocked until the D3S idle exit is understood or narrowed to a non-control subsystem.

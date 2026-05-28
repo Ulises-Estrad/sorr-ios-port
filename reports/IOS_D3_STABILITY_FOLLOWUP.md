@@ -284,3 +284,14 @@ Next artifact target:
 This build keeps real BGM/SFX enabled and adds process watch counts plus a recent create/destroy lifecycle ring to the Files-visible stability log. The goal is to identify whether a specific attract/demo transition, HUD/enemy/player process spike, invalid process status, or fatal signal happens after heartbeat 47-49.
 
 When testing, report the last 80-120 lines from `Documents/SORR_DIAGNOSTICS/ios_d3_runtime_stability_probe.txt`, especially `runtime_snapshot`, `watch=`, `runtime_lifecycle`, direct `runtime_lifecycle ...` lines, and any `signal=` line.
+## GitHub-Side D3S Attract Lifecycle Artifact Proof
+
+Produced successfully:
+
+- Actions run: `26595939671`
+- Commit: `f0553b4`
+- Artifact: `ios-shell-d3s-attract-lifecycle-diagnostics-device-arm64`
+- IPA: `build-products/SorrIOSShell-d3s-attract-lifecycle-diagnostics-adhoc.ipa`
+- Artifact size: `800173` bytes
+
+This is the next on-device diagnostic build for the five-minute D3S exit. It keeps BGM and SFX enabled, does not bundle game data/assets, and should be tested with the existing D2-staged private data.
