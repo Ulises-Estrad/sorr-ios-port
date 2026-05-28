@@ -1209,6 +1209,16 @@ Cause: libtext.c passed TEXT * callbacks to gr_new_object while the render objec
 Fix: text callbacks now accept void * context and cast back to TEXT * inside the callback body
 ```
 
+Ninth D3 CI failure:
+
+```text
+Commit: 8f80318
+Run: 26548169964
+Failed step: Build unsigned iOS shell app for device
+Cause: libscroll.c passed int scroll indexes to gr_new_object callbacks while the render object API expects void * callback context
+Fix: scroll callbacks now accept void * context and convert through intptr_t at the callback boundary
+```
+
 Manual D3 test flow:
 
 1. Keep the D2 data staged on the iPhone.

@@ -139,6 +139,16 @@ Failure: libtext.c used TEXT * callback parameters where the render object API e
 Fix: convert the text render-object callbacks to void * and cast back to TEXT * inside the callbacks
 ```
 
+Ninth D3 attempt:
+
+```text
+Commit: 8f80318
+Run: 26548169964
+Result: device compile failed
+Failure: libscroll.c used int scroll-index callback parameters where the render object API expects void * callback context
+Fix: convert the scroll render-object callbacks to void * plus intptr_t casts
+```
+
 The IPA must still contain no:
 
 - `SorR.dat`
