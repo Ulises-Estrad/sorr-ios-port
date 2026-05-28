@@ -1776,6 +1776,30 @@ Result: success
 ```
 
 The simulator shell job also passed in the same run. The device artifact passed the existing IPA layout/signature/forbidden-asset inspection.
+## D3S Enemy/HUD Guard Artifact
+
+The workflow now produces a D3S patch artifact aimed at the confirmed `SIGSEGV` after enemy/HUD child-process teardown:
+
+```text
+ios-shell-d3s-enemy-hud-guard-device-arm64
+```
+
+IPA:
+
+```text
+build-products/SorrIOSShell-d3s-enemy-hud-guard-adhoc.ipa
+```
+
+Purpose:
+
+- keep real BGM/SFX enabled,
+- keep the IPA asset-free and continue using the existing D2-staged private data,
+- preserve the visible D3S stability log in `Documents/SORR_DIAGNOSTICS`,
+- tag iOS/D3S remote process-local/public stack pointers with the owning process id,
+- guard later dereferences of those pointers when the owner process has already been destroyed or reused,
+- log guarded stale references as `runtime_stale_process_ref ...` instead of silently dereferencing freed process memory.
+
+Expected CI checks remain unchanged: build iphoneos arm64, ad-hoc sign for Sideloadly, package `Payload/SorrIOSShell.app`, inspect Info.plist/architecture/signature, and verify the IPA contains no `SorR.dat`, `data/`, FPG/WAV/OGG/SMK/PNG assets, logs, or prepared data.
 ## D3S Title Re-Entry Diagnostic Artifact
 
 The workflow now produces a D3S follow-up artifact aimed at the post-demo return-to-title transition:

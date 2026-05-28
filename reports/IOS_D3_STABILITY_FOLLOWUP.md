@@ -397,3 +397,30 @@ Produced successfully:
 - Simulator job result: success
 
 This is the current recommended physical iPhone diagnostic IPA for the confirmed `SIGSEGV` in the timed attract/demo gameplay path. It keeps real BGM/SFX enabled, uses the existing D2-staged data, and does not bundle game data/assets in the IPA.
+## D3S Enemy/HUD Stale-Reference Guard Patch
+
+Latest physical enemy/HUD diagnostics narrowed the `SIGSEGV` further:
+
+```text
+signal=11 ticks=275266 stage=runtime-loop
+runtime_last_proc=ENEMIGO#68082
+last_lifecycle=destroy ESCRIBE_ENEMIGO#68362
+last_family=runtime_family_unlink ESCRIBE_ENEMIGO#68362
+last_render=render_object_destroy ... ESCRIBE_ENEMIGO#68362
+ENEMIGO live=5
+ESCRIBE_ENEMIGO live=0
+BARRA_VIDA1 live=0
+BARRA_SEC_VIDA1 live=0
+MINI_CUADRO1 live=0
+```
+
+This patch attempts a narrow D3S runtime guard instead of adding more passive diagnostics. The iOS/D3S pointer side table now tags remote process-local/public stack pointers with the owning `INSTANCE` and process id. When a later pointer dereference finds that the owner process has been destroyed or its id no longer matches, the runtime logs `runtime_stale_process_ref ...`, clears the stale side-table entry, and returns a zeroed sink pointer instead of dereferencing freed process memory.
+
+The patch is intentionally scoped to the iOS/D3S pointer-table build path. It does not alter the known-good desktop/x64 snapshots, does not disable music/SFX, does not skip the attract/demo scene, and does not bundle game data.
+
+Next artifact target:
+
+- `ios-shell-d3s-enemy-hud-guard-device-arm64`
+- `build-products/SorrIOSShell-d3s-enemy-hud-guard-adhoc.ipa`
+
+When testing, install with Sideloadly, leave the app foregrounded for 10-15 minutes, and report whether it survives past the old five-minute window. If it still exits, retrieve `Documents/SORR_DIAGNOSTICS/ios_d3_runtime_stability_probe.txt` and report the last 150-250 lines, especially `runtime_stale_process_ref`, `signal=`, `last_lifecycle=`, `last_family=`, and `last_render=`.

@@ -713,3 +713,15 @@ The D3S enemy/HUD diagnostic IPA was produced successfully:
 - Artifact size: `800677` bytes
 
 Next manual step is physical iPhone testing with the existing D2-staged data. D4a remains blocked until this enemy/HUD signal log identifies the failure point or narrows the crash to a subsystem outside input.
+## D3S Enemy/HUD Guard Patch
+
+The latest physical log identified a likely stale enemy/HUD child-process reference after `ESCRIBE_ENEMIGO`, `MINI_CUADRO1`, `BARRA_VIDA1`, and `BARRA_SEC_VIDA1` teardown. D3 first render and D3A audio remain complete; D4a fixed touch input stays blocked while this D3S stability guard is tested.
+
+Next patch artifact:
+
+- `ios-shell-d3s-enemy-hud-guard-device-arm64`
+- `build-products/SorrIOSShell-d3s-enemy-hud-guard-adhoc.ipa`
+
+The patch keeps BGM/SFX enabled and keeps the IPA asset-free. It extends the iOS/D3S pointer side table so remote process-local/public pointers carry owner process metadata, then guards later dereferences if the owner process has been destroyed or reused. Guard hits are logged as `runtime_stale_process_ref ...` in the Files-visible diagnostics log.
+
+Success criteria for this patch are unchanged from the D3S stability pass: physical iPhone render works, BGM/SFX work, and the app survives foreground idle past the old five-minute attract/demo crash window. If it still crashes, the visible log should contain stronger breadcrumbs for the next patch attempt.

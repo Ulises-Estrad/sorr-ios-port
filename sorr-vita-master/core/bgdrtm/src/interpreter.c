@@ -62,9 +62,26 @@ typedef struct portable_x64_stack_ptr_entry
     int * cell;
     uint32_t low_value;
     uintptr_t full_ptr;
+#ifdef SORR_IOS_D3_FIRST_RENDER
+    const INSTANCE * owner;
+    uint32_t owner_id;
+    const char * owner_kind;
+#endif
 } portable_x64_stack_ptr_entry;
 
 static portable_x64_stack_ptr_entry portable_x64_stack_ptr_table[PORTABLE_X64_STACK_PTR_TABLE_SIZE];
+
+#ifdef SORR_IOS_D3_FIRST_RENDER
+static uintptr_t portable_x64_stale_ptr_sink[64];
+static INSTANCE * portable_x64_current_instance_for_guard = NULL;
+static void sorr_ios_d3_note_stale_pointer_guard( INSTANCE * current,
+                                                  const char * op,
+                                                  const int * cell,
+                                                  const void * target,
+                                                  const INSTANCE * owner,
+                                                  uint32_t owner_id,
+                                                  const char * owner_kind );
+#endif
 
 static unsigned int portable_x64_stack_ptr_hash( const int * cell )
 {
@@ -75,7 +92,11 @@ static unsigned int portable_x64_stack_ptr_hash( const int * cell )
     return ( unsigned int )value & ( PORTABLE_X64_STACK_PTR_TABLE_SIZE - 1u );
 }
 
-static void portable_x64_stack_set_ptr( int * cell, const void * ptr )
+static void portable_x64_stack_set_ptr_ex( int * cell, const void * ptr
+#ifdef SORR_IOS_D3_FIRST_RENDER
+                                           , const INSTANCE * owner, const char * owner_kind
+#endif
+                                         )
 {
     uintptr_t full_ptr = ( uintptr_t )ptr;
     uint32_t low_value = ( uint32_t )full_ptr;
@@ -92,6 +113,11 @@ static void portable_x64_stack_set_ptr( int * cell, const void * ptr )
             entry->cell = cell;
             entry->low_value = low_value;
             entry->full_ptr = full_ptr;
+#ifdef SORR_IOS_D3_FIRST_RENDER
+            entry->owner = owner;
+            entry->owner_id = owner ? LOCDWORD( owner, PROCESS_ID ) : 0;
+            entry->owner_kind = owner_kind;
+#endif
 #ifdef PORTABLE_RUNTIME_DIAG
             if ( PORTABLE_DIAG_ENV_ON( "SORR_PORTABLE_DIAG_PTRS" ) )
             {
@@ -107,6 +133,22 @@ static void portable_x64_stack_set_ptr( int * cell, const void * ptr )
 #endif
 }
 
+static void portable_x64_stack_set_ptr( int * cell, const void * ptr )
+{
+    portable_x64_stack_set_ptr_ex( cell, ptr
+#ifdef SORR_IOS_D3_FIRST_RENDER
+                                   , NULL, NULL
+#endif
+                                 );
+}
+
+#ifdef SORR_IOS_D3_FIRST_RENDER
+static void portable_x64_stack_set_ptr_owned( int * cell, const void * ptr, const INSTANCE * owner, const char * owner_kind )
+{
+    portable_x64_stack_set_ptr_ex( cell, ptr, owner, owner_kind );
+}
+#endif
+
 static void * portable_x64_stack_get_ptr( int * cell )
 {
     uint32_t low_value = ( uint32_t )*cell;
@@ -121,6 +163,34 @@ static void * portable_x64_stack_get_ptr( int * cell )
         {
             if ( entry->low_value == low_value )
             {
+#ifdef SORR_IOS_D3_FIRST_RENDER
+                if ( entry->owner )
+                {
+                    int owner_exists = instance_exists( ( INSTANCE * )entry->owner );
+                    int owner_id_matches = owner_exists ? ( LOCDWORD( entry->owner, PROCESS_ID ) == entry->owner_id ) : 0;
+                    if ( !owner_exists || !owner_id_matches )
+                    {
+                        void * stale_target = ( void * )entry->full_ptr;
+                        sorr_ios_d3_note_stale_pointer_guard(
+                            portable_x64_current_instance_for_guard,
+                            "ptr-get",
+                            cell,
+                            stale_target,
+                            entry->owner,
+                            entry->owner_id,
+                            entry->owner_kind
+                        );
+                        entry->cell = NULL;
+                        entry->low_value = 0;
+                        entry->full_ptr = 0;
+                        entry->owner = NULL;
+                        entry->owner_id = 0;
+                        entry->owner_kind = NULL;
+                        *cell = 0;
+                        return ( void * )portable_x64_stale_ptr_sink;
+                    }
+                }
+#endif
 #ifdef PORTABLE_RUNTIME_DIAG
                 if ( PORTABLE_DIAG_ENV_ON( "SORR_PORTABLE_DIAG_PTRS" ) )
                 {
@@ -133,6 +203,11 @@ static void * portable_x64_stack_get_ptr( int * cell )
             entry->cell = NULL;
             entry->low_value = 0;
             entry->full_ptr = 0;
+#ifdef SORR_IOS_D3_FIRST_RENDER
+            entry->owner = NULL;
+            entry->owner_id = 0;
+            entry->owner_kind = NULL;
+#endif
             break;
         }
     }
@@ -172,6 +247,22 @@ static int portable_x64_stack_peek_ptr( int * cell, uintptr_t * full_ptr )
 static void portable_x64_stack_copy_cell( int * dst, int * src )
 {
     uintptr_t full_ptr;
+#ifdef SORR_IOS_D3_FIRST_RENDER
+    uint32_t low_value = ( uint32_t )*src;
+    unsigned int slot = portable_x64_stack_ptr_hash( src );
+    unsigned int i;
+
+    for ( i = 0; i < PORTABLE_X64_STACK_PTR_TABLE_SIZE; i++ )
+    {
+        portable_x64_stack_ptr_entry * entry = &portable_x64_stack_ptr_table[( slot + i ) & ( PORTABLE_X64_STACK_PTR_TABLE_SIZE - 1u )];
+        if ( entry->cell == NULL ) break;
+        if ( entry->cell == src && entry->low_value == low_value )
+        {
+            portable_x64_stack_set_ptr_ex( dst, ( void * )entry->full_ptr, entry->owner, entry->owner_kind );
+            return;
+        }
+    }
+#endif
 
     if ( portable_x64_stack_peek_ptr( src, &full_ptr ) )
     {
@@ -186,6 +277,22 @@ static void portable_x64_stack_copy_cell( int * dst, int * src )
 static void portable_x64_stack_adjust_ptr( int * cell, intptr_t offset )
 {
     uintptr_t full_ptr;
+#ifdef SORR_IOS_D3_FIRST_RENDER
+    uint32_t low_value = ( uint32_t )*cell;
+    unsigned int slot = portable_x64_stack_ptr_hash( cell );
+    unsigned int i;
+
+    for ( i = 0; i < PORTABLE_X64_STACK_PTR_TABLE_SIZE; i++ )
+    {
+        portable_x64_stack_ptr_entry * entry = &portable_x64_stack_ptr_table[( slot + i ) & ( PORTABLE_X64_STACK_PTR_TABLE_SIZE - 1u )];
+        if ( entry->cell == NULL ) break;
+        if ( entry->cell == cell && entry->low_value == low_value )
+        {
+            portable_x64_stack_set_ptr_ex( cell, ( void * )( entry->full_ptr + offset ), entry->owner, entry->owner_kind );
+            return;
+        }
+    }
+#endif
 
     if ( portable_x64_stack_peek_ptr( cell, &full_ptr ) )
     {
@@ -247,6 +354,12 @@ static int portable_x64_sysproc_load_save( int is_save, int * params )
     string_discard( params[0] );
     return result;
 }
+#endif
+
+#if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
+#define PORTABLE_STACK_PTR(cell,type) (( type * )portable_x64_stack_get_ptr( ( cell ) ))
+#else
+#define PORTABLE_STACK_PTR(cell,type) (( type * )( uintptr_t )*( cell ))
 #endif
 
 #if defined(PORTABLE_RUNTIME_DIAG) && (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
@@ -387,6 +500,7 @@ volatile unsigned int sorr_ios_d3_instance_destroyed_count = 0;
 volatile unsigned int sorr_ios_d3_render_instance_object_created_count = 0;
 volatile unsigned int sorr_ios_d3_render_instance_object_destroyed_count = 0;
 volatile unsigned int sorr_ios_d3_render_invalid_callback_count = 0;
+volatile unsigned int sorr_ios_d3_stale_remote_ptr_guard_count = 0;
 volatile unsigned int sorr_ios_d3_snapshot_count = 0;
 volatile unsigned int sorr_ios_d3_last_proc_id = 0;
 volatile unsigned long long sorr_ios_d3_last_proc_ptr = 0;
@@ -708,11 +822,51 @@ void sorr_ios_d3_note_render_instance_event( const char * action,
     sorr_ios_d3_append_visible_event_line( line );
 }
 
+static void sorr_ios_d3_note_stale_pointer_guard( INSTANCE * current,
+                                                  const char * op,
+                                                  const int * cell,
+                                                  const void * target,
+                                                  const INSTANCE * owner,
+                                                  uint32_t owner_id,
+                                                  const char * owner_kind )
+{
+    char line[768];
+    int current_exists = current ? instance_exists( current ) : 0;
+    const char * current_name = ( current_exists && current->proc && current->proc->name ) ? current->proc->name : "dead";
+    uint32_t current_id = current_exists ? LOCDWORD( current, PROCESS_ID ) : 0;
+    int owner_exists = owner ? instance_exists( ( INSTANCE * )owner ) : 0;
+    uint32_t owner_live_id = owner_exists ? LOCDWORD( owner, PROCESS_ID ) : 0;
+
+    sorr_ios_d3_stale_remote_ptr_guard_count++;
+    snprintf(
+        line,
+        sizeof( line ),
+        "runtime_stale_process_ref guard=%u op=%s current=%s#%u current_ptr=%p cell=%p target=%p owner_kind=%s owner_ptr=%p owner_id=%u owner_exists=%d owner_live_id=%u last_proc=%s#%u",
+        sorr_ios_d3_stale_remote_ptr_guard_count,
+        op ? op : "ptr",
+        current_name,
+        current_id,
+        ( void * )current,
+        ( const void * )cell,
+        target,
+        owner_kind ? owner_kind : "unknown",
+        ( const void * )owner,
+        owner_id,
+        owner_exists,
+        owner_live_id,
+        sorr_ios_d3_last_proc_name,
+        sorr_ios_d3_last_proc_id
+    );
+    snprintf( sorr_ios_d3_last_render_event, sizeof( sorr_ios_d3_last_render_event ), "%s", line );
+    sorr_ios_d3_append_visible_event_line( line );
+}
+
 static void sorr_ios_d3_note_instance_run( const INSTANCE * r )
 {
     sorr_ios_d3_instance_run_count++;
     sorr_ios_d3_copy_proc_name( sorr_ios_d3_last_proc_name, sizeof( sorr_ios_d3_last_proc_name ), r );
     sorr_ios_d3_current_proc_ptr = ( unsigned long long )( uintptr_t )r;
+    portable_x64_current_instance_for_guard = ( INSTANCE * )r;
 
     if ( r )
     {
@@ -1427,7 +1581,11 @@ int instance_go( INSTANCE * r )
                 }
                 else
 #if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
+#ifdef SORR_IOS_D3_FIRST_RENDER
+                    portable_x64_stack_set_ptr_owned( &r->stack_ptr[-1], &LOCDWORD( i, ptr[1] ), i, "remote_local" );
+#else
                     portable_x64_stack_set_ptr( &r->stack_ptr[-1], &LOCDWORD( i, ptr[1] ) );
+#endif
 #else
                     r->stack_ptr[-1] = ( uint32_t ) & LOCDWORD( i, ptr[1] ) ;
 #endif
@@ -1450,7 +1608,11 @@ int instance_go( INSTANCE * r )
                 }
                 else
 #if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
+#ifdef SORR_IOS_D3_FIRST_RENDER
+                    portable_x64_stack_set_ptr_owned( &r->stack_ptr[-1], &PUBDWORD( i, ptr[1] ), i, "remote_public" );
+#else
                     portable_x64_stack_set_ptr( &r->stack_ptr[-1], &PUBDWORD( i, ptr[1] ) );
+#endif
 #else
                     r->stack_ptr[-1] = ( uint32_t ) & PUBDWORD( i, ptr[1] ) ;
 #endif
@@ -1519,9 +1681,9 @@ int instance_go( INSTANCE * r )
             case MN_PTR | MN_UNSIGNED:
             case MN_PTR | MN_FLOAT:
 #if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
-                r->stack_ptr[-1] = *( int32_t * )portable_x64_stack_get_ptr( &r->stack_ptr[-1] ) ;
+                r->stack_ptr[-1] = *PORTABLE_STACK_PTR( &r->stack_ptr[-1], int32_t ) ;
 #else
-                r->stack_ptr[-1] = *( int32_t * )r->stack_ptr[-1] ;
+                r->stack_ptr[-1] = *PORTABLE_STACK_PTR( &r->stack_ptr[-1], int32_t ) ;
 #endif
                 ptr++ ;
                 break ;
@@ -1586,9 +1748,9 @@ int instance_go( INSTANCE * r )
 
             case MN_STRING | MN_PTR:
 #if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
-                r->stack_ptr[-1] = *( int32_t * )portable_x64_stack_get_ptr( &r->stack_ptr[-1] ) ;
+                r->stack_ptr[-1] = *PORTABLE_STACK_PTR( &r->stack_ptr[-1], int32_t ) ;
 #else
-                r->stack_ptr[-1] = *( int32_t * )r->stack_ptr[-1] ;
+                r->stack_ptr[-1] = *PORTABLE_STACK_PTR( &r->stack_ptr[-1], int32_t ) ;
 #endif
                 string_use( r->stack_ptr[-1] );
                 ptr++ ;
@@ -1692,18 +1854,18 @@ int instance_go( INSTANCE * r )
 
             case MN_WORD | MN_PTR:
 #if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
-                r->stack_ptr[-1] = *( int16_t * )portable_x64_stack_get_ptr( &r->stack_ptr[-1] ) ;
+                r->stack_ptr[-1] = *PORTABLE_STACK_PTR( &r->stack_ptr[-1], int16_t ) ;
 #else
-                r->stack_ptr[-1] = *( int16_t * )r->stack_ptr[-1] ;
+                r->stack_ptr[-1] = *PORTABLE_STACK_PTR( &r->stack_ptr[-1], int16_t ) ;
 #endif
                 ptr++ ;
                 break ;
 
             case MN_WORD | MN_PTR | MN_UNSIGNED:
 #if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
-                r->stack_ptr[-1] = *( uint16_t * )portable_x64_stack_get_ptr( &r->stack_ptr[-1] ) ;
+                r->stack_ptr[-1] = *PORTABLE_STACK_PTR( &r->stack_ptr[-1], uint16_t ) ;
 #else
-                r->stack_ptr[-1] = *( uint16_t * )r->stack_ptr[-1] ;
+                r->stack_ptr[-1] = *PORTABLE_STACK_PTR( &r->stack_ptr[-1], uint16_t ) ;
 #endif
                 ptr++ ;
                 break ;
@@ -2270,9 +2432,9 @@ int instance_go( INSTANCE * r )
             /* String operations */
 
             case MN_VARADD | MN_STRING:
-                n = *( int32_t * )( r->stack_ptr[-2] ) ;
-                *( int32_t * )( r->stack_ptr[-2] ) = string_add( n, r->stack_ptr[-1] ) ;
-                string_use( *( int32_t * )( r->stack_ptr[-2] ) );
+                n = *PORTABLE_STACK_PTR( &r->stack_ptr[-2], int32_t ) ;
+                *PORTABLE_STACK_PTR( &r->stack_ptr[-2], int32_t ) = string_add( n, r->stack_ptr[-1] ) ;
+                string_use(*PORTABLE_STACK_PTR( &r->stack_ptr[-2], int32_t ));
                 string_discard( n );
                 string_discard( r->stack_ptr[-1] );
                 r->stack_ptr-- ;
@@ -2282,13 +2444,13 @@ int instance_go( INSTANCE * r )
             case MN_LETNP | MN_STRING:
 #if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
                 {
-                    int32_t * string_slot = ( int32_t * )portable_x64_stack_get_ptr( &r->stack_ptr[-2] );
+                    int32_t * string_slot = PORTABLE_STACK_PTR( &r->stack_ptr[-2], int32_t );
                     string_discard( *string_slot );
                     *string_slot = r->stack_ptr[-1];
                 }
 #else
-                string_discard( *( int32_t * )( r->stack_ptr[-2] ) );
-                ( *( int32_t * )( r->stack_ptr[-2] ) ) = r->stack_ptr[-1];
+                string_discard(*PORTABLE_STACK_PTR( &r->stack_ptr[-2], int32_t ));
+                (*PORTABLE_STACK_PTR( &r->stack_ptr[-2], int32_t )) = r->stack_ptr[-1];
 #endif
                 r->stack_ptr -= 2 ;
                 ptr++ ;
@@ -2297,13 +2459,13 @@ int instance_go( INSTANCE * r )
             case MN_LET | MN_STRING:
 #if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
                 {
-                    int32_t * string_slot = ( int32_t * )portable_x64_stack_get_ptr( &r->stack_ptr[-2] );
+                    int32_t * string_slot = PORTABLE_STACK_PTR( &r->stack_ptr[-2], int32_t );
                     string_discard( *string_slot );
                     *string_slot = r->stack_ptr[-1];
                 }
 #else
-                string_discard( *( int32_t * )( r->stack_ptr[-2] ) );
-                ( *( int32_t * )( r->stack_ptr[-2] ) ) = r->stack_ptr[-1];
+                string_discard(*PORTABLE_STACK_PTR( &r->stack_ptr[-2], int32_t ));
+                (*PORTABLE_STACK_PTR( &r->stack_ptr[-2], int32_t )) = r->stack_ptr[-1];
 #endif
                 r->stack_ptr-- ;
                 ptr++ ;
@@ -2431,7 +2593,7 @@ int instance_go( INSTANCE * r )
                 str[ptr[1]] = 0;
 #else
                 strncpy( *( char ** )( &r->stack_ptr[-2] ), string_get( n ), ptr[1] ) ;
-                (( char * )( r->stack_ptr[-2] ) )[ptr[1]] = 0;
+                (PORTABLE_STACK_PTR( &r->stack_ptr[-2], char ))[ptr[1]] = 0;
 #endif
                 r->stack_ptr[-2] = r->stack_ptr[-1];
                 r->stack_ptr--;
@@ -2446,7 +2608,7 @@ int instance_go( INSTANCE * r )
                 str[ptr[1]-1] = 0;
 #else
                 strncat( *( char ** )( &r->stack_ptr[-2] ), string_get( n ), (ptr[1]-1) - strlen( *( char ** )( &r->stack_ptr[-2] ) ) ) ;
-                (( char * )( r->stack_ptr[-2] ) )[ptr[1]-1] = 0;
+                (PORTABLE_STACK_PTR( &r->stack_ptr[-2], char ))[ptr[1]-1] = 0;
 #endif
                 r->stack_ptr[-2] = r->stack_ptr[-1];
                 r->stack_ptr--;
@@ -2458,9 +2620,9 @@ int instance_go( INSTANCE * r )
             case MN_LETNP:
             case MN_LETNP | MN_UNSIGNED:
 #if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
-                ( *( int32_t * )portable_x64_stack_get_ptr( &r->stack_ptr[-2] ) ) = r->stack_ptr[-1] ;
+                ( *PORTABLE_STACK_PTR( &r->stack_ptr[-2], int32_t ) ) = r->stack_ptr[-1] ;
 #else
-                ( *( int32_t * )( r->stack_ptr[-2] ) ) = r->stack_ptr[-1] ;
+                (*PORTABLE_STACK_PTR( &r->stack_ptr[-2], int32_t )) = r->stack_ptr[-1] ;
 #endif
                 r->stack_ptr -= 2 ;
                 ptr++ ;
@@ -2469,9 +2631,9 @@ int instance_go( INSTANCE * r )
             case MN_LET:
             case MN_LET | MN_UNSIGNED:
 #if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
-                ( *( int32_t * )portable_x64_stack_get_ptr( &r->stack_ptr[-2] ) ) = r->stack_ptr[-1] ;
+                ( *PORTABLE_STACK_PTR( &r->stack_ptr[-2], int32_t ) ) = r->stack_ptr[-1] ;
 #else
-                ( *( int32_t * )( r->stack_ptr[-2] ) ) = r->stack_ptr[-1] ;
+                (*PORTABLE_STACK_PTR( &r->stack_ptr[-2], int32_t )) = r->stack_ptr[-1] ;
 #endif
                 r->stack_ptr-- ;
                 ptr++ ;
@@ -2480,9 +2642,9 @@ int instance_go( INSTANCE * r )
             case MN_INC:
             case MN_INC | MN_UNSIGNED:
 #if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
-                ( *( int32_t * )portable_x64_stack_get_ptr( &r->stack_ptr[-1] ) ) += ptr[1] ;
+                ( *PORTABLE_STACK_PTR( &r->stack_ptr[-1], int32_t ) ) += ptr[1] ;
 #else
-                ( *( int32_t * )( r->stack_ptr[-1] ) ) += ptr[1] ;
+                (*PORTABLE_STACK_PTR( &r->stack_ptr[-1], int32_t )) += ptr[1] ;
 #endif
                 ptr += 2 ;
                 break ;
@@ -2490,9 +2652,9 @@ int instance_go( INSTANCE * r )
             case MN_DEC:
             case MN_DEC | MN_UNSIGNED:
 #if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
-                ( *( int32_t * )portable_x64_stack_get_ptr( &r->stack_ptr[-1] ) ) -= ptr[1] ;
+                ( *PORTABLE_STACK_PTR( &r->stack_ptr[-1], int32_t ) ) -= ptr[1] ;
 #else
-                ( *( int32_t * )( r->stack_ptr[-1] ) ) -= ptr[1] ;
+                (*PORTABLE_STACK_PTR( &r->stack_ptr[-1], int32_t )) -= ptr[1] ;
 #endif
                 ptr += 2 ;
                 break ;
@@ -2501,13 +2663,13 @@ int instance_go( INSTANCE * r )
             case MN_POSTDEC | MN_UNSIGNED:
 #if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
                 {
-                    int32_t * value = ( int32_t * )portable_x64_stack_get_ptr( &r->stack_ptr[-1] );
+                    int32_t * value = PORTABLE_STACK_PTR( &r->stack_ptr[-1], int32_t );
                     *value -= ptr[1] ;
                     r->stack_ptr[-1] = *value + ptr[1] ;
                 }
 #else
-                ( *( int32_t * )( r->stack_ptr[-1] ) ) -= ptr[1] ;
-                r->stack_ptr[-1] = *( int32_t * )( r->stack_ptr[-1] ) + ptr[1] ;
+                (*PORTABLE_STACK_PTR( &r->stack_ptr[-1], int32_t )) -= ptr[1] ;
+                r->stack_ptr[-1] = *PORTABLE_STACK_PTR( &r->stack_ptr[-1], int32_t ) + ptr[1] ;
 #endif
                 ptr += 2 ;
                 break ;
@@ -2516,13 +2678,13 @@ int instance_go( INSTANCE * r )
             case MN_POSTINC | MN_UNSIGNED:
 #if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
                 {
-                    int32_t * value = ( int32_t * )portable_x64_stack_get_ptr( &r->stack_ptr[-1] );
+                    int32_t * value = PORTABLE_STACK_PTR( &r->stack_ptr[-1], int32_t );
                     *value += ptr[1] ;
                     r->stack_ptr[-1] = *value - ptr[1] ;
                 }
 #else
-                *(( int32_t * )( r->stack_ptr[-1] ) ) += ptr[1] ;
-                r->stack_ptr[-1] = *( int32_t * )( r->stack_ptr[-1] ) - ptr[1] ;
+                (*PORTABLE_STACK_PTR( &r->stack_ptr[-1], int32_t )) += ptr[1] ;
+                r->stack_ptr[-1] = *PORTABLE_STACK_PTR( &r->stack_ptr[-1], int32_t ) - ptr[1] ;
 #endif
                 ptr += 2 ;
                 break ;
@@ -2530,9 +2692,9 @@ int instance_go( INSTANCE * r )
             case MN_VARADD:
             case MN_VARADD | MN_UNSIGNED:
 #if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
-                *( int32_t * )portable_x64_stack_get_ptr( &r->stack_ptr[-2] ) += r->stack_ptr[-1] ;
+                *PORTABLE_STACK_PTR( &r->stack_ptr[-2], int32_t ) += r->stack_ptr[-1] ;
 #else
-                *( int32_t * )( r->stack_ptr[-2] ) += r->stack_ptr[-1] ;
+                *PORTABLE_STACK_PTR( &r->stack_ptr[-2], int32_t ) += r->stack_ptr[-1] ;
 #endif
                 r->stack_ptr-- ;
                 ptr++ ;
@@ -2541,9 +2703,9 @@ int instance_go( INSTANCE * r )
             case MN_VARSUB:
             case MN_VARSUB | MN_UNSIGNED:
 #if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
-                *( int32_t * )portable_x64_stack_get_ptr( &r->stack_ptr[-2] ) -= r->stack_ptr[-1] ;
+                *PORTABLE_STACK_PTR( &r->stack_ptr[-2], int32_t ) -= r->stack_ptr[-1] ;
 #else
-                *( int32_t * )( r->stack_ptr[-2] ) -= r->stack_ptr[-1] ;
+                *PORTABLE_STACK_PTR( &r->stack_ptr[-2], int32_t ) -= r->stack_ptr[-1] ;
 #endif
                 r->stack_ptr-- ;
                 ptr++ ;
@@ -2552,9 +2714,9 @@ int instance_go( INSTANCE * r )
             case MN_VARMUL:
             case MN_VARMUL | MN_UNSIGNED:
 #if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
-                *( int32_t * )portable_x64_stack_get_ptr( &r->stack_ptr[-2] ) *= r->stack_ptr[-1] ;
+                *PORTABLE_STACK_PTR( &r->stack_ptr[-2], int32_t ) *= r->stack_ptr[-1] ;
 #else
-                *( int32_t * )( r->stack_ptr[-2] ) *= r->stack_ptr[-1] ;
+                *PORTABLE_STACK_PTR( &r->stack_ptr[-2], int32_t ) *= r->stack_ptr[-1] ;
 #endif
                 r->stack_ptr-- ;
                 ptr++ ;
@@ -2568,9 +2730,9 @@ int instance_go( INSTANCE * r )
                     exit( 0 );
                 }
 #if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
-                *( int32_t * )portable_x64_stack_get_ptr( &r->stack_ptr[-2] ) /= r->stack_ptr[-1] ;
+                *PORTABLE_STACK_PTR( &r->stack_ptr[-2], int32_t ) /= r->stack_ptr[-1] ;
 #else
-                *( int32_t * )( r->stack_ptr[-2] ) /= r->stack_ptr[-1] ;
+                *PORTABLE_STACK_PTR( &r->stack_ptr[-2], int32_t ) /= r->stack_ptr[-1] ;
 #endif
                 r->stack_ptr-- ;
                 ptr++ ;
@@ -2584,9 +2746,9 @@ int instance_go( INSTANCE * r )
                     exit( 0 );
                 }
 #if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
-                *( int32_t * )portable_x64_stack_get_ptr( &r->stack_ptr[-2] ) %= r->stack_ptr[-1] ;
+                *PORTABLE_STACK_PTR( &r->stack_ptr[-2], int32_t ) %= r->stack_ptr[-1] ;
 #else
-                *( int32_t * )( r->stack_ptr[-2] ) %= r->stack_ptr[-1] ;
+                *PORTABLE_STACK_PTR( &r->stack_ptr[-2], int32_t ) %= r->stack_ptr[-1] ;
 #endif
                 r->stack_ptr-- ;
                 ptr++ ;
@@ -2595,9 +2757,9 @@ int instance_go( INSTANCE * r )
             case MN_VAROR:
             case MN_VAROR | MN_UNSIGNED:
 #if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
-                *( int32_t * )portable_x64_stack_get_ptr( &r->stack_ptr[-2] ) |= r->stack_ptr[-1] ;
+                *PORTABLE_STACK_PTR( &r->stack_ptr[-2], int32_t ) |= r->stack_ptr[-1] ;
 #else
-                *( int32_t * )( r->stack_ptr[-2] ) |= r->stack_ptr[-1] ;
+                *PORTABLE_STACK_PTR( &r->stack_ptr[-2], int32_t ) |= r->stack_ptr[-1] ;
 #endif
                 r->stack_ptr-- ;
                 ptr++ ;
@@ -2606,9 +2768,9 @@ int instance_go( INSTANCE * r )
             case MN_VARXOR:
             case MN_VARXOR | MN_UNSIGNED:
 #if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
-                *( int32_t * )portable_x64_stack_get_ptr( &r->stack_ptr[-2] ) ^= r->stack_ptr[-1] ;
+                *PORTABLE_STACK_PTR( &r->stack_ptr[-2], int32_t ) ^= r->stack_ptr[-1] ;
 #else
-                *( int32_t * )( r->stack_ptr[-2] ) ^= r->stack_ptr[-1] ;
+                *PORTABLE_STACK_PTR( &r->stack_ptr[-2], int32_t ) ^= r->stack_ptr[-1] ;
 #endif
                 r->stack_ptr-- ;
                 ptr++ ;
@@ -2617,9 +2779,9 @@ int instance_go( INSTANCE * r )
             case MN_VARAND:
             case MN_VARAND | MN_UNSIGNED:
 #if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
-                *( int32_t * )portable_x64_stack_get_ptr( &r->stack_ptr[-2] ) &= r->stack_ptr[-1] ;
+                *PORTABLE_STACK_PTR( &r->stack_ptr[-2], int32_t ) &= r->stack_ptr[-1] ;
 #else
-                *( int32_t * )( r->stack_ptr[-2] ) &= r->stack_ptr[-1] ;
+                *PORTABLE_STACK_PTR( &r->stack_ptr[-2], int32_t ) &= r->stack_ptr[-1] ;
 #endif
                 r->stack_ptr-- ;
                 ptr++ ;
@@ -2627,9 +2789,9 @@ int instance_go( INSTANCE * r )
 
             case MN_VARROR:
 #if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
-                *( int32_t * )portable_x64_stack_get_ptr( &r->stack_ptr[-2] ) >>= r->stack_ptr[-1] ;
+                *PORTABLE_STACK_PTR( &r->stack_ptr[-2], int32_t ) >>= r->stack_ptr[-1] ;
 #else
-                *( int32_t * )( r->stack_ptr[-2] ) >>= r->stack_ptr[-1] ;
+                *PORTABLE_STACK_PTR( &r->stack_ptr[-2], int32_t ) >>= r->stack_ptr[-1] ;
 #endif
                 r->stack_ptr-- ;
                 ptr++ ;
@@ -2637,9 +2799,9 @@ int instance_go( INSTANCE * r )
 
             case MN_VARROR | MN_UNSIGNED:
 #if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
-                *( uint32_t * )portable_x64_stack_get_ptr( &r->stack_ptr[-2] ) >>= r->stack_ptr[-1] ;
+                *PORTABLE_STACK_PTR( &r->stack_ptr[-2], uint32_t ) >>= r->stack_ptr[-1] ;
 #else
-                *( uint32_t * )( r->stack_ptr[-2] ) >>= r->stack_ptr[-1] ;
+                *PORTABLE_STACK_PTR( &r->stack_ptr[-2], uint32_t ) >>= r->stack_ptr[-1] ;
 #endif
                 r->stack_ptr-- ;
                 ptr++ ;
@@ -2647,9 +2809,9 @@ int instance_go( INSTANCE * r )
 
             case MN_VARROL:
 #if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
-                *( int32_t * )portable_x64_stack_get_ptr( &r->stack_ptr[-2] ) <<= r->stack_ptr[-1] ;
+                *PORTABLE_STACK_PTR( &r->stack_ptr[-2], int32_t ) <<= r->stack_ptr[-1] ;
 #else
-                *( int32_t * )( r->stack_ptr[-2] ) <<= r->stack_ptr[-1] ;
+                *PORTABLE_STACK_PTR( &r->stack_ptr[-2], int32_t ) <<= r->stack_ptr[-1] ;
 #endif
                 r->stack_ptr-- ;
                 ptr++ ;
@@ -2657,9 +2819,9 @@ int instance_go( INSTANCE * r )
 
             case MN_VARROL | MN_UNSIGNED:
 #if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
-                *( uint32_t * )portable_x64_stack_get_ptr( &r->stack_ptr[-2] ) <<= r->stack_ptr[-1] ;
+                *PORTABLE_STACK_PTR( &r->stack_ptr[-2], uint32_t ) <<= r->stack_ptr[-1] ;
 #else
-                *( uint32_t * )( r->stack_ptr[-2] ) <<= r->stack_ptr[-1] ;
+                *PORTABLE_STACK_PTR( &r->stack_ptr[-2], uint32_t ) <<= r->stack_ptr[-1] ;
 #endif
                 r->stack_ptr-- ;
                 ptr++ ;
@@ -2668,61 +2830,61 @@ int instance_go( INSTANCE * r )
 
             case MN_WORD | MN_LETNP:
             case MN_WORD | MN_LETNP | MN_UNSIGNED:
-                ( *( int16_t * )( r->stack_ptr[-2] ) ) = r->stack_ptr[-1] ;
+                (*PORTABLE_STACK_PTR( &r->stack_ptr[-2], int16_t )) = r->stack_ptr[-1] ;
                 r->stack_ptr -= 2 ;
                 ptr++ ;
                 break ;
 
             case MN_WORD | MN_LET:
             case MN_WORD | MN_LET | MN_UNSIGNED:
-                ( *( int16_t * )( r->stack_ptr[-2] ) ) = r->stack_ptr[-1] ;
+                (*PORTABLE_STACK_PTR( &r->stack_ptr[-2], int16_t )) = r->stack_ptr[-1] ;
                 r->stack_ptr-- ;
                 ptr++ ;
                 break ;
 
             case MN_WORD | MN_INC:
             case MN_WORD | MN_INC | MN_UNSIGNED:
-                ( *( int16_t * )( r->stack_ptr[-1] ) ) += ptr[1] ;
+                (*PORTABLE_STACK_PTR( &r->stack_ptr[-1], int16_t )) += ptr[1] ;
                 ptr += 2 ;
                 break ;
 
             case MN_WORD | MN_DEC:
             case MN_WORD | MN_DEC | MN_UNSIGNED:
-                ( *( int16_t * )( r->stack_ptr[-1] ) ) -= ptr[1] ;
+                (*PORTABLE_STACK_PTR( &r->stack_ptr[-1], int16_t )) -= ptr[1] ;
                 ptr += 2 ;
                 break ;
 
             case MN_WORD | MN_POSTDEC:
             case MN_WORD | MN_POSTDEC | MN_UNSIGNED:
-                ( *( int16_t * )( r->stack_ptr[-1] ) ) -= ptr[1] ;
-                r->stack_ptr[-1] = *( int16_t * )( r->stack_ptr[-1] ) + ptr[1] ;
+                (*PORTABLE_STACK_PTR( &r->stack_ptr[-1], int16_t )) -= ptr[1] ;
+                r->stack_ptr[-1] = *PORTABLE_STACK_PTR( &r->stack_ptr[-1], int16_t ) + ptr[1] ;
                 ptr += 2 ;
                 break ;
 
             case MN_WORD | MN_POSTINC:
             case MN_WORD | MN_POSTINC | MN_UNSIGNED:
-                *(( int16_t * )( r->stack_ptr[-1] ) ) += ptr[1] ;
-                r->stack_ptr[-1] = *( int16_t * )( r->stack_ptr[-1] ) - ptr[1] ;
+                (*PORTABLE_STACK_PTR( &r->stack_ptr[-1], int16_t )) += ptr[1] ;
+                r->stack_ptr[-1] = *PORTABLE_STACK_PTR( &r->stack_ptr[-1], int16_t ) - ptr[1] ;
                 ptr += 2 ;
                 break ;
 
             case MN_WORD | MN_VARADD:
             case MN_WORD | MN_VARADD | MN_UNSIGNED:
-                *( int16_t * )( r->stack_ptr[-2] ) += r->stack_ptr[-1] ;
+                *PORTABLE_STACK_PTR( &r->stack_ptr[-2], int16_t ) += r->stack_ptr[-1] ;
                 r->stack_ptr-- ;
                 ptr++ ;
                 break ;
 
             case MN_WORD | MN_VARSUB:
             case MN_WORD | MN_VARSUB | MN_UNSIGNED:
-                *( int16_t * )( r->stack_ptr[-2] ) -= r->stack_ptr[-1] ;
+                *PORTABLE_STACK_PTR( &r->stack_ptr[-2], int16_t ) -= r->stack_ptr[-1] ;
                 r->stack_ptr-- ;
                 ptr++ ;
                 break ;
 
             case MN_WORD | MN_VARMUL:
             case MN_WORD | MN_VARMUL | MN_UNSIGNED:
-                *( int16_t * )( r->stack_ptr[-2] ) *= r->stack_ptr[-1] ;
+                *PORTABLE_STACK_PTR( &r->stack_ptr[-2], int16_t ) *= r->stack_ptr[-1] ;
                 r->stack_ptr-- ;
                 ptr++ ;
                 break ;
@@ -2734,7 +2896,7 @@ int instance_go( INSTANCE * r )
                     fprintf( stderr, "ERROR: Runtime error in %s(%d) - Division by zero\n", r->proc->name, LOCDWORD( r, PROCESS_ID ) ) ;
                     exit( 0 );
                 }
-                *( int16_t * )( r->stack_ptr[-2] ) /= ( int16_t )r->stack_ptr[-1] ;
+                *PORTABLE_STACK_PTR( &r->stack_ptr[-2], int16_t ) /= ( int16_t )r->stack_ptr[-1] ;
                 r->stack_ptr-- ;
                 ptr++ ;
                 break ;
@@ -2746,52 +2908,52 @@ int instance_go( INSTANCE * r )
                     fprintf( stderr, "ERROR: Runtime error in %s(%d) - Division by zero\n", r->proc->name, LOCDWORD( r, PROCESS_ID ) ) ;
                     exit( 0 );
                 }
-                *( int16_t * )( r->stack_ptr[-2] ) %= ( int16_t )r->stack_ptr[-1] ;
+                *PORTABLE_STACK_PTR( &r->stack_ptr[-2], int16_t ) %= ( int16_t )r->stack_ptr[-1] ;
                 r->stack_ptr-- ;
                 ptr++ ;
                 break ;
 
             case MN_WORD | MN_VAROR:
             case MN_WORD | MN_VAROR | MN_UNSIGNED:
-                *( int16_t * )( r->stack_ptr[-2] ) |= r->stack_ptr[-1] ;
+                *PORTABLE_STACK_PTR( &r->stack_ptr[-2], int16_t ) |= r->stack_ptr[-1] ;
                 r->stack_ptr-- ;
                 ptr++ ;
                 break ;
 
             case MN_WORD | MN_VARXOR:
             case MN_WORD | MN_VARXOR | MN_UNSIGNED:
-                *( int16_t * )( r->stack_ptr[-2] ) ^= r->stack_ptr[-1] ;
+                *PORTABLE_STACK_PTR( &r->stack_ptr[-2], int16_t ) ^= r->stack_ptr[-1] ;
                 r->stack_ptr-- ;
                 ptr++ ;
                 break ;
 
             case MN_WORD | MN_VARAND:
             case MN_WORD | MN_VARAND | MN_UNSIGNED:
-                *( int16_t * )( r->stack_ptr[-2] ) &= r->stack_ptr[-1] ;
+                *PORTABLE_STACK_PTR( &r->stack_ptr[-2], int16_t ) &= r->stack_ptr[-1] ;
                 r->stack_ptr-- ;
                 ptr++ ;
                 break ;
 
             case MN_WORD | MN_VARROR:
-                *( int16_t * )( r->stack_ptr[-2] ) >>= r->stack_ptr[-1] ;
+                *PORTABLE_STACK_PTR( &r->stack_ptr[-2], int16_t ) >>= r->stack_ptr[-1] ;
                 r->stack_ptr-- ;
                 ptr++ ;
                 break ;
 
             case MN_WORD | MN_VARROR | MN_UNSIGNED:
-                *( uint16_t * )( r->stack_ptr[-2] ) >>= r->stack_ptr[-1] ;
+                *PORTABLE_STACK_PTR( &r->stack_ptr[-2], uint16_t ) >>= r->stack_ptr[-1] ;
                 r->stack_ptr-- ;
                 ptr++ ;
                 break ;
 
             case MN_WORD | MN_VARROL:
-                *( int16_t * )( r->stack_ptr[-2] ) <<= r->stack_ptr[-1] ;
+                *PORTABLE_STACK_PTR( &r->stack_ptr[-2], int16_t ) <<= r->stack_ptr[-1] ;
                 r->stack_ptr-- ;
                 ptr++ ;
                 break ;
 
             case MN_WORD | MN_VARROL | MN_UNSIGNED:
-                *( uint16_t * )( r->stack_ptr[-2] ) <<= r->stack_ptr[-1] ;
+                *PORTABLE_STACK_PTR( &r->stack_ptr[-2], uint16_t ) <<= r->stack_ptr[-1] ;
                 r->stack_ptr-- ;
                 ptr++ ;
                 break ;
@@ -2803,7 +2965,7 @@ int instance_go( INSTANCE * r )
 #if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
                 ( *( uint8_t * )portable_x64_stack_get_ptr( &r->stack_ptr[-2] ) ) = r->stack_ptr[-1] ;
 #else
-                ( *( uint8_t * )( r->stack_ptr[-2] ) ) = r->stack_ptr[-1] ;
+                (*PORTABLE_STACK_PTR( &r->stack_ptr[-2], uint8_t )) = r->stack_ptr[-1] ;
 #endif
                 r->stack_ptr -= 2 ;
                 ptr++ ;
@@ -2814,7 +2976,7 @@ int instance_go( INSTANCE * r )
 #if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
                 ( *( uint8_t * )portable_x64_stack_get_ptr( &r->stack_ptr[-2] ) ) = r->stack_ptr[-1] ;
 #else
-                ( *( uint8_t * )( r->stack_ptr[-2] ) ) = r->stack_ptr[-1] ;
+                (*PORTABLE_STACK_PTR( &r->stack_ptr[-2], uint8_t )) = r->stack_ptr[-1] ;
 #endif
                 r->stack_ptr-- ;
                 ptr++ ;
@@ -2822,47 +2984,47 @@ int instance_go( INSTANCE * r )
 
             case MN_BYTE | MN_INC:
             case MN_BYTE | MN_INC | MN_UNSIGNED:
-                ( *( uint8_t * )( r->stack_ptr[-1] ) ) += ptr[1] ;
+                (*PORTABLE_STACK_PTR( &r->stack_ptr[-1], uint8_t )) += ptr[1] ;
                 ptr += 2 ;
                 break ;
 
             case MN_BYTE | MN_DEC:
             case MN_BYTE | MN_DEC | MN_UNSIGNED:
-                ( *( uint8_t * )( r->stack_ptr[-1] ) ) -= ptr[1] ;
+                (*PORTABLE_STACK_PTR( &r->stack_ptr[-1], uint8_t )) -= ptr[1] ;
                 ptr += 2 ;
                 break ;
 
             case MN_BYTE | MN_POSTDEC:
             case MN_BYTE | MN_POSTDEC | MN_UNSIGNED:
-                ( *( uint8_t * )( r->stack_ptr[-1] ) ) -= ptr[1] ;
-                r->stack_ptr[-1] = *( uint8_t * )( r->stack_ptr[-1] ) + ptr[1] ;
+                (*PORTABLE_STACK_PTR( &r->stack_ptr[-1], uint8_t )) -= ptr[1] ;
+                r->stack_ptr[-1] = *PORTABLE_STACK_PTR( &r->stack_ptr[-1], uint8_t ) + ptr[1] ;
                 ptr += 2 ;
                 break ;
 
             case MN_BYTE | MN_POSTINC:
             case MN_BYTE | MN_POSTINC | MN_UNSIGNED:
-                *(( uint8_t * )( r->stack_ptr[-1] ) ) += ptr[1] ;
-                r->stack_ptr[-1] = *( uint8_t * )( r->stack_ptr[-1] ) - ptr[1] ;
+                (*PORTABLE_STACK_PTR( &r->stack_ptr[-1], uint8_t )) += ptr[1] ;
+                r->stack_ptr[-1] = *PORTABLE_STACK_PTR( &r->stack_ptr[-1], uint8_t ) - ptr[1] ;
                 ptr += 2 ;
                 break ;
 
             case MN_BYTE | MN_VARADD:
             case MN_BYTE | MN_VARADD | MN_UNSIGNED:
-                *( uint8_t * )( r->stack_ptr[-2] ) += r->stack_ptr[-1] ;
+                *PORTABLE_STACK_PTR( &r->stack_ptr[-2], uint8_t ) += r->stack_ptr[-1] ;
                 r->stack_ptr-- ;
                 ptr++ ;
                 break ;
 
             case MN_BYTE | MN_VARSUB:
             case MN_BYTE | MN_VARSUB | MN_UNSIGNED:
-                *( uint8_t * )( r->stack_ptr[-2] ) -= r->stack_ptr[-1] ;
+                *PORTABLE_STACK_PTR( &r->stack_ptr[-2], uint8_t ) -= r->stack_ptr[-1] ;
                 r->stack_ptr-- ;
                 ptr++ ;
                 break ;
 
             case MN_BYTE | MN_VARMUL:
             case MN_BYTE | MN_VARMUL | MN_UNSIGNED:
-                *( uint8_t * )( r->stack_ptr[-2] ) *= r->stack_ptr[-1] ;
+                *PORTABLE_STACK_PTR( &r->stack_ptr[-2], uint8_t ) *= r->stack_ptr[-1] ;
                 r->stack_ptr-- ;
                 ptr++ ;
                 break ;
@@ -2874,7 +3036,7 @@ int instance_go( INSTANCE * r )
                     fprintf( stderr, "ERROR: Runtime error in %s(%d) - Division by zero\n", r->proc->name, LOCDWORD( r, PROCESS_ID ) ) ;
                     exit( 0 );
                 }
-                *( uint8_t * )( r->stack_ptr[-2] ) /= ( uint8_t )r->stack_ptr[-1] ;
+                *PORTABLE_STACK_PTR( &r->stack_ptr[-2], uint8_t ) /= ( uint8_t )r->stack_ptr[-1] ;
                 r->stack_ptr-- ;
                 ptr++ ;
                 break ;
@@ -2886,52 +3048,52 @@ int instance_go( INSTANCE * r )
                     fprintf( stderr, "ERROR: Runtime error in %s(%d) - Division by zero\n", r->proc->name, LOCDWORD( r, PROCESS_ID ) ) ;
                     exit( 0 );
                 }
-                *( uint8_t * )( r->stack_ptr[-2] ) %= ( uint8_t )r->stack_ptr[-1] ;
+                *PORTABLE_STACK_PTR( &r->stack_ptr[-2], uint8_t ) %= ( uint8_t )r->stack_ptr[-1] ;
                 r->stack_ptr-- ;
                 ptr++ ;
                 break ;
 
             case MN_BYTE | MN_VAROR:
             case MN_BYTE | MN_VAROR | MN_UNSIGNED:
-                *( uint8_t * )( r->stack_ptr[-2] ) |= r->stack_ptr[-1] ;
+                *PORTABLE_STACK_PTR( &r->stack_ptr[-2], uint8_t ) |= r->stack_ptr[-1] ;
                 r->stack_ptr-- ;
                 ptr++ ;
                 break ;
 
             case MN_BYTE | MN_VARXOR:
             case MN_BYTE | MN_VARXOR | MN_UNSIGNED:
-                *( uint8_t * )( r->stack_ptr[-2] ) ^= r->stack_ptr[-1] ;
+                *PORTABLE_STACK_PTR( &r->stack_ptr[-2], uint8_t ) ^= r->stack_ptr[-1] ;
                 r->stack_ptr-- ;
                 ptr++ ;
                 break ;
 
             case MN_BYTE | MN_VARAND:
             case MN_BYTE | MN_VARAND | MN_UNSIGNED:
-                *( uint8_t * )( r->stack_ptr[-2] ) &= r->stack_ptr[-1] ;
+                *PORTABLE_STACK_PTR( &r->stack_ptr[-2], uint8_t ) &= r->stack_ptr[-1] ;
                 r->stack_ptr-- ;
                 ptr++ ;
                 break ;
 
             case MN_BYTE | MN_VARROR:
-                *( int8_t * )( r->stack_ptr[-2] ) >>= r->stack_ptr[-1] ;
+                *PORTABLE_STACK_PTR( &r->stack_ptr[-2], int8_t ) >>= r->stack_ptr[-1] ;
                 r->stack_ptr-- ;
                 ptr++ ;
                 break ;
 
             case MN_BYTE | MN_VARROR | MN_UNSIGNED:
-                *( uint8_t * )( r->stack_ptr[-2] ) >>= r->stack_ptr[-1] ;
+                *PORTABLE_STACK_PTR( &r->stack_ptr[-2], uint8_t ) >>= r->stack_ptr[-1] ;
                 r->stack_ptr-- ;
                 ptr++ ;
                 break ;
 
             case MN_BYTE | MN_VARROL:
-                *( int8_t * )( r->stack_ptr[-2] ) <<= r->stack_ptr[-1] ;
+                *PORTABLE_STACK_PTR( &r->stack_ptr[-2], int8_t ) <<= r->stack_ptr[-1] ;
                 r->stack_ptr-- ;
                 ptr++ ;
                 break ;
 
             case MN_BYTE | MN_VARROL | MN_UNSIGNED:
-                *( uint8_t * )( r->stack_ptr[-2] ) <<= r->stack_ptr[-1] ;
+                *PORTABLE_STACK_PTR( &r->stack_ptr[-2], uint8_t ) <<= r->stack_ptr[-1] ;
                 r->stack_ptr-- ;
                 ptr++ ;
                 break ;
@@ -2942,7 +3104,7 @@ int instance_go( INSTANCE * r )
 #if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
                 ( *( float * )portable_x64_stack_get_ptr( &r->stack_ptr[-2] ) ) = *( float * ) & r->stack_ptr[-1] ;
 #else
-                ( *( float * )( r->stack_ptr[-2] ) ) = *( float * ) & r->stack_ptr[-1] ;
+                (*PORTABLE_STACK_PTR( &r->stack_ptr[-2], float )) = *( float * ) & r->stack_ptr[-1] ;
 #endif
                 r->stack_ptr -= 2 ;
                 ptr++ ;
@@ -2952,31 +3114,31 @@ int instance_go( INSTANCE * r )
 #if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
                 ( *( float * )portable_x64_stack_get_ptr( &r->stack_ptr[-2] ) ) = *( float * ) & r->stack_ptr[-1] ;
 #else
-                ( *( float * )( r->stack_ptr[-2] ) ) = *( float * ) & r->stack_ptr[-1] ;
+                (*PORTABLE_STACK_PTR( &r->stack_ptr[-2], float )) = *( float * ) & r->stack_ptr[-1] ;
 #endif
                 r->stack_ptr-- ;
                 ptr++ ;
                 break ;
 
             case MN_FLOAT | MN_INC:
-                ( *( float * )( r->stack_ptr[-1] ) ) += ptr[1] ;
+                (*PORTABLE_STACK_PTR( &r->stack_ptr[-1], float )) += ptr[1] ;
                 ptr += 2 ;
                 break ;
 
             case MN_FLOAT | MN_DEC:
-                ( *( float * )( r->stack_ptr[-1] ) ) -= ptr[1] ;
+                (*PORTABLE_STACK_PTR( &r->stack_ptr[-1], float )) -= ptr[1] ;
                 ptr += 2 ;
                 break ;
 
             case MN_FLOAT | MN_POSTDEC:
-                ( *( float * )( r->stack_ptr[-1] ) ) -= ptr[1] ;
-                r->stack_ptr[-1] = *( uint32_t * )( r->stack_ptr[-1] ) + ptr[1] ;
+                (*PORTABLE_STACK_PTR( &r->stack_ptr[-1], float )) -= ptr[1] ;
+                r->stack_ptr[-1] = *PORTABLE_STACK_PTR( &r->stack_ptr[-1], uint32_t ) + ptr[1] ;
                 ptr += 2 ;
                 break ;
 
             case MN_FLOAT | MN_POSTINC:
-                *(( float * )( r->stack_ptr[-1] ) ) += ptr[1] ;
-                r->stack_ptr[-1] = *( uint32_t * )( r->stack_ptr[-1] ) - ptr[1] ;
+                (*PORTABLE_STACK_PTR( &r->stack_ptr[-1], float )) += ptr[1] ;
+                r->stack_ptr[-1] = *PORTABLE_STACK_PTR( &r->stack_ptr[-1], uint32_t ) - ptr[1] ;
                 ptr += 2 ;
                 break ;
 
@@ -2984,7 +3146,7 @@ int instance_go( INSTANCE * r )
 #if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
                 *( float * )portable_x64_stack_get_ptr( &r->stack_ptr[-2] ) += *( float * ) & r->stack_ptr[-1] ;
 #else
-                *( float * )( r->stack_ptr[-2] ) += *( float * ) & r->stack_ptr[-1] ;
+                *PORTABLE_STACK_PTR( &r->stack_ptr[-2], float ) += *( float * ) & r->stack_ptr[-1] ;
 #endif
                 r->stack_ptr-- ;
                 ptr++ ;
@@ -2994,7 +3156,7 @@ int instance_go( INSTANCE * r )
 #if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
                 *( float * )portable_x64_stack_get_ptr( &r->stack_ptr[-2] ) -= *( float * ) & r->stack_ptr[-1] ;
 #else
-                *( float * )( r->stack_ptr[-2] ) -= *( float * ) & r->stack_ptr[-1] ;
+                *PORTABLE_STACK_PTR( &r->stack_ptr[-2], float ) -= *( float * ) & r->stack_ptr[-1] ;
 #endif
                 r->stack_ptr-- ;
                 ptr++ ;
@@ -3004,7 +3166,7 @@ int instance_go( INSTANCE * r )
 #if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
                 *( float * )portable_x64_stack_get_ptr( &r->stack_ptr[-2] ) *= *( float * ) & r->stack_ptr[-1] ;
 #else
-                *( float * )( r->stack_ptr[-2] ) *= *( float * ) & r->stack_ptr[-1] ;
+                *PORTABLE_STACK_PTR( &r->stack_ptr[-2], float ) *= *( float * ) & r->stack_ptr[-1] ;
 #endif
                 r->stack_ptr-- ;
                 ptr++ ;
@@ -3014,7 +3176,7 @@ int instance_go( INSTANCE * r )
 #if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
                 *( float * )portable_x64_stack_get_ptr( &r->stack_ptr[-2] ) /= *( float * ) & r->stack_ptr[-1] ;
 #else
-                *( float * )( r->stack_ptr[-2] ) /= *( float * ) & r->stack_ptr[-1] ;
+                *PORTABLE_STACK_PTR( &r->stack_ptr[-2], float ) /= *( float * ) & r->stack_ptr[-1] ;
 #endif
                 r->stack_ptr-- ;
                 ptr++ ;
