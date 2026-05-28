@@ -1358,3 +1358,15 @@ Manual stability test:
 3. Install `build-products/SorrIOSShell-d3-stability-adhoc.ipa` through Sideloadly.
 4. Launch the app and leave it foregrounded and untouched for at least 7 minutes.
 5. If it exits, reopen once and report the previous stability marker from the screen/log.
+
+Current D3 stability artifact proof:
+
+```text
+Actions run: 26551315103
+Device artifact: ios-shell-d3-stability-device-arm64
+Artifact size: 675392 bytes
+IPA: build-products/SorrIOSShell-d3-stability-adhoc.ipa
+Artifact-producing commit: a0a401d
+Device job result: success
+Game data/assets bundled in IPA: no
+```

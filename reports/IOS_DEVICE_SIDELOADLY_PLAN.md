@@ -274,6 +274,18 @@ ios-shell-d3-stability-device-arm64
 build-products/SorrIOSShell-d3-stability-adhoc.ipa
 ```
 
+GitHub-side artifact proof:
+
+```text
+Actions run: 26551315103
+Artifact: ios-shell-d3-stability-device-arm64
+Artifact size: 675392 bytes
+IPA: build-products/SorrIOSShell-d3-stability-adhoc.ipa
+Artifact-producing commit: a0a401d
+Device job result: success
+Game data/assets bundled in IPA: no
+```
+
 Install through the same Windows + Sideloadly route as D1-D3. Keep the D2-staged data on the device. Launch the app, leave it foregrounded and untouched for at least 7 minutes, and if it exits, reopen once and report the previous stability marker.
 
 The stability build still bundles no game data and writes its diagnostic log locally on the iPhone:

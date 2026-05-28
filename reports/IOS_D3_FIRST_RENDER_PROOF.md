@@ -322,6 +322,17 @@ ios-shell-d3-stability-device-arm64
 build-products/SorrIOSShell-d3-stability-adhoc.ipa
 ```
 
+GitHub-side D3 stability artifact proof:
+
+```text
+Actions run: 26551315103
+Artifact: ios-shell-d3-stability-device-arm64
+Artifact size: 675392 bytes
+IPA: build-products/SorrIOSShell-d3-stability-adhoc.ipa
+Artifact-producing commit: a0a401d
+Device job result: success
+```
+
 That build keeps the same D2-staged data path and still bundles no game data. It adds an SDL iOS idle-timer disable hint plus a persistent stability log:
 
 ```text

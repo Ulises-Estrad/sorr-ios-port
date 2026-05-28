@@ -1,6 +1,6 @@
 # iOS D3 Stability Follow-Up
 
-Status: diagnostic IPA pending GitHub Actions.
+Status: diagnostic IPA produced by GitHub Actions.
 
 D3 first render remains complete. This pass hardens the already-rendering D3 build after a repeatable physical-device idle exit was observed at about five minutes.
 
@@ -62,6 +62,18 @@ build-products/SorrIOSShell-d3-stability-adhoc.ipa
 ```
 
 The IPA remains asset-free. The workflow inspection still rejects `SorR.dat`, `data/`, `.fpg`, `.wav`, `.ogg`, `.smk`, and `.png` content.
+
+GitHub-side artifact proof:
+
+```text
+Actions run: 26551315103
+Device artifact: ios-shell-d3-stability-device-arm64
+Artifact size: 675392 bytes
+IPA: build-products/SorrIOSShell-d3-stability-adhoc.ipa
+Artifact-producing commit: a0a401d
+Device job result: success
+Game data/assets bundled in IPA: no
+```
 
 ## Manual iPhone Test
 

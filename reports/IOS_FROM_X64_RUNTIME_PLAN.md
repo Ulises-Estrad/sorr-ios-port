@@ -386,6 +386,18 @@ Library/Application Support/SORR/logs/ios_d3_runtime_stability_probe.txt
 
 The stability log records runtime stages, 10-second heartbeats, resident memory, lifecycle events, low-memory events, background/foreground transitions, and the previous run's last marker on the next launch.
 
+D3 stability artifact proof:
+
+```text
+Actions run: 26551315103
+Artifact: ios-shell-d3-stability-device-arm64
+Artifact size: 675392 bytes
+IPA: build-products/SorrIOSShell-d3-stability-adhoc.ipa
+Artifact-producing commit: a0a401d
+Device job result: success
+Game data/assets bundled in IPA: no
+```
+
 ## Out Of Scope For This Plan
 
 - SOR2-only pruning.
