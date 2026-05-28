@@ -272,3 +272,15 @@ Game data/assets bundled in IPA: no
 Best case: the SDL audio device opens, WAV effects can be queued, unsupported music remains inert or silent, and the app keeps rendering for 10-15 minutes.
 
 Diagnostic case: if the app still exits, the next launch's previous marker and dense-window heartbeat block should identify the last runtime stage, frame count, process/object/file counters, audio init/load/play/inert-handle counters, lifecycle event, low-memory event, termination event, or runtime return marker before the exit.
+## D3S Attract Lifecycle Diagnostics
+
+Latest physical runtime-window feedback shows the app is no longer in a passive menu near the five-minute exit. BGM and SFX are healthy, files are stable, and the runtime snapshots show active attract/demo/gameplay-like processes including `CONTROLADOR`, `BARRA_NEGRA`, `MELODIA`, `SOMBRA`, `ESTIRAMIENTO`, `BARRA_SEC_VIDA1`, `BARRA_VIDA1`, `EFECTO_POLVO`, `LETRA_NOMBRE`, and `MINI_CUADRO1`.
+
+Next artifact target:
+
+- `ios-shell-d3s-attract-lifecycle-diagnostics-device-arm64`
+- `build-products/SorrIOSShell-d3s-attract-lifecycle-diagnostics-adhoc.ipa`
+
+This build keeps real BGM/SFX enabled and adds process watch counts plus a recent create/destroy lifecycle ring to the Files-visible stability log. The goal is to identify whether a specific attract/demo transition, HUD/enemy/player process spike, invalid process status, or fatal signal happens after heartbeat 47-49.
+
+When testing, report the last 80-120 lines from `Documents/SORR_DIAGNOSTICS/ios_d3_runtime_stability_probe.txt`, especially `runtime_snapshot`, `watch=`, `runtime_lifecycle`, direct `runtime_lifecycle ...` lines, and any `signal=` line.

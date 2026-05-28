@@ -602,3 +602,14 @@ Game data/assets bundled in IPA: no
 - App Store packaging.
 - Store-ready signing/provisioning.
 - Broad VM uintptr rewrite unless the x64 side-table strategy hits a clear design blocker.
+## D3S Attract Lifecycle Follow-Up
+
+D3 first render remains complete, and the x64-safe runtime path is still the base for iOS. Latest physical D3S diagnostics show BGM and SFX working, stable file counters, and runtime snapshots entering an active attract/demo/gameplay-like scene around the old 240-300 second exit window.
+
+The next D3S build does not start D4a controls. It keeps BGM/SFX enabled and adds process lifecycle diagnostics for the currently suspected timed runtime path:
+
+- Artifact target: `ios-shell-d3s-attract-lifecycle-diagnostics-device-arm64`
+- IPA target: `build-products/SorrIOSShell-d3s-attract-lifecycle-diagnostics-adhoc.ipa`
+- Log path: `Documents/SORR_DIAGNOSTICS/ios_d3_runtime_stability_probe.txt`
+
+The intended output is a clearer answer to whether the exit occurs during a specific attract/demo transition, process create/destroy burst, invalid process state, or catchable fatal signal. D4a fixed touch input should stay blocked until this D3S pass produces a result or a narrow fix.

@@ -13,6 +13,8 @@
 #else
 #include <dirent.h>
 #include <errno.h>
+#include <fcntl.h>
+#include <signal.h>
 #include <unistd.h>
 #define SORR_MKDIR(path) mkdir((path), 0755)
 #endif
@@ -619,6 +621,8 @@ extern volatile int sorr_ios_d3_last_proc_frame_percent;
 extern volatile int sorr_ios_d3_last_proc_code_offset;
 extern char sorr_ios_d3_last_proc_name[];
 extern char sorr_ios_d3_runtime_snapshot[];
+extern char sorr_ios_d3_lifecycle_events[];
+extern char sorr_ios_d3_visible_event_log_path[];
 extern volatile unsigned int sorr_ios_sound_stub_zero_count;
 extern volatile unsigned int sorr_ios_sound_stub_minus_one_count;
 extern volatile unsigned int sorr_ios_audio_init_attempt_count;
@@ -691,6 +695,69 @@ static const char *sorr_ios_d3_stage_name(int stage)
             return "unknown";
     }
 }
+
+#ifndef _WIN32
+static char sorr_ios_d3_signal_log_path[1024];
+
+static void sorr_ios_d3_signal_handler(int sig)
+{
+    int fd;
+
+    if (sorr_ios_d3_signal_log_path[0])
+    {
+        char line[4096];
+        int len;
+
+        fd = open(sorr_ios_d3_signal_log_path, O_WRONLY | O_CREAT | O_APPEND, 0644);
+        if (fd >= 0)
+        {
+            len = snprintf(line,
+                           sizeof(line),
+                           "signal=%d ticks=%u stage=%s runtime_loops=%u runtime_frames=%u runtime_runs=%u runtime_last_proc=%s#%u:s%d:f%d:o%d runtime_snapshot=%s runtime_lifecycle=%s\n",
+                           sig,
+                           SDL_GetTicks(),
+                           sorr_ios_d3_stage_name(sorr_ios_d3_stage),
+                           sorr_ios_d3_instance_go_loop_count,
+                           sorr_ios_d3_frame_complete_count,
+                           sorr_ios_d3_instance_run_count,
+                           sorr_ios_d3_last_proc_name,
+                           sorr_ios_d3_last_proc_id,
+                           sorr_ios_d3_last_proc_status,
+                           sorr_ios_d3_last_proc_frame_percent,
+                           sorr_ios_d3_last_proc_code_offset,
+                           sorr_ios_d3_runtime_snapshot,
+                           sorr_ios_d3_lifecycle_events);
+            if (len > 0)
+            {
+                size_t write_len = (size_t)len;
+                if (write_len >= sizeof(line))
+                {
+                    write_len = sizeof(line) - 1;
+                }
+                (void)write(fd, line, write_len);
+            }
+            close(fd);
+        }
+    }
+
+    signal(sig, SIG_DFL);
+    raise(sig);
+}
+
+static void sorr_ios_d3_install_signal_handlers(const char *path)
+{
+    if (path)
+    {
+        snprintf(sorr_ios_d3_signal_log_path, sizeof(sorr_ios_d3_signal_log_path), "%s", path);
+    }
+
+    signal(SIGABRT, sorr_ios_d3_signal_handler);
+    signal(SIGBUS, sorr_ios_d3_signal_handler);
+    signal(SIGFPE, sorr_ios_d3_signal_handler);
+    signal(SIGILL, sorr_ios_d3_signal_handler);
+    signal(SIGSEGV, sorr_ios_d3_signal_handler);
+}
+#endif
 
 static void sorr_ios_d3_append_log_file(const char *path, const char *line)
 {
@@ -866,7 +933,7 @@ static Uint32 sorr_ios_d3_heartbeat_timer(Uint32 interval, void *param)
     }
 
     sorr_ios_d3_stability_log(layout,
-                              "heartbeat=%u ticks=%u runtime_ms=%u interval_next_ms=%u stage=%s rss_bytes=%llu frame_count=%u last_frame_ticks=%d frame_ms=%.3f fps_count=%d fps_init=%d max_jump=%d jump=%d instances=%d render_objects=%d opened_files=%d x_files=%d max_x_files=%d runtime_loops=%u runtime_frames=%u runtime_runs=%u runtime_created=%u runtime_destroyed=%u runtime_snapshots=%u runtime_last_proc=%s#%u:s%d:f%d:o%d audio_stub_zero=%u audio_stub_minus_one=%u audio_init_attempts=%u audio_init_ok=%u audio_init_fail=%u audio_wav_load_ok=%u audio_wav_load_fail=%u audio_wav_play=%u audio_inert_handles=%u audio_queue_clears=%u audio_music_load_attempts=%u audio_music_open_ok=%u audio_music_open_fail=%u audio_music_mem_ok=%u audio_music_mem_fail=%u audio_music_play_attempts=%u audio_music_play_ok=%u audio_music_play_fail=%u audio_music_controls=%u audio_music_queries=%u audio_music_free=%u audio_music_halt=%u audio_music_playing=%u audio_music_last_handle=%llu audio_music_last_ptr=0x%llx audio_music_last_bytes=%llu audio_music_total_bytes=%llu audio_live_handles=%u audio_live_wav=%u audio_live_inert_wav=%u audio_live_music=%u audio_max_live_handles=%u audio_zero_music_play=%u audio_zero_music_control=%u audio_zero_music_query=%u audio_zero_wav_control=%u audio_zero_wav_query=%u audio_zero_wav_volume=%u audio_zero_channel_effect=%u audio_zero_play_wav_guard=%u audio_music_last_status=%s audio_music_last_path=%s runtime_snapshot=%s",
+                              "heartbeat=%u ticks=%u runtime_ms=%u interval_next_ms=%u stage=%s rss_bytes=%llu frame_count=%u last_frame_ticks=%d frame_ms=%.3f fps_count=%d fps_init=%d max_jump=%d jump=%d instances=%d render_objects=%d opened_files=%d x_files=%d max_x_files=%d runtime_loops=%u runtime_frames=%u runtime_runs=%u runtime_created=%u runtime_destroyed=%u runtime_snapshots=%u runtime_last_proc=%s#%u:s%d:f%d:o%d audio_stub_zero=%u audio_stub_minus_one=%u audio_init_attempts=%u audio_init_ok=%u audio_init_fail=%u audio_wav_load_ok=%u audio_wav_load_fail=%u audio_wav_play=%u audio_inert_handles=%u audio_queue_clears=%u audio_music_load_attempts=%u audio_music_open_ok=%u audio_music_open_fail=%u audio_music_mem_ok=%u audio_music_mem_fail=%u audio_music_play_attempts=%u audio_music_play_ok=%u audio_music_play_fail=%u audio_music_controls=%u audio_music_queries=%u audio_music_free=%u audio_music_halt=%u audio_music_playing=%u audio_music_last_handle=%llu audio_music_last_ptr=0x%llx audio_music_last_bytes=%llu audio_music_total_bytes=%llu audio_live_handles=%u audio_live_wav=%u audio_live_inert_wav=%u audio_live_music=%u audio_max_live_handles=%u audio_zero_music_play=%u audio_zero_music_control=%u audio_zero_music_query=%u audio_zero_wav_control=%u audio_zero_wav_query=%u audio_zero_wav_volume=%u audio_zero_channel_effect=%u audio_zero_play_wav_guard=%u audio_music_last_status=%s audio_music_last_path=%s runtime_snapshot=%s runtime_lifecycle=%s",
                               heartbeat,
                               ticks,
                               runtime_ms,
@@ -938,7 +1005,8 @@ static Uint32 sorr_ios_d3_heartbeat_timer(Uint32 interval, void *param)
                               sorr_ios_audio_zero_play_wav_guard_count,
                               sorr_ios_audio_last_music_status,
                               sorr_ios_audio_last_music_path,
-                              sorr_ios_d3_runtime_snapshot);
+                              sorr_ios_d3_runtime_snapshot,
+                              sorr_ios_d3_lifecycle_events);
     return next_interval;
 }
 
@@ -984,7 +1052,7 @@ static int sorr_ios_d3_event_watch(void *userdata, SDL_Event *event)
         case SDL_APP_WILLENTERFOREGROUND:
         case SDL_APP_DIDENTERFOREGROUND:
             sorr_ios_d3_stability_log(layout,
-                                      "event=%s ticks=%u stage=%s runtime_loops=%u runtime_frames=%u runtime_runs=%u runtime_last_proc=%s#%u:s%d:f%d:o%d audio_music_last_status=%s audio_music_last_path=%s audio_music_play_attempts=%u audio_music_play_ok=%u audio_music_play_fail=%u audio_music_playing=%u audio_music_last_handle=%llu audio_music_last_ptr=0x%llx audio_music_last_bytes=%llu runtime_snapshot=%s",
+                                      "event=%s ticks=%u stage=%s runtime_loops=%u runtime_frames=%u runtime_runs=%u runtime_last_proc=%s#%u:s%d:f%d:o%d audio_music_last_status=%s audio_music_last_path=%s audio_music_play_attempts=%u audio_music_play_ok=%u audio_music_play_fail=%u audio_music_playing=%u audio_music_last_handle=%llu audio_music_last_ptr=0x%llx audio_music_last_bytes=%llu runtime_snapshot=%s runtime_lifecycle=%s",
                                       sorr_ios_d3_event_name(event->type),
                                       SDL_GetTicks(),
                                       sorr_ios_d3_stage_name(sorr_ios_d3_stage),
@@ -1005,7 +1073,8 @@ static int sorr_ios_d3_event_watch(void *userdata, SDL_Event *event)
                                       sorr_ios_audio_music_last_handle,
                                       sorr_ios_audio_music_last_ptr,
                                       sorr_ios_audio_music_last_bytes,
-                                      sorr_ios_d3_runtime_snapshot);
+                                      sorr_ios_d3_runtime_snapshot,
+                                      sorr_ios_d3_lifecycle_events);
             break;
 
         case SDL_WINDOWEVENT:
@@ -1107,6 +1176,13 @@ static int sorr_ios_run_d3_first_render(sorr_ios_data_layout *layout,
     sorr_ios_d3_log(layout, "probe log path=%s", layout->d3_probe_path);
     sorr_ios_d3_log(layout, "stability log path=%s", layout->d3_stability_path);
     sorr_ios_d3_log(layout, "visible stability log path=%s", layout->d3_visible_stability_path);
+    snprintf(sorr_ios_d3_visible_event_log_path,
+             1024,
+             "%s",
+             layout->d3_visible_stability_path);
+#ifndef _WIN32
+    sorr_ios_d3_install_signal_handlers(layout->d3_visible_stability_path);
+#endif
     sorr_ios_d3_log(layout, "app support path=%s", layout->support_root);
     sorr_ios_d3_log(layout, "SorR.dat path=%s", layout->sorr_dat_path);
     if (previous_stability_line[0])
@@ -1528,7 +1604,7 @@ static int sorr_ios_prepare_data_layout(sorr_ios_data_layout *layout)
         sorr_ios_write_text_file(diagnostics_readme_path,
                                  "D3S diagnostics are mirrored here for Files access.\n"
                                  "After an idle crash, reopen SorrIOSShell once, then copy the last lines of ios_d3_runtime_stability_probe.txt.\n"
-                                 "For the five-minute idle issue, include dense_window_start through dense_window_end when present.\n");
+                                 "For the five-minute idle issue, include dense_window_start through dense_window_end, runtime_snapshot, runtime_lifecycle, and signal= lines when present.\n");
     }
 
     if (!sorr_ios_create_dir_marker("savegame", layout->savegame_dir) ||

@@ -392,7 +392,145 @@ volatile int sorr_ios_d3_last_proc_code_offset = 0;
 char sorr_ios_d3_last_proc_name[64] = "none";
 char sorr_ios_d3_last_created_proc_name[64] = "none";
 char sorr_ios_d3_last_destroyed_proc_name[64] = "none";
-char sorr_ios_d3_runtime_snapshot[1024] = "snapshot=uninitialized";
+char sorr_ios_d3_runtime_snapshot[2048] = "snapshot=uninitialized";
+char sorr_ios_d3_lifecycle_events[1536] = "events=none";
+char sorr_ios_d3_visible_event_log_path[1024] = "";
+
+static const char * const sorr_ios_d3_watch_proc_names[] = {
+    "CONTROLADOR",
+    "BARRA_NEGRA",
+    "MELODIA",
+    "SOMBRA",
+    "ESTIRAMIENTO",
+    "BARRA_SEC_VIDA1",
+    "BARRA_VIDA1",
+    "EFECTO_POLVO",
+    "LETRA_NOMBRE",
+    "MINI_CUADRO1"
+};
+#define SORR_IOS_D3_WATCH_PROC_COUNT ( sizeof( sorr_ios_d3_watch_proc_names ) / sizeof( sorr_ios_d3_watch_proc_names[0] ) )
+#define SORR_IOS_D3_EVENT_SLOT_COUNT 12
+#define SORR_IOS_D3_EVENT_SLOT_SIZE 160
+
+static volatile unsigned int sorr_ios_d3_lifecycle_event_seq = 0;
+static volatile unsigned int sorr_ios_d3_watch_create_count[SORR_IOS_D3_WATCH_PROC_COUNT];
+static volatile unsigned int sorr_ios_d3_watch_destroy_count[SORR_IOS_D3_WATCH_PROC_COUNT];
+static char sorr_ios_d3_event_slots[SORR_IOS_D3_EVENT_SLOT_COUNT][SORR_IOS_D3_EVENT_SLOT_SIZE];
+static unsigned int sorr_ios_d3_event_slot_pos = 0;
+
+static int sorr_ios_d3_name_equal_fold( const char * a, const char * b )
+{
+    unsigned char ca;
+    unsigned char cb;
+
+    if ( !a || !b ) return 0;
+
+    while ( *a && *b )
+    {
+        ca = ( unsigned char )*a++;
+        cb = ( unsigned char )*b++;
+        if ( ca >= 'a' && ca <= 'z' ) ca = ( unsigned char )( ca - 'a' + 'A' );
+        if ( cb >= 'a' && cb <= 'z' ) cb = ( unsigned char )( cb - 'a' + 'A' );
+        if ( ca != cb ) return 0;
+    }
+
+    return *a == '\0' && *b == '\0';
+}
+
+static int sorr_ios_d3_watch_proc_index( const char * name )
+{
+    unsigned int n;
+
+    for ( n = 0; n < SORR_IOS_D3_WATCH_PROC_COUNT; n++ )
+    {
+        if ( sorr_ios_d3_name_equal_fold( name, sorr_ios_d3_watch_proc_names[n] ) ) return ( int )n;
+    }
+
+    return -1;
+}
+
+static void sorr_ios_d3_rebuild_lifecycle_events( void )
+{
+    char next[1536];
+    size_t used = 0;
+    unsigned int n;
+
+    next[0] = '\0';
+    for ( n = 0; n < SORR_IOS_D3_EVENT_SLOT_COUNT; n++ )
+    {
+        unsigned int slot = ( sorr_ios_d3_event_slot_pos + n ) % SORR_IOS_D3_EVENT_SLOT_COUNT;
+        if ( sorr_ios_d3_event_slots[slot][0] )
+        {
+            int written = snprintf( next + used, sizeof( next ) - used, "%s|", sorr_ios_d3_event_slots[slot] );
+            if ( written > 0 )
+            {
+                size_t inc = ( size_t )written;
+                if ( inc >= sizeof( next ) - used )
+                {
+                    used = sizeof( next ) - 1;
+                    break;
+                }
+                used += inc;
+            }
+        }
+    }
+
+    if ( used == 0 ) snprintf( next, sizeof( next ), "events=none" );
+    snprintf( sorr_ios_d3_lifecycle_events, sizeof( sorr_ios_d3_lifecycle_events ), "%s", next );
+}
+
+static void sorr_ios_d3_append_visible_event_line( const char * line )
+{
+    FILE * fp;
+
+    if ( !line || !sorr_ios_d3_visible_event_log_path[0] ) return;
+
+    fp = fopen( sorr_ios_d3_visible_event_log_path, "ab" );
+    if ( !fp ) return;
+    fputs( line, fp );
+    fputc( '\n', fp );
+    fclose( fp );
+}
+
+static void sorr_ios_d3_note_lifecycle_event( const char * action, const INSTANCE * r )
+{
+    const char * name = ( r && r->proc && r->proc->name ) ? r->proc->name : "null";
+    int watch_index = sorr_ios_d3_watch_proc_index( name );
+    unsigned int seq = ++sorr_ios_d3_lifecycle_event_seq;
+    unsigned int slot = sorr_ios_d3_event_slot_pos++ % SORR_IOS_D3_EVENT_SLOT_COUNT;
+    char line[320];
+
+    if ( watch_index >= 0 )
+    {
+        if ( action && action[0] == 'c' )
+            sorr_ios_d3_watch_create_count[watch_index]++;
+        else if ( action && action[0] == 'd' )
+            sorr_ios_d3_watch_destroy_count[watch_index]++;
+    }
+
+    snprintf(
+        sorr_ios_d3_event_slots[slot],
+        sizeof( sorr_ios_d3_event_slots[slot] ),
+        "seq=%u %s %s#%u:s%d:f%d:o%d watch=%d created=%u destroyed=%u",
+        seq,
+        action ? action : "event",
+        name,
+        r ? LOCDWORD( r, PROCESS_ID ) : 0,
+        r ? LOCDWORD( r, STATUS ) : 0,
+        r ? LOCINT32( r, FRAME_PERCENT ) : 0,
+        ( r && r->code && r->codeptr ) ? ( int )( r->codeptr - r->code ) : -1,
+        watch_index,
+        sorr_ios_d3_instance_created_count,
+        sorr_ios_d3_instance_destroyed_count
+    );
+    sorr_ios_d3_rebuild_lifecycle_events();
+
+    if ( watch_index >= 0 || ( seq <= 80 ) || ( seq % 100 ) == 0 )
+    {
+        snprintf( line, sizeof( line ), "runtime_lifecycle %s", sorr_ios_d3_event_slots[slot] );
+        sorr_ios_d3_append_visible_event_line( line );
+    }
+}
 
 static void sorr_ios_d3_copy_proc_name( char * dst, size_t dst_size, const INSTANCE * r )
 {
@@ -406,12 +544,14 @@ void sorr_ios_d3_note_instance_create( const INSTANCE * r )
 {
     sorr_ios_d3_instance_created_count++;
     sorr_ios_d3_copy_proc_name( sorr_ios_d3_last_created_proc_name, sizeof( sorr_ios_d3_last_created_proc_name ), r );
+    sorr_ios_d3_note_lifecycle_event( "create", r );
 }
 
 void sorr_ios_d3_note_instance_destroy( const INSTANCE * r )
 {
     sorr_ios_d3_instance_destroyed_count++;
     sorr_ios_d3_copy_proc_name( sorr_ios_d3_last_destroyed_proc_name, sizeof( sorr_ios_d3_last_destroyed_proc_name ), r );
+    sorr_ios_d3_note_lifecycle_event( "destroy", r );
 }
 
 static void sorr_ios_d3_note_instance_run( const INSTANCE * r )
@@ -477,16 +617,22 @@ static void sorr_ios_d3_update_runtime_snapshot( const char * reason, int loop_c
     unsigned int dead = 0;
     unsigned int other = 0;
     unsigned int sample_count = 0;
+    unsigned int watch_live[SORR_IOS_D3_WATCH_PROC_COUNT] = { 0 };
+    unsigned int n;
     char sample[512];
+    char watch_summary[512];
     size_t used = 0;
-    char next_snapshot[1024];
+    size_t watch_used = 0;
+    char next_snapshot[2048];
 
     sample[0] = '\0';
+    watch_summary[0] = '\0';
 
     while ( i )
     {
         int status = LOCDWORD( i, STATUS );
         int base_status = status & ~STATUS_WAITING_MASK;
+        int watch_index = sorr_ios_d3_watch_proc_index( ( i && i->proc && i->proc->name ) ? i->proc->name : "null" );
 
         total++;
         if ( status & STATUS_WAITING_MASK )
@@ -518,6 +664,11 @@ static void sorr_ios_d3_update_runtime_snapshot( const char * reason, int loop_c
             other++;
         }
 
+        if ( watch_index >= 0 )
+        {
+            watch_live[watch_index]++;
+        }
+
         if ( sample_count < 10 )
         {
             sorr_ios_d3_append_sample( sample, sizeof( sample ), &used, i, sample_count );
@@ -527,11 +678,36 @@ static void sorr_ios_d3_update_runtime_snapshot( const char * reason, int loop_c
         i = i->next;
     }
 
+    for ( n = 0; n < SORR_IOS_D3_WATCH_PROC_COUNT; n++ )
+    {
+        int written = snprintf(
+            watch_summary + watch_used,
+            sizeof( watch_summary ) - watch_used,
+            "%s%s:l%u:c%u:d%u",
+            watch_used ? "," : "",
+            sorr_ios_d3_watch_proc_names[n],
+            watch_live[n],
+            sorr_ios_d3_watch_create_count[n],
+            sorr_ios_d3_watch_destroy_count[n]
+        );
+
+        if ( written > 0 )
+        {
+            size_t inc = ( size_t )written;
+            if ( inc >= sizeof( watch_summary ) - watch_used )
+            {
+                watch_used = sizeof( watch_summary ) - 1;
+                break;
+            }
+            watch_used += inc;
+        }
+    }
+
     sorr_ios_d3_snapshot_count++;
     snprintf(
         next_snapshot,
         sizeof( next_snapshot ),
-        "snap=%u reason=%s loop=%d total=%u run=%u wait=%u sleep=%u frozen=%u killed=%u dead=%u other=%u last=%s#%u:s%d:f%d:o%d created=%u destroyed=%u last_create=%s last_destroy=%s sample=%s",
+        "snap=%u reason=%s loop=%d total=%u run=%u wait=%u sleep=%u frozen=%u killed=%u dead=%u other=%u last=%s#%u:s%d:f%d:o%d created=%u destroyed=%u last_create=%s last_destroy=%s watch=%s sample=%s",
         sorr_ios_d3_snapshot_count,
         reason ? reason : "unknown",
         loop_count,
@@ -552,6 +728,7 @@ static void sorr_ios_d3_update_runtime_snapshot( const char * reason, int loop_c
         sorr_ios_d3_instance_destroyed_count,
         sorr_ios_d3_last_created_proc_name,
         sorr_ios_d3_last_destroyed_proc_name,
+        watch_summary,
         sample
     );
     snprintf( sorr_ios_d3_runtime_snapshot, sizeof( sorr_ios_d3_runtime_snapshot ), "%s", next_snapshot );

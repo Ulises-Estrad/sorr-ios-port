@@ -431,3 +431,29 @@ Device job result: success
 Simulator job result: success
 Game data/assets bundled in IPA: no
 ```
+## D3S Attract Lifecycle Diagnostic Target
+
+Latest physical D3S feedback shows real audio is healthy: BGM is playing from the memory-backed OGG path, SFX works, and the zero music play/control/query counters are no longer active. The remaining five-minute foreground exit now appears tied to a timed runtime path after the game enters an attract/demo/gameplay-like scene.
+
+Next diagnostic target:
+
+- Artifact target: `ios-shell-d3s-attract-lifecycle-diagnostics-device-arm64`
+- IPA target: `build-products/SorrIOSShell-d3s-attract-lifecycle-diagnostics-adhoc.ipa`
+
+This build keeps BGM/SFX enabled and adds watchlist lifecycle diagnostics for active demo/runtime processes reported from the physical phone: `CONTROLADOR`, `BARRA_NEGRA`, `MELODIA`, `SOMBRA`, `ESTIRAMIENTO`, `BARRA_SEC_VIDA1`, `BARRA_VIDA1`, `EFECTO_POLVO`, `LETRA_NOMBRE`, and `MINI_CUADRO1`.
+
+New log fields:
+
+- `runtime_snapshot` now includes `watch=name:live:create:destroy` counts for the watchlist.
+- `runtime_lifecycle` records a short create/destroy ring for recent process lifecycle events.
+- `runtime_lifecycle ...` lines are mirrored directly into `Documents/SORR_DIAGNOSTICS/ios_d3_runtime_stability_probe.txt` for watched processes.
+- fatal signal diagnostics, when catchable, append `signal=... runtime_snapshot=... runtime_lifecycle=...` to the visible diagnostics log.
+
+Manual test:
+
+1. Install `build-products/SorrIOSShell-d3s-attract-lifecycle-diagnostics-adhoc.ipa` with Sideloadly.
+2. Launch the app with the existing D2-staged data.
+3. Leave the app foregrounded and untouched for 10-15 minutes or until it exits.
+4. Reopen once if it exits.
+5. In Files, open `On My iPhone/SorrIOSShell/SORR_DIAGNOSTICS/ios_d3_runtime_stability_probe.txt`.
+6. Report the last 80-120 lines, especially `dense_window_start`, heartbeats after `runtime_ms=240000`, `runtime_snapshot`, `runtime_lifecycle`, `runtime_lifecycle ...`, and any `signal=` line.

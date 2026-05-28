@@ -447,7 +447,7 @@ jobs:
       IOS_DEVICE_ARCH: "arm64"
       IOS_DEVICE_BUILD_DIR: "build-ios-shell-device"
       ARTIFACT_DIR: "ci-artifacts/ios-shell-device"
-      IPA_NAME: "SorrIOSShell-d3s-runtime-window-diagnostics-adhoc.ipa"
+      IPA_NAME: "SorrIOSShell-d3s-attract-lifecycle-diagnostics-adhoc.ipa"
 
     steps:
       - name: Checkout
@@ -733,7 +733,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ios-shell-d3s-runtime-window-diagnostics-device-arm64
+          name: ios-shell-d3s-attract-lifecycle-diagnostics-device-arm64
           path: ci-artifacts/ios-shell-device
           if-no-files-found: warn
           retention-days: 14

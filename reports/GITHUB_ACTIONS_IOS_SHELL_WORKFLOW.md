@@ -1705,3 +1705,26 @@ Device job result: success
 Simulator job result: success
 Game data/assets bundled in IPA: no
 ```
+## D3S Attract Lifecycle Diagnostic Artifact
+
+The workflow now produces a follow-up D3S device artifact for the remaining five-minute foreground exit:
+
+```text
+ios-shell-d3s-attract-lifecycle-diagnostics-device-arm64
+```
+
+IPA:
+
+```text
+build-products/SorrIOSShell-d3s-attract-lifecycle-diagnostics-adhoc.ipa
+```
+
+Purpose:
+
+- keep the D3 first-render path and real BGM/SFX enabled,
+- keep the IPA asset-free and use the existing D2-staged private data,
+- add process watch counts for the active attract/demo scene processes seen on the physical phone,
+- mirror recent process create/destroy lifecycle events into the Files-visible diagnostics log,
+- append fatal signal context to `Documents/SORR_DIAGNOSTICS/ios_d3_runtime_stability_probe.txt` when the signal is catchable.
+
+Expected CI checks remain unchanged: build the iphoneos arm64 app, ad-hoc sign it for Sideloadly, package `Payload/SorrIOSShell.app`, inspect Info.plist/architecture/signature, and verify that no `SorR.dat`, `data/`, FPG/WAV/OGG/SMK/PNG assets, logs, or prepared data are present in the IPA.
