@@ -6,6 +6,7 @@ get_filename_component(SORR_ROOT "${CMAKE_CURRENT_LIST_DIR}/../.." ABSOLUTE)
 
 set(SORR_IOS_BUNDLE_IDENTIFIER "dev.local.sorr.iosshell" CACHE STRING "Bundle identifier for the iOS shell app")
 set(SORR_IOS_SDL2_ROOT "" CACHE PATH "Path to an SDL2 iOS install prefix containing include/SDL2 and lib")
+set(SORR_IOS_SDL2_MIXER_ROOT "" CACHE PATH "Path to an SDL2_mixer iOS install prefix containing include/SDL2 and lib")
 set(SORR_IOS_SDL2_FRAMEWORK "" CACHE PATH "Path to SDL2.framework for iOS")
 option(SORR_IOS_SHELL_USE_SDL_MAIN_HANDLED "Define SDL_MAIN_HANDLED for the iOS shell app" OFF)
 option(SORR_IOS_D3_FIRST_RENDER "Build the D3 runtime-linked first-render probe" OFF)
@@ -281,6 +282,33 @@ else()
   else()
     message(FATAL_ERROR "SDL2 for iOS was not found. Set SORR_IOS_SDL2_FRAMEWORK to SDL2.framework or SORR_IOS_SDL2_ROOT to an SDL2 iOS install prefix.")
   endif()
+endif()
+
+if(SORR_IOS_D3_FIRST_RENDER)
+  if(NOT SORR_IOS_SDL2_MIXER_ROOT)
+    message(FATAL_ERROR "D3 first-render/audio builds require SDL2_mixer for real BGM. Set SORR_IOS_SDL2_MIXER_ROOT to an SDL2_mixer iOS install prefix.")
+  endif()
+  find_path(SDL2_MIXER_INCLUDE_DIR
+    NAMES SDL_mixer.h
+    PATHS
+      "${SORR_IOS_SDL2_MIXER_ROOT}/include/SDL2"
+      "${SORR_IOS_SDL2_MIXER_ROOT}/include"
+    NO_DEFAULT_PATH
+    NO_CMAKE_FIND_ROOT_PATH
+    REQUIRED)
+  find_library(SDL2_MIXER_LIBRARY
+    NAMES SDL2_mixer SDL2_mixer-static
+    PATHS
+      "${SORR_IOS_SDL2_MIXER_ROOT}/lib"
+      "${SORR_IOS_SDL2_MIXER_ROOT}"
+    NO_DEFAULT_PATH
+    NO_CMAKE_FIND_ROOT_PATH
+    REQUIRED)
+  message(STATUS "Using SDL2_mixer include directory: ${SDL2_MIXER_INCLUDE_DIR}")
+  message(STATUS "Using SDL2_mixer library: ${SDL2_MIXER_LIBRARY}")
+  target_include_directories(SorrIOSShell PRIVATE "${SDL2_MIXER_INCLUDE_DIR}")
+  target_compile_definitions(SorrIOSShell PRIVATE SORR_IOS_USE_SDL_MIXER_AUDIO)
+  target_link_libraries(SorrIOSShell PRIVATE "${SDL2_MIXER_LIBRARY}")
 endif()
 
 if(APPLE)

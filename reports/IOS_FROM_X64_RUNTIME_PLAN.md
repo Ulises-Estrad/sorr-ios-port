@@ -501,6 +501,27 @@ Simulator job result: success
 Game data/assets bundled in IPA: no
 ```
 
+## D3A Music/BGM Direction
+
+The physical D3A diagnostics proved that real iOS SFX/WAV audio initializes and plays, but BGM remained `open-ok-inert`: music files were present, path lookup worked, and OGG opened through the file layer, but the iOS music backend returned inert handles and no-op play/control/query results.
+
+The next iOS path therefore uses the x64-safe runtime plus a real SDL2_mixer music backend on iOS:
+
+- build SDL2_mixer for `iphoneos` arm64 in GitHub Actions,
+- enable OGG/Vorbis through SDL2_mixer's STB decoder,
+- keep private BGM assets in the D2-staged `Library/Application Support/SORR/mod/music` folder,
+- keep the IPA free of `SorR.dat`, `data/`, and asset files,
+- preserve D3 stability diagnostics in `Documents/SORR_DIAGNOSTICS`.
+
+Target artifact:
+
+```text
+ios-shell-d3a-music-device-arm64
+build-products/SorrIOSShell-d3a-music-adhoc.ipa
+```
+
+D4a touch input remains blocked until D3A proves audible BGM or reaches a genuine SDL2_mixer/decoder blocker.
+
 ## Out Of Scope For This Plan
 
 - SOR2-only pruning.

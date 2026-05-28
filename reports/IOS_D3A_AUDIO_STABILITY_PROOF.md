@@ -223,3 +223,40 @@ Game data/assets bundled in IPA: no
 Best case: the real SDL audio device opens, WAV effects can be queued, music remains inert or silent, and the app idles 10-15 minutes without exiting.
 
 Diagnostic case: if the app still exits, the visible log should show whether audio initialized, whether WAV loads/plays are happening, whether unsupported inert handles are stable, and whether the previous retry counters still climb near the 240-300 second window.
+
+## D3A Music Backend Target
+
+The physical D3A diagnostics showed that SFX/WAV playback works, `mod/music` files are present in the local-only import package, BGM path lookup works, and OGG files open through Bennu's file layer. The remaining failure is the iOS music backend itself: the previous `LOAD_SONG` path returned an `open-ok-inert` handle and `PLAY_SONG`/music controls were no-ops.
+
+The next D3A build replaces that inert music path with SDL2_mixer:
+
+- GitHub Actions builds SDL2_mixer for `iphoneos` arm64.
+- SDL2_mixer is configured static, vendored, and OGG/Vorbis uses the built-in STB backend.
+- The IPA still contains no game data or music assets.
+- Runtime BGM stays private through the D2-staged `Library/Application Support/SORR/mod/music` data.
+- `LOAD_SONG` now uses `Mix_LoadMUS_RW`.
+- `PLAY_SONG`, fade, stop, pause, resume, volume, position, and playing-query calls route to SDL2_mixer.
+- WAV/SFX also route through SDL2_mixer so there is one iOS audio backend instead of a queue-audio/SFX path plus inert music.
+
+Artifact target:
+
+```text
+ios-shell-d3a-music-device-arm64
+```
+
+IPA target:
+
+```text
+build-products/SorrIOSShell-d3a-music-adhoc.ipa
+```
+
+Expected physical test:
+
+1. Keep the D2-staged data on the iPhone, including `mod/music`.
+2. Install `build-products/SorrIOSShell-d3a-music-adhoc.ipa` with Sideloadly.
+3. Launch `SorrIOSShell`.
+4. Confirm real SoRR rendering still appears.
+5. Confirm whether BGM is audible.
+6. Leave the app foregrounded and untouched for 10-15 minutes.
+7. If it exits, reopen once and retrieve `On My iPhone/SorrIOSShell/SORR_DIAGNOSTICS/ios_d3_runtime_stability_probe.txt`.
+8. Report the last 40-60 lines, especially `audio_music_last_status`, `audio_music_last_path`, `audio_music_open_ok`, `audio_music_open_fail`, and any `SDL_APP_*` lifecycle markers.

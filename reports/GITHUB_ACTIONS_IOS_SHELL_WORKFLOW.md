@@ -1567,3 +1567,40 @@ Manual D3A diagnostic test:
 6. Leave the app foregrounded and untouched for 10-15 minutes.
 7. If it exits, reopen once and retrieve `On My iPhone/SorrIOSShell/SORR_DIAGNOSTICS/ios_d3_runtime_stability_probe.txt`.
 8. Report the last 40-60 lines, including named audio counters, `audio_music_last_*`, and any `SDL_APP_*` lifecycle markers.
+
+## D3A Music/BGM Artifact Target
+
+The next device workflow target upgrades D3A from the previous SFX-only/minimal audio path to a real SDL2_mixer-backed music path:
+
+- fetch SDL2_mixer `2.8.1`,
+- build it for `iphoneos` arm64,
+- link it into `SorrIOSShell`,
+- enable OGG/Vorbis through SDL2_mixer's STB backend,
+- keep all game/music data external through the D2 import path,
+- keep the IPA asset-free.
+
+Expected artifact:
+
+```text
+ios-shell-d3a-music-device-arm64
+```
+
+Expected IPA:
+
+```text
+build-products/SorrIOSShell-d3a-music-adhoc.ipa
+```
+
+Expected CI checks remain:
+
+```text
+unzip -l IPA
+no SorR.dat
+no data/
+no .fpg/.wav/.ogg/.smk/.png assets
+Info.plist file-sharing keys present
+iphoneos arm64 executable
+ad-hoc signature valid
+```
+
+If the workflow fails, the first likely failure area is SDL2_mixer CMake configuration or static link resolution. The app-side CMake requires `SORR_IOS_SDL2_MIXER_ROOT` for D3 builds because inert/silent BGM is no longer an acceptable D3A endpoint.
