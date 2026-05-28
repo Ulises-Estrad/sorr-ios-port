@@ -1169,6 +1169,16 @@ Cause: mod_m7.c passed int callbacks to gr_new_object even though the render obj
 Fix: mode7 callbacks now accept void * context and convert through intptr_t at the callback boundary
 ```
 
+Fifth D3 CI failure:
+
+```text
+Commit: 362fcb6
+Run: 26547029368
+Failed step: Build unsigned iOS shell app for device
+Cause: mod_flic.c passed FLIC * callbacks to gr_new_object while the render object API expects void * callback context
+Fix: FLIC callbacks now accept void * context and cast back to FLIC * inside the callback body
+```
+
 Manual D3 test flow:
 
 1. Keep the D2 data staged on the iPhone.

@@ -99,6 +99,16 @@ Failure: mod_m7.c used int callback parameters where the render object API expec
 Fix: convert the mode7 render-object callback boundary to void * plus intptr_t casts
 ```
 
+Fifth D3 attempt:
+
+```text
+Commit: 362fcb6
+Run: 26547029368
+Result: device compile failed
+Failure: mod_flic.c used FLIC * callback parameters where the render object API expects void * callback context
+Fix: convert the FLIC render-object callback boundary to void * and cast back to FLIC * inside the callbacks
+```
+
 The IPA must still contain no:
 
 - `SorR.dat`
