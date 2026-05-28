@@ -1249,6 +1249,16 @@ Cause: interpreter.c still called Windows GetSystemMetrics in the GET_DESKTOP_SI
 Fix: use a 640x480 non-Windows fallback for the bridge and keep the diagnostic helper functions inside the outer PORTABLE_RUNTIME_DIAG guard
 ```
 
+Thirteenth D3 CI failure:
+
+```text
+Commit: 4aa5f00
+Run: 26549458571
+Failed step: Build unsigned iOS shell app for device
+Cause: g_blit.c passed a VERTEX-typed comparator to qsort; AppleClang requires the standard const void * comparator function type
+Fix: compare_vertex_y now uses the standard qsort callback ABI and casts to VERTEX internally
+```
+
 Manual D3 test flow:
 
 1. Keep the D2 data staged on the iPhone.

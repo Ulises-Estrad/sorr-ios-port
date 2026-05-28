@@ -179,6 +179,16 @@ Failure: interpreter.c still used Windows GetSystemMetrics in the host pointer-t
 Fix: use a small non-Windows desktop-size fallback for SORR_HOST_POINTER_TABLES and keep the diagnostic helper functions inside the outer portable diagnostic guard
 ```
 
+Thirteenth D3 attempt:
+
+```text
+Commit: 4aa5f00
+Run: 26549458571
+Result: device compile failed
+Failure: g_blit.c passed a typed VERTEX comparator to qsort, which AppleClang rejects against the standard const void * comparator ABI
+Fix: update compare_vertex_y to use the standard qsort comparator signature and cast to VERTEX internally
+```
+
 The IPA must still contain no:
 
 - `SorR.dat`
