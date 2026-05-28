@@ -1229,6 +1229,16 @@ Cause: libmouse.c passed INSTANCE * callbacks to gr_new_object while the render 
 Fix: mouse callbacks now accept void * context; the remaining included g_instance render-object callback boundary was converted after a local gr_new_object scan
 ```
 
+Eleventh D3 CI failure:
+
+```text
+Commit: 5597154
+Run: 26548706584
+Failed step: Build unsigned iOS shell app for device
+Cause: interpreter.c included windows.h on iOS after the x64 pointer side table diagnostics were generalized for SORR_HOST_POINTER_TABLES
+Fix: keep VirtualQuery diagnostics under _WIN64 and use a non-Windows non-null fallback for SORR_HOST_POINTER_TABLES
+```
+
 Manual D3 test flow:
 
 1. Keep the D2 data staged on the iPhone.

@@ -159,6 +159,16 @@ Failure: libmouse.c used INSTANCE * callback parameters where the render object 
 Fix: convert mouse callbacks to void *; also convert the remaining included g_instance render-object callbacks found by local gr_new_object scan
 ```
 
+Eleventh D3 attempt:
+
+```text
+Commit: 5597154
+Run: 26548706584
+Result: device compile failed
+Failure: interpreter.c included windows.h on iOS after host pointer-table diagnostics were generalized for SORR_HOST_POINTER_TABLES
+Fix: keep Windows VirtualQuery diagnostics under _WIN64; use a non-Windows non-null pointer diagnostic fallback for SORR_HOST_POINTER_TABLES
+```
+
 The IPA must still contain no:
 
 - `SorR.dat`

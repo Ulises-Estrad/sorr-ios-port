@@ -49,10 +49,12 @@
 
 #include <assert.h>
 #if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
+#if defined(_WIN64)
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif
 #include <windows.h>
+#endif
 #define PORTABLE_X64_STACK_PTR_TABLE_SIZE 262144u
 
 typedef struct portable_x64_stack_ptr_entry
@@ -242,7 +244,7 @@ static int portable_x64_sysproc_load_save( int is_save, int * params )
 }
 #endif
 
-#if defined(PORTABLE_RUNTIME_DIAG) && (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
+#if defined(PORTABLE_RUNTIME_DIAG) && defined(_WIN64)
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif
@@ -260,6 +262,12 @@ static int portable_x64_ptr_looks_readable( const void * ptr )
 
     return 1;
 }
+#elif defined(PORTABLE_RUNTIME_DIAG) && defined(SORR_HOST_POINTER_TABLES)
+static int portable_x64_ptr_looks_readable( const void * ptr )
+{
+    return ptr != NULL;
+}
+#endif
 
 static void portable_x64_log_mn_a2str( INSTANCE * r, int * ptr, int arg )
 {
