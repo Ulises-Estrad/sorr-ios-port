@@ -702,3 +702,14 @@ The next D3S artifact stays in stability diagnostics and does not start D4a inpu
 - New signal fields: `last_lifecycle`, `last_family`, `last_render`, `last_proc_ptr`, `current_proc_ptr`
 
 The goal is to determine whether the crash is a stale process/render reference during enemy/HUD/effect cleanup or creation in the timed attract/demo gameplay path.
+## D3S Enemy/HUD Artifact Proof
+
+The D3S enemy/HUD diagnostic IPA was produced successfully:
+
+- Actions run: `26602412647`
+- Commit: `3009e2d`
+- Artifact: `ios-shell-d3s-enemy-hud-diagnostics-device-arm64`
+- IPA: `build-products/SorrIOSShell-d3s-enemy-hud-diagnostics-adhoc.ipa`
+- Artifact size: `800677` bytes
+
+Next manual step is physical iPhone testing with the existing D2-staged data. D4a remains blocked until this enemy/HUD signal log identifies the failure point or narrows the crash to a subsystem outside input.

@@ -384,3 +384,16 @@ Next artifact target:
 This build keeps BGM/SFX enabled and adds `ENEMIGO` and `ESCRIBE_ENEMIGO` to the explicit watchlist. The signal handler now records the last lifecycle event, last family unlink event, last render event, last process pointer, and current process pointer alongside the existing runtime snapshot. The goal is to catch whether an enemy/HUD/effect process is rendering or referencing a process after it has been destroyed.
 
 When testing, report the last 150-250 lines from `Documents/SORR_DIAGNOSTICS/ios_d3_runtime_stability_probe.txt`, especially `signal=11`, `last_lifecycle=`, `last_family=`, `last_render=`, `ENEMIGO`, `ESCRIBE_ENEMIGO`, `BARRA_VIDA1`, `BARRA_SEC_VIDA1`, `MINI_CUADRO1`, `EFECTO_POLVO`, and `runtime_render_event`.
+## GitHub-Side D3S Enemy/HUD Artifact Proof
+
+Produced successfully:
+
+- Actions run: `26602412647`
+- Commit: `3009e2d`
+- Artifact: `ios-shell-d3s-enemy-hud-diagnostics-device-arm64`
+- IPA: `build-products/SorrIOSShell-d3s-enemy-hud-diagnostics-adhoc.ipa`
+- Artifact size: `800677` bytes
+- Device job result: success
+- Simulator job result: success
+
+This is the current recommended physical iPhone diagnostic IPA for the confirmed `SIGSEGV` in the timed attract/demo gameplay path. It keeps real BGM/SFX enabled, uses the existing D2-staged data, and does not bundle game data/assets in the IPA.

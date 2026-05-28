@@ -574,3 +574,14 @@ Added diagnostics:
 - existing render callback guards remain enabled.
 
 Manual test: install the IPA with Sideloadly, leave the app foregrounded/untouched until it exits or 10-15 minutes pass, reopen once if needed, then report the last 150-250 lines of `On My iPhone/SorrIOSShell/SORR_DIAGNOSTICS/ios_d3_runtime_stability_probe.txt`.
+## GitHub-Side D3S Enemy/HUD Diagnostic Proof
+
+Status: produced successfully.
+
+- Actions run: `26602412647`
+- Artifact-producing commit: `3009e2d`
+- Device artifact: `ios-shell-d3s-enemy-hud-diagnostics-device-arm64`
+- IPA: `build-products/SorrIOSShell-d3s-enemy-hud-diagnostics-adhoc.ipa`
+- Artifact size: `800677` bytes
+
+The IPA remains asset-free and uses only the D2-staged private data on-device. Use this build to capture the next physical-device log around `ENEMIGO`, `ESCRIBE_ENEMIGO`, enemy/HUD/effect cleanup, `last_lifecycle`, `last_family`, `last_render`, and `signal=11`.

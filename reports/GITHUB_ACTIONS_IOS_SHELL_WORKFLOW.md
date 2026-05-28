@@ -1800,6 +1800,7 @@ Purpose:
 
 Expected CI checks remain unchanged: build iphoneos arm64, ad-hoc sign for Sideloadly, package `Payload/SorrIOSShell.app`, inspect Info.plist/architecture/signature, and verify the IPA contains no `SorR.dat`, `data/`, FPG/WAV/OGG/SMK/PNG assets, logs, or prepared data.
 
+
 GitHub-side D3S title re-entry artifact proof:
 
 ```text
@@ -1872,3 +1873,16 @@ Purpose:
 - keep render callback guards and watched `runtime_render_event ...` lines.
 
 Expected CI checks remain unchanged: build iphoneos arm64, ad-hoc sign for Sideloadly, package `Payload/SorrIOSShell.app`, inspect Info.plist/architecture/signature, and verify the IPA contains no `SorR.dat`, `data/`, FPG/WAV/OGG/SMK/PNG assets, logs, or prepared data.
+
+GitHub-side D3S enemy/HUD diagnostic artifact proof:
+
+```text
+Actions run: 26602412647
+Commit: 3009e2d
+Device artifact: ios-shell-d3s-enemy-hud-diagnostics-device-arm64
+IPA: build-products/SorrIOSShell-d3s-enemy-hud-diagnostics-adhoc.ipa
+Artifact size: 800677 bytes
+Result: success
+```
+
+The simulator shell job also passed in the same run. The device artifact passed the existing IPA layout/signature/forbidden-asset inspection.
