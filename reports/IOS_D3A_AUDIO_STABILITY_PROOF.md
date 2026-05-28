@@ -489,3 +489,14 @@ Added diagnostics:
 - priority/status/frame/code-offset context on watched lifecycle events.
 
 Manual test: install the IPA with Sideloadly, leave the app foregrounded/untouched until it exits or 10-15 minutes pass, reopen once if needed, then report the last 100-150 lines of `On My iPhone/SorrIOSShell/SORR_DIAGNOSTICS/ios_d3_runtime_stability_probe.txt`.
+## GitHub-Side D3S Demo Teardown Diagnostic Proof
+
+Status: produced successfully.
+
+- Actions run: `26598228033`
+- Artifact-producing commit: `8017ff7`
+- Device artifact: `ios-shell-d3s-demo-teardown-diagnostics-device-arm64`
+- IPA: `build-products/SorrIOSShell-d3s-demo-teardown-diagnostics-adhoc.ipa`
+- Artifact size: `798554` bytes
+
+The IPA remains asset-free and uses only the D2-staged private data on-device. Use this build to capture the next physical-device teardown log around `FASE1`, `DESCARGA_SISTEMA`, `SISTEMA_SONIDO`, `ASIGNADOR_ENEMIGO`, HUD/effect process cleanup, and title/menu re-entry.

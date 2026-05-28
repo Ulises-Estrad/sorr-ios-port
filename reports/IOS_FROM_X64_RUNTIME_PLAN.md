@@ -634,3 +634,14 @@ Next diagnostic artifact:
 - `build-products/SorrIOSShell-d3s-demo-teardown-diagnostics-adhoc.ipa`
 
 This build keeps BGM/SFX enabled and instruments process lifecycle around `FASE1`, `DESCARGA_SISTEMA`, `SISTEMA_SONIDO`, `ASIGNADOR_ENEMIGO`, HUD/effect teardown, and title/menu re-entry processes. It compares `destroy_begin` state before hierarchy updates against post-unlink `destroy` state to look for stale process ids, caller pointers, sibling links, or a cleanup burst immediately before exit.
+## D3S Demo Teardown Artifact Proof
+
+The D3S demo teardown diagnostic IPA was produced successfully:
+
+- Actions run: `26598228033`
+- Commit: `8017ff7`
+- Artifact: `ios-shell-d3s-demo-teardown-diagnostics-device-arm64`
+- IPA: `build-products/SorrIOSShell-d3s-demo-teardown-diagnostics-adhoc.ipa`
+- Artifact size: `798554` bytes
+
+Next manual step is physical iPhone testing with the existing D2-staged data. D4a remains blocked until this teardown transition log identifies the failure point or narrows the crash to a subsystem outside input.

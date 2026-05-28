@@ -307,3 +307,14 @@ Next artifact target:
 This build keeps BGM/SFX enabled and expands the process watchlist to cover the demo teardown and title re-entry process names. It also logs `destroy_begin` before Bennu rewrites hierarchy/sibling links, then keeps the existing post-unlink `destroy` marker. Each lifecycle line now includes father/son/sibling ids, whether those ids resolve, called-by id/validity, priority, status, frame percent, and code offset. The goal is to catch a bad family link, stale caller pointer, or specific process lifecycle burst at the transition.
 
 When testing, report the last 100-150 lines from `Documents/SORR_DIAGNOSTICS/ios_d3_runtime_stability_probe.txt`, especially `runtime_lifecycle ... destroy_begin`, matching `destroy` lines, `watch=`, `runtime_snapshot`, and any `signal=` line.
+## GitHub-Side D3S Demo Teardown Artifact Proof
+
+Produced successfully:
+
+- Actions run: `26598228033`
+- Commit: `8017ff7`
+- Artifact: `ios-shell-d3s-demo-teardown-diagnostics-device-arm64`
+- IPA: `build-products/SorrIOSShell-d3s-demo-teardown-diagnostics-adhoc.ipa`
+- Artifact size: `798554` bytes
+
+This is the current recommended physical iPhone diagnostic IPA for the five-minute D3S exit. It keeps real BGM/SFX enabled, uses the existing D2-staged data, and does not bundle game data/assets in the IPA.
