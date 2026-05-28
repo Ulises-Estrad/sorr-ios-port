@@ -1,6 +1,6 @@
 # iOS D3A Audio Stability Proof
 
-Status: Initial D3A audio/stability IPA produced by GitHub Actions and tested on physical iPhone; follow-up audio-category diagnostic IPA in progress.
+Status: Initial D3A audio/stability IPA produced and tested on physical iPhone; follow-up audio-category diagnostic IPA produced by GitHub Actions and ready for physical iPhone test.
 
 D3 first render remains complete. D3A is a stability/audio hardening pass for the repeatable foreground idle exit near the five-minute mark.
 
@@ -186,6 +186,19 @@ The next D3A diagnostic IPA keeps the same D2 data path and D3 render path but a
 Artifact: ios-shell-d3a-audio-diagnostics-device-arm64
 IPA: build-products/SorrIOSShell-d3a-audio-diagnostics-adhoc.ipa
 Purpose: identify which remaining audio no-op path climbs near the 240-300 second idle window
+Game data/assets bundled in IPA: no
+```
+
+GitHub-side follow-up diagnostic artifact proof:
+
+```text
+Actions run: 26557322892
+Device artifact: ios-shell-d3a-audio-diagnostics-device-arm64
+Artifact size: 728042 bytes
+IPA: build-products/SorrIOSShell-d3a-audio-diagnostics-adhoc.ipa
+Artifact-producing commit: 0d3eb53
+Device job result: success
+Simulator job result: success
 Game data/assets bundled in IPA: no
 ```
 

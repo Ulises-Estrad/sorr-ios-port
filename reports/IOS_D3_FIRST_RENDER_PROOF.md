@@ -97,6 +97,19 @@ Audio scope: minimal real SDL audio, WAV effect decode/queue, inert handles for 
 
 Initial D3A physical test confirmed SFX audio initializes and plays, but the app still exits around five minutes. The next diagnostic artifact remains a D3 stability/audio hardening pass and does not start D4a touch controls.
 
+GitHub-side D3A follow-up diagnostic artifact proof:
+
+```text
+Actions run: 26557322892
+Artifact: ios-shell-d3a-audio-diagnostics-device-arm64
+Artifact size: 728042 bytes
+IPA: build-products/SorrIOSShell-d3a-audio-diagnostics-adhoc.ipa
+Artifact-producing commit: 0d3eb53
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
+```
+
 GitHub-side D3S idle-window artifact proof:
 
 ```text

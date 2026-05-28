@@ -397,3 +397,16 @@ Physical idle result: initial D3A audio pass still exited around five minutes
 SFX result: audio_init_ok=1, audio_wav_load_ok=122, audio_wav_play=304
 Next artifact: ios-shell-d3a-audio-diagnostics-device-arm64
 ```
+
+GitHub-side D3A follow-up diagnostic artifact proof:
+
+```text
+Actions run: 26557322892
+Artifact: ios-shell-d3a-audio-diagnostics-device-arm64
+Artifact size: 728042 bytes
+IPA: build-products/SorrIOSShell-d3a-audio-diagnostics-adhoc.ipa
+Artifact-producing commit: 0d3eb53
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
+```

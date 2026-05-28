@@ -488,6 +488,19 @@ Next diagnostic target: ios-shell-d3a-audio-diagnostics-device-arm64
 
 The local-only import helper now validates `SORR_IMPORT/mod/music/1.ogg` and found 237 prepared music/BGM files in `sorr-vita-master/data`. If the phone's staged D2 data is stale or missing BGM, refresh it with the regenerated local-only `out/local-only/SORR_IMPORT.zip`; do not commit or upload that ZIP.
 
+D3A follow-up diagnostic artifact proof:
+
+```text
+Actions run: 26557322892
+Artifact: ios-shell-d3a-audio-diagnostics-device-arm64
+Artifact size: 728042 bytes
+IPA: build-products/SorrIOSShell-d3a-audio-diagnostics-adhoc.ipa
+Artifact-producing commit: 0d3eb53
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
+```
+
 ## Out Of Scope For This Plan
 
 - SOR2-only pruning.

@@ -1531,6 +1531,19 @@ Simulator job result: success
 Game data/assets bundled in IPA: no
 ```
 
+D3A follow-up diagnostic artifact proof:
+
+```text
+Actions run: 26557322892
+Device artifact: ios-shell-d3a-audio-diagnostics-device-arm64
+Artifact size: 728042 bytes
+IPA: build-products/SorrIOSShell-d3a-audio-diagnostics-adhoc.ipa
+Artifact-producing commit: 0d3eb53
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
+```
+
 Initial physical D3A result:
 
 ```text
