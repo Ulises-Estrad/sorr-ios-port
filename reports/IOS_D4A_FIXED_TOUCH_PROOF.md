@@ -1,6 +1,6 @@
 # iOS D4a Fixed Touch And Crash Reports
 
-Status: implementation/artifact pass in progress.
+Status: GitHub-side D4a IPA produced successfully; ready for physical iPhone Sideloadly test.
 
 D4a starts after the completed D3 first-render proof and D3A audio proof. It keeps the D2-staged data path, real BGM/SFX, and D3S stability guards active while adding fixed on-screen controls and cleaner crash reporting.
 
@@ -117,3 +117,20 @@ On a catchable crash signal, the compact report records signal number, ticks/run
 ## Expected Result
 
 The app should remain D3-compatible while becoming playable enough for fixed-control testing. If the five-minute attract/demo crash still occurs, the next report should be much smaller and should isolate the latest crash instead of requiring a long historical log search.
+
+## GitHub-Side Artifact Proof
+
+Produced successfully:
+
+```text
+Actions run: 26607711467
+Patch commit: dc64c13
+Artifact: ios-shell-d4a-fixed-touch-guarded-device-arm64
+IPA: build-products/SorrIOSShell-d4a-fixed-touch-guarded-adhoc.ipa
+Artifact size: 811502 bytes
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
+```
+
+This artifact is the current D4a physical iPhone test build. It keeps real BGM/SFX enabled, keeps the D2-staged data path, keeps D3S guards/diagnostics, and adds the fixed touch overlay plus current-run/latest-crash log files.

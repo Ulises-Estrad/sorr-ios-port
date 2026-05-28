@@ -1870,6 +1870,21 @@ Expected next run:
 
 - simulator shell build should link again,
 - device job should continue producing `ios-shell-d4a-fixed-touch-guarded-device-arm64`.
+
+D4a GitHub-side artifact proof:
+
+```text
+Actions run: 26607711467
+Patch commit: dc64c13
+Device artifact: ios-shell-d4a-fixed-touch-guarded-device-arm64
+Artifact size: 811502 bytes
+IPA: build-products/SorrIOSShell-d4a-fixed-touch-guarded-adhoc.ipa
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
+```
+
+This is the current recommended physical iPhone D4a test artifact.
 ## D3S Enemy/HUD Guard Artifact
 
 The workflow now produces a D3S patch artifact aimed at the confirmed `SIGSEGV` after enemy/HUD child-process teardown:

@@ -454,6 +454,19 @@ New Files-visible crash files:
 
 After a crash, reopen the app once and send `ios_latest_crash_report.txt` first. The current-run log is only needed if the compact report needs more context.
 
+D4a artifact proof:
+
+```text
+Actions run: 26607711467
+Patch commit: dc64c13
+Artifact: ios-shell-d4a-fixed-touch-guarded-device-arm64
+IPA: build-products/SorrIOSShell-d4a-fixed-touch-guarded-adhoc.ipa
+Artifact size: 811502 bytes
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
+```
+
 ## D3S ENEMIGO Lookup Guard Patch
 
 The previous enemy/HUD remote-pointer guard did not trigger before the repeated `SIGSEGV`, so the next patch focuses on process-id lookups rather than stack pointer ownership.

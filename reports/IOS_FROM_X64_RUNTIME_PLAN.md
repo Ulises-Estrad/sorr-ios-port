@@ -807,3 +807,18 @@ On My iPhone/SorrIOSShell/SORR_DIAGNOSTICS/ios_current_run_stability_log.txt
 ```
 
 D4a still does not start D4b customization, D5 gameplay polish, App Store/TestFlight signing, or asset bundling.
+
+GitHub-side D4a artifact proof:
+
+```text
+Actions run: 26607711467
+Patch commit: dc64c13
+Artifact: ios-shell-d4a-fixed-touch-guarded-device-arm64
+IPA: build-products/SorrIOSShell-d4a-fixed-touch-guarded-adhoc.ipa
+Artifact size: 811502 bytes
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
+```
+
+Next manual step is physical iPhone testing through Sideloadly with the existing D2-staged data. Do not start D4b customization or D5 until the fixed controls and latest crash-report path are tested.

@@ -436,3 +436,18 @@ On My iPhone/SorrIOSShell/SORR_DIAGNOSTICS/ios_latest_crash_report.txt
 ```
 
 Send `ios_current_run_stability_log.txt` only if more context is needed. The IPA must still contain no `SorR.dat`, `data/`, prepared data, or game assets.
+
+D4a GitHub-side artifact proof:
+
+```text
+Actions run: 26607711467
+Patch commit: dc64c13
+Artifact: ios-shell-d4a-fixed-touch-guarded-device-arm64
+IPA: build-products/SorrIOSShell-d4a-fixed-touch-guarded-adhoc.ipa
+Artifact size: 811502 bytes
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
+```
+
+Use this artifact for the first fixed-touch physical iPhone test.
