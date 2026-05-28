@@ -1508,6 +1508,15 @@ IPA target:
 build-products/SorrIOSShell-d3a-audio-adhoc.ipa
 ```
 
+First D3A CI failure:
+
+```text
+Run: 26554204340
+Failure: AppleClang compile error in sorr_ios_mod_sound_stub.c
+Cause: mod_sound globals fixup was used before declaration by GLOEXISTS/GLODWORD macros
+Fix: forward-declare __bgdexport(mod_sound, globals_fixup) in the iOS audio replacement
+```
+
 Manual D3A test:
 
 1. Keep the D2-staged data on the iPhone.

@@ -22,6 +22,8 @@
 #define SOUND_MODE 1
 #define SOUND_CHANNELS 2
 
+extern DLVARFIXUP __bgdexport(mod_sound, globals_fixup)[];
+
 #define SORR_IOS_AUDIO_HANDLE_MAX 4096
 #define SORR_IOS_AUDIO_PATH_MAX 512
 #define SORR_IOS_AUDIO_KIND_EMPTY 0

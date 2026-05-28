@@ -99,6 +99,12 @@ no data/
 no .fpg/.wav/.ogg/.smk/.png assets
 ```
 
+## CI Iteration Notes
+
+- Run `26554204340` reached AppleClang for the device build but failed compiling `sorr_ios_mod_sound_stub.c`.
+- Cause: the iOS-only audio replacement used Bennu global-access macros before the `mod_sound` globals-fixup array had a visible declaration.
+- Fix: add a forward declaration for `__bgdexport(mod_sound, globals_fixup)` so `GLOEXISTS` and `GLODWORD` compile without changing desktop/x64 code.
+
 ## Manual iPhone Test
 
 1. Keep the D2-staged data on the iPhone.
