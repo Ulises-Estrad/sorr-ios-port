@@ -1517,6 +1517,19 @@ Cause: mod_sound globals fixup was used before declaration by GLOEXISTS/GLODWORD
 Fix: forward-declare __bgdexport(mod_sound, globals_fixup) in the iOS audio replacement
 ```
 
+D3A GitHub-side artifact proof:
+
+```text
+Actions run: 26554585872
+Device artifact: ios-shell-d3a-audio-device-arm64
+Artifact size: 724145 bytes
+IPA: build-products/SorrIOSShell-d3a-audio-adhoc.ipa
+Artifact-producing commit: d6785c7
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
+```
+
 Manual D3A test:
 
 1. Keep the D2-staged data on the iPhone.

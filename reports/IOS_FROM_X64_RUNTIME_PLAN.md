@@ -470,6 +470,20 @@ Device job result: success
 Game data/assets bundled in IPA: no
 ```
 
+D3A audio/stability artifact proof:
+
+```text
+Actions run: 26554585872
+Artifact: ios-shell-d3a-audio-device-arm64
+Artifact size: 724145 bytes
+IPA: build-products/SorrIOSShell-d3a-audio-adhoc.ipa
+Artifact-producing commit: d6785c7
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
+Physical idle result: pending user test
+```
+
 ## Out Of Scope For This Plan
 
 - SOR2-only pruning.

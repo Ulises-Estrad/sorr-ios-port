@@ -1,6 +1,6 @@
 # iOS D3A Audio Stability Proof
 
-Status: D3A audio/stability IPA target prepared.
+Status: D3A audio/stability IPA produced by GitHub Actions; physical iPhone idle test pending.
 
 D3 first render remains complete. D3A is a stability/audio hardening pass for the repeatable foreground idle exit near the five-minute mark.
 
@@ -104,6 +104,21 @@ no .fpg/.wav/.ogg/.smk/.png assets
 - Run `26554204340` reached AppleClang for the device build but failed compiling `sorr_ios_mod_sound_stub.c`.
 - Cause: the iOS-only audio replacement used Bennu global-access macros before the `mod_sound` globals-fixup array had a visible declaration.
 - Fix: add a forward declaration for `__bgdexport(mod_sound, globals_fixup)` so `GLOEXISTS` and `GLODWORD` compile without changing desktop/x64 code.
+
+## GitHub-Side Artifact Proof
+
+```text
+Actions run: 26554585872
+Device artifact: ios-shell-d3a-audio-device-arm64
+Artifact size: 724145 bytes
+IPA: build-products/SorrIOSShell-d3a-audio-adhoc.ipa
+Artifact-producing commit: d6785c7
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
+```
+
+This is not a physical stability pass yet. It is the installable D3A diagnostic build for the next iPhone test.
 
 ## Manual iPhone Test
 

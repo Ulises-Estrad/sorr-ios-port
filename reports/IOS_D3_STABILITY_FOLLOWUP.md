@@ -1,6 +1,6 @@
 # iOS D3 Stability Follow-Up
 
-Status: D3A minimal real-audio stability IPA target prepared.
+Status: D3A minimal real-audio stability IPA produced by GitHub Actions; physical iPhone idle test pending.
 
 D3 first render remains complete. This pass hardens the already-rendering D3 build after a repeatable physical-device idle exit was observed at about five minutes.
 
@@ -142,6 +142,19 @@ Current D3A audio/stability target:
 Artifact: ios-shell-d3a-audio-device-arm64
 IPA: build-products/SorrIOSShell-d3a-audio-adhoc.ipa
 Focus: minimal real SDL audio backend plus the existing 240000..330000 ms dense diagnostics
+Game data/assets bundled in IPA: no
+```
+
+GitHub-side D3A audio/stability artifact proof:
+
+```text
+Actions run: 26554585872
+Device artifact: ios-shell-d3a-audio-device-arm64
+Artifact size: 724145 bytes
+IPA: build-products/SorrIOSShell-d3a-audio-adhoc.ipa
+Artifact-producing commit: d6785c7
+Device job result: success
+Simulator job result: success
 Game data/assets bundled in IPA: no
 ```
 
