@@ -546,3 +546,14 @@ Added diagnostics:
 - continued family unlink and lifecycle diagnostics for title re-entry processes.
 
 Manual test: install the IPA with Sideloadly, leave the app foregrounded/untouched until it exits or 10-15 minutes pass, reopen once if needed, then report the last 150-200 lines of `On My iPhone/SorrIOSShell/SORR_DIAGNOSTICS/ios_d3_runtime_stability_probe.txt`.
+## GitHub-Side D3S LAYER_INTRO Diagnostic Proof
+
+Status: produced successfully.
+
+- Actions run: `26601081243`
+- Artifact-producing commit: `79342fe`
+- Device artifact: `ios-shell-d3s-layer-intro-diagnostics-device-arm64`
+- IPA: `build-products/SorrIOSShell-d3s-layer-intro-diagnostics-adhoc.ipa`
+- Artifact size: `799927` bytes
+
+The IPA remains asset-free and uses only the D2-staged private data on-device. Use this build to capture the next physical-device log around `LAYER_INTRO`, `INTRO_PRINCIPIO`, `OSCURECE_PANTALLA`, `runtime_render_event`, and `runtime_family_unlink`.

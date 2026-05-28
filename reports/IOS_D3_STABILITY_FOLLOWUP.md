@@ -353,3 +353,16 @@ Next artifact target:
 This build adds `LAYER_INTRO` and `INTRO_PRINCIPIO` to the explicit watchlist, keeps the family-unlink diagnostics, and adds `runtime_render_event ...` lines for watched render-object create/destroy plus any render callback that fires after its backing process is no longer live. Heartbeats now include `render_object_creates`, `render_object_destroys`, and `render_invalid_callbacks`.
 
 When testing, report the last 150-200 lines from `Documents/SORR_DIAGNOSTICS/ios_d3_runtime_stability_probe.txt`, especially `runtime_render_event`, `runtime_family_unlink`, `LAYER_INTRO`, `INTRO_PRINCIPIO`, `OSCURECE_PANTALLA`, `runtime_snapshot`, and any `signal=` line.
+## GitHub-Side D3S LAYER_INTRO Artifact Proof
+
+Produced successfully:
+
+- Actions run: `26601081243`
+- Commit: `79342fe`
+- Artifact: `ios-shell-d3s-layer-intro-diagnostics-device-arm64`
+- IPA: `build-products/SorrIOSShell-d3s-layer-intro-diagnostics-adhoc.ipa`
+- Artifact size: `799927` bytes
+- Device job result: success
+- Simulator job result: success
+
+This is the current recommended physical iPhone diagnostic IPA for the post-demo intro/title-animation exit. It keeps real BGM/SFX enabled, uses the existing D2-staged data, and does not bundle game data/assets in the IPA.

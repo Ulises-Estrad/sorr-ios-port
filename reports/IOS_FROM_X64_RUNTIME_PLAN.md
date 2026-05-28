@@ -676,3 +676,14 @@ Next diagnostic artifact:
 - `build-products/SorrIOSShell-d3s-layer-intro-diagnostics-adhoc.ipa`
 
 This build keeps BGM/SFX enabled and adds render-object diagnostics for the intro animation path. It logs watched render-object create/destroy events, heartbeat render object create/destroy totals, invalid render-callback guards, and the existing family unlink/lifecycle markers. The goal is to determine whether `LAYER_INTRO`, `INTRO_PRINCIPIO`, or `OSCURECE_PANTALLA` leaves a stale render object or process relationship shortly before termination.
+## D3S LAYER_INTRO Artifact Proof
+
+The D3S LAYER_INTRO diagnostic IPA was produced successfully:
+
+- Actions run: `26601081243`
+- Commit: `79342fe`
+- Artifact: `ios-shell-d3s-layer-intro-diagnostics-device-arm64`
+- IPA: `build-products/SorrIOSShell-d3s-layer-intro-diagnostics-adhoc.ipa`
+- Artifact size: `799927` bytes
+
+Next manual step is physical iPhone testing with the existing D2-staged data. D4a remains blocked until this intro/title-animation diagnostic log identifies the failure point or narrows the exit to a subsystem outside input.

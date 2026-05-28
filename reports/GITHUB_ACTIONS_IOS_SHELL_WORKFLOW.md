@@ -1763,6 +1763,43 @@ Purpose:
 - include family ids/validity and called-by id/validity on lifecycle lines.
 
 Expected CI checks remain unchanged: build iphoneos arm64, ad-hoc sign for Sideloadly, package `Payload/SorrIOSShell.app`, inspect Info.plist/architecture/signature, and verify the IPA contains no `SorR.dat`, `data/`, FPG/WAV/OGG/SMK/PNG assets, logs, or prepared data.
+
+GitHub-side D3S demo teardown artifact proof:
+
+```text
+Actions run: 26598228033
+Commit: 8017ff7
+Device artifact: ios-shell-d3s-demo-teardown-diagnostics-device-arm64
+IPA: build-products/SorrIOSShell-d3s-demo-teardown-diagnostics-adhoc.ipa
+Artifact size: 798554 bytes
+Result: success
+```
+
+The simulator shell job also passed in the same run. The device artifact passed the existing IPA layout/signature/forbidden-asset inspection.
+## D3S Title Re-Entry Diagnostic Artifact
+
+The workflow now produces a D3S follow-up artifact aimed at the post-demo return-to-title transition:
+
+```text
+ios-shell-d3s-title-reentry-diagnostics-device-arm64
+```
+
+IPA:
+
+```text
+build-products/SorrIOSShell-d3s-title-reentry-diagnostics-adhoc.ipa
+```
+
+Purpose:
+
+- keep real BGM/SFX enabled,
+- keep the IPA asset-free and continue using the existing D2-staged private data,
+- watch `INTRO`, `MENU`, `TROPHIES_CALL`, `TROPHIES_CONTROL`, and `RESOLUCIONX`,
+- log `runtime_family_unlink ...` lines with father/son/sibling ids before and after process hierarchy unlinking,
+- keep `destroy_begin` and post-unlink `destroy` lifecycle diagnostics for comparison.
+
+Expected CI checks remain unchanged: build iphoneos arm64, ad-hoc sign for Sideloadly, package `Payload/SorrIOSShell.app`, inspect Info.plist/architecture/signature, and verify the IPA contains no `SorR.dat`, `data/`, FPG/WAV/OGG/SMK/PNG assets, logs, or prepared data.
+
 GitHub-side D3S title re-entry artifact proof:
 
 ```text
@@ -1799,38 +1836,16 @@ Purpose:
 - keep `runtime_family_unlink ...`, `destroy_begin`, and post-unlink `destroy` lifecycle diagnostics.
 
 Expected CI checks remain unchanged: build iphoneos arm64, ad-hoc sign for Sideloadly, package `Payload/SorrIOSShell.app`, inspect Info.plist/architecture/signature, and verify the IPA contains no `SorR.dat`, `data/`, FPG/WAV/OGG/SMK/PNG assets, logs, or prepared data.
-GitHub-side D3S demo teardown artifact proof:
+
+GitHub-side D3S LAYER_INTRO artifact proof:
 
 ```text
-Actions run: 26598228033
-Commit: 8017ff7
-Device artifact: ios-shell-d3s-demo-teardown-diagnostics-device-arm64
-IPA: build-products/SorrIOSShell-d3s-demo-teardown-diagnostics-adhoc.ipa
-Artifact size: 798554 bytes
+Actions run: 26601081243
+Commit: 79342fe
+Device artifact: ios-shell-d3s-layer-intro-diagnostics-device-arm64
+IPA: build-products/SorrIOSShell-d3s-layer-intro-diagnostics-adhoc.ipa
+Artifact size: 799927 bytes
 Result: success
 ```
 
 The simulator shell job also passed in the same run. The device artifact passed the existing IPA layout/signature/forbidden-asset inspection.
-## D3S Title Re-Entry Diagnostic Artifact
-
-The workflow now produces a D3S follow-up artifact aimed at the post-demo return-to-title transition:
-
-```text
-ios-shell-d3s-title-reentry-diagnostics-device-arm64
-```
-
-IPA:
-
-```text
-build-products/SorrIOSShell-d3s-title-reentry-diagnostics-adhoc.ipa
-```
-
-Purpose:
-
-- keep real BGM/SFX enabled,
-- keep the IPA asset-free and continue using the existing D2-staged private data,
-- watch `INTRO`, `MENU`, `TROPHIES_CALL`, `TROPHIES_CONTROL`, and `RESOLUCIONX`,
-- log `runtime_family_unlink ...` lines with father/son/sibling ids before and after process hierarchy unlinking,
-- keep `destroy_begin` and post-unlink `destroy` lifecycle diagnostics for comparison.
-
-Expected CI checks remain unchanged: build iphoneos arm64, ad-hoc sign for Sideloadly, package `Payload/SorrIOSShell.app`, inspect Info.plist/architecture/signature, and verify the IPA contains no `SorR.dat`, `data/`, FPG/WAV/OGG/SMK/PNG assets, logs, or prepared data.
