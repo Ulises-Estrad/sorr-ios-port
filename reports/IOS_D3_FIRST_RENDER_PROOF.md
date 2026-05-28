@@ -189,6 +189,16 @@ Failure: g_blit.c passed a typed VERTEX comparator to qsort, which AppleClang re
 Fix: update compare_vertex_y to use the standard qsort comparator signature and cast to VERTEX internally
 ```
 
+Fourteenth D3 attempt:
+
+```text
+Commit: 1468e75
+Run: 26549773741
+Result: device compile failed
+Failure: dirs.c used GLOB_PERIOD, which is not provided by the iPhoneOS glob headers
+Fix: define GLOB_PERIOD as 0 when the platform headers do not provide it
+```
+
 The IPA must still contain no:
 
 - `SorR.dat`

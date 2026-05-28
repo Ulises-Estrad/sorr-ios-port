@@ -42,6 +42,10 @@
 #include <stdlib.h>
 #include <ctype.h>
 
+#ifndef GLOB_PERIOD
+#define GLOB_PERIOD 0
+#endif
+
 /* ------------------------------------------------------------------------------------ */
 /*
  *  FUNCTION : dir_path_convert

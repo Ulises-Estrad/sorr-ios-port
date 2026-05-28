@@ -1259,6 +1259,16 @@ Cause: g_blit.c passed a VERTEX-typed comparator to qsort; AppleClang requires t
 Fix: compare_vertex_y now uses the standard qsort callback ABI and casts to VERTEX internally
 ```
 
+Fourteenth D3 CI failure:
+
+```text
+Commit: 1468e75
+Run: 26549773741
+Failed step: Build unsigned iOS shell app for device
+Cause: dirs.c used GLOB_PERIOD, which is unavailable in the iPhoneOS glob headers
+Fix: define GLOB_PERIOD as 0 when the platform does not provide it
+```
+
 Manual D3 test flow:
 
 1. Keep the D2 data staged on the iPhone.
