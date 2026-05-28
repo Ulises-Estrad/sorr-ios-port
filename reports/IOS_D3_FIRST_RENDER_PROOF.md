@@ -57,6 +57,20 @@ Expected IPA inside the artifact:
 build-products/SorrIOSShell-d3-first-render-adhoc.ipa
 ```
 
+GitHub-side D3 artifact proof:
+
+```text
+Commit: d79a53a
+Run: https://github.com/Ulises-Estrad/sorr-ios-port/actions/runs/26549967383
+Artifact: ios-shell-d3-first-render-device-arm64
+Artifact size: 674040 bytes
+IPA inside artifact: build-products/SorrIOSShell-d3-first-render-adhoc.ipa
+IPA size: 598798 bytes
+Result: success
+Asset status: no SorR.dat, data/, FPG/WAV/OGG/SMK/PNG assets, or prepared game data in the IPA
+Physical iPhone result: pending manual Sideloadly install/test
+```
+
 ## CI Iterations
 
 First D3 attempt:
@@ -199,6 +213,18 @@ Failure: dirs.c used GLOB_PERIOD, which is not provided by the iPhoneOS glob hea
 Fix: define GLOB_PERIOD as 0 when the platform headers do not provide it
 ```
 
+Fifteenth D3 attempt:
+
+```text
+Commit: d79a53a
+Run: 26549967383
+Result: device IPA artifact produced successfully
+Artifact: ios-shell-d3-first-render-device-arm64
+IPA: build-products/SorrIOSShell-d3-first-render-adhoc.ipa
+Asset scan: passed
+Physical iPhone result: pending manual Sideloadly install/test
+```
+
 The IPA must still contain no:
 
 - `SorR.dat`
@@ -243,6 +269,7 @@ The title/menu/city scene are all acceptable first-render proof targets.
 5. Open `SorrIOSShell` on the iPhone.
 6. If the D2 staged data is present, expect the app to briefly show a D3 status screen and then attempt real SoRR rendering.
 7. If the D2 staged data is missing, expect the app to show a D3/D2 missing-data status screen instead of a silent black screen.
+8. Stop after observing whether real SoRR pixels render; do not proceed to D4 controls or D5 gameplay until the physical D3 result is reported.
 
 ## Logs
 

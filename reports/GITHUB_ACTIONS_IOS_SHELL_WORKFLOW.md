@@ -1107,6 +1107,20 @@ Expected IPA inside the artifact:
 build-products/SorrIOSShell-d3-first-render-adhoc.ipa
 ```
 
+Current D3 artifact proof:
+
+```text
+Commit: d79a53a
+Run: https://github.com/Ulises-Estrad/sorr-ios-port/actions/runs/26549967383
+Workflow result: success
+Device artifact: ios-shell-d3-first-render-device-arm64
+Artifact size: 674040 bytes
+IPA: build-products/SorrIOSShell-d3-first-render-adhoc.ipa
+IPA size: 598798 bytes
+Asset inspection: passed, no SorR.dat/data/assets bundled
+Physical iPhone result: pending manual Sideloadly install/test
+```
+
 The D3 IPA is still asset-free. The workflow inspection continues to fail if the IPA contains:
 
 ```text
@@ -1267,6 +1281,17 @@ Run: 26549773741
 Failed step: Build unsigned iOS shell app for device
 Cause: dirs.c used GLOB_PERIOD, which is unavailable in the iPhoneOS glob headers
 Fix: define GLOB_PERIOD as 0 when the platform does not provide it
+```
+
+Fifteenth D3 CI result:
+
+```text
+Commit: d79a53a
+Run: 26549967383
+Result: success
+Device artifact: ios-shell-d3-first-render-device-arm64
+IPA: build-products/SorrIOSShell-d3-first-render-adhoc.ipa
+Asset inspection: passed
 ```
 
 Manual D3 test flow:

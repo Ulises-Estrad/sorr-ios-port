@@ -326,6 +326,20 @@ Artifact: ios-shell-d3-first-render-device-arm64
 IPA: build-products/SorrIOSShell-d3-first-render-adhoc.ipa
 ```
 
+D3 GitHub-side artifact proof:
+
+```text
+Commit: d79a53a
+Run: https://github.com/Ulises-Estrad/sorr-ios-port/actions/runs/26549967383
+Workflow result: success
+Artifact: ios-shell-d3-first-render-device-arm64
+Artifact size: 674040 bytes
+IPA: build-products/SorrIOSShell-d3-first-render-adhoc.ipa
+IPA size: 598798 bytes
+Asset inspection: passed, no SorR.dat/data/assets bundled
+Physical iPhone result: pending manual Sideloadly install/test
+```
+
 D3 implementation strategy:
 
 - keep the D2 preflight and visible status screen,
