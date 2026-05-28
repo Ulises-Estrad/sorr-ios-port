@@ -354,6 +354,18 @@ ios-shell-d3s-visible-diagnostics-device-arm64
 build-products/SorrIOSShell-d3s-visible-diagnostics-adhoc.ipa
 ```
 
+D3S visible diagnostics artifact proof:
+
+```text
+Actions run: 26552137370
+Artifact: ios-shell-d3s-visible-diagnostics-device-arm64
+Artifact size: 675260 bytes
+IPA: build-products/SorrIOSShell-d3s-visible-diagnostics-adhoc.ipa
+Artifact-producing commit: 692c73b
+Device job result: success
+Game data/assets bundled in IPA: no
+```
+
 ## Out Of Scope
 
 - touch controls,

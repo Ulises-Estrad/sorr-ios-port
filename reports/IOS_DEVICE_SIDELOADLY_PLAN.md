@@ -309,4 +309,16 @@ ios-shell-d3s-visible-diagnostics-device-arm64
 build-products/SorrIOSShell-d3s-visible-diagnostics-adhoc.ipa
 ```
 
+GitHub-side artifact proof:
+
+```text
+Actions run: 26552137370
+Artifact: ios-shell-d3s-visible-diagnostics-device-arm64
+Artifact size: 675260 bytes
+IPA: build-products/SorrIOSShell-d3s-visible-diagnostics-adhoc.ipa
+Artifact-producing commit: 692c73b
+Device job result: success
+Game data/assets bundled in IPA: no
+```
+
 After an idle exit, reopen the app once, then open Files and retrieve the last 20 lines from `SORR_DIAGNOSTICS/ios_d3_runtime_stability_probe.txt`.
