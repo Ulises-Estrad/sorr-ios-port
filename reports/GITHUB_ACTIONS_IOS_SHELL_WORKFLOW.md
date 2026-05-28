@@ -1844,6 +1844,32 @@ If additional context is needed, also retrieve:
 ```text
 On My iPhone/SorrIOSShell/SORR_DIAGNOSTICS/ios_current_run_stability_log.txt
 ```
+
+First D4a CI iteration:
+
+```text
+Actions run: 26607336464
+Commit: d4e2983
+Device artifact: ios-shell-d4a-fixed-touch-guarded-device-arm64
+Device job result: success
+Simulator job result: failed during shell build
+```
+
+Cause:
+
+- the D4a overlay was compiled into the simulator shell-only target,
+- the simulator shell-only target does not link the Bennu `mod_key` module,
+- the touch bridge still referenced `sorr_ios_touch_set_bennu_key`.
+
+Fix:
+
+- keep direct Bennu key injection for `SORR_IOS_D3_FIRST_RENDER` builds,
+- provide a no-op key sink for the simulator shell-only build.
+
+Expected next run:
+
+- simulator shell build should link again,
+- device job should continue producing `ios-shell-d4a-fixed-touch-guarded-device-arm64`.
 ## D3S Enemy/HUD Guard Artifact
 
 The workflow now produces a D3S patch artifact aimed at the confirmed `SIGSEGV` after enemy/HUD child-process teardown:

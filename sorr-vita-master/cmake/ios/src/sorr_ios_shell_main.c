@@ -120,7 +120,15 @@ typedef struct sorr_ios_data_layout
     bool d2_import_failed;
 } sorr_ios_data_layout;
 
+#ifdef SORR_IOS_D3_FIRST_RENDER
 static void sorr_ios_d3_stability_log(const sorr_ios_data_layout *layout, const char *format, ...);
+#else
+static void sorr_ios_d3_stability_log(const sorr_ios_data_layout *layout, const char *format, ...)
+{
+    (void)layout;
+    (void)format;
+}
+#endif
 
 #define SORR_IOS_STATUS_MAX_LINES 16
 #define SORR_IOS_STATUS_LINE_LEN 96
@@ -325,7 +333,15 @@ static void sorr_ios_draw_status(SDL_Renderer *renderer)
 }
 
 #ifdef TARGET_IOS
+#ifdef SORR_IOS_D3_FIRST_RENDER
 void sorr_ios_touch_set_bennu_key(int code, int pressed);
+#else
+static void sorr_ios_touch_set_bennu_key(int code, int pressed)
+{
+    (void)code;
+    (void)pressed;
+}
+#endif
 
 #define SORR_IOS_D4A_TOUCH_BUTTON_COUNT 10
 #define SORR_IOS_D4A_TOUCH_FINGER_COUNT 16
@@ -641,6 +657,13 @@ void sorr_ios_d4a_draw_touch_overlay(SDL_Renderer *renderer)
     }
 
     SDL_SetRenderDrawBlendMode(renderer, old_blend);
+}
+#endif
+
+#ifndef SORR_IOS_D3_FIRST_RENDER
+static void sorr_ios_d4a_prepare_run_logs(const sorr_ios_data_layout *layout)
+{
+    (void)layout;
 }
 #endif
 
