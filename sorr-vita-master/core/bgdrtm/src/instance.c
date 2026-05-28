@@ -73,6 +73,16 @@ volatile int sorr_ios_d3_live_instance_count = 0;
 void sorr_ios_d3_note_instance_create( const INSTANCE * r );
 void sorr_ios_d3_note_instance_destroy_begin( const INSTANCE * r );
 void sorr_ios_d3_note_instance_destroy( const INSTANCE * r );
+void sorr_ios_d3_note_family_unlink( const INSTANCE * r,
+                                     uint32_t father_id,
+                                     uint32_t father_son_before,
+                                     uint32_t father_son_after,
+                                     uint32_t bigbro_id,
+                                     uint32_t bigbro_smallbro_before,
+                                     uint32_t bigbro_smallbro_after,
+                                     uint32_t smallbro_id,
+                                     uint32_t smallbro_bigbro_before,
+                                     uint32_t smallbro_bigbro_after );
 #endif
 
 /* Priority lists */
@@ -618,6 +628,10 @@ void instance_destroy( INSTANCE * r )
     int n ;
 
 #ifdef SORR_IOS_D3_FIRST_RENDER
+    uint32_t d3_father_id = 0, d3_bigbro_id = 0, d3_smallbro_id = 0;
+    uint32_t d3_father_son_before = 0, d3_father_son_after = 0;
+    uint32_t d3_bigbro_smallbro_before = 0, d3_bigbro_smallbro_after = 0;
+    uint32_t d3_smallbro_bigbro_before = 0, d3_smallbro_bigbro_after = 0;
     sorr_ios_d3_note_instance_destroy_begin( r );
 #endif
 
@@ -636,13 +650,39 @@ void instance_destroy( INSTANCE * r )
     /* Actualiza árbol de jerarquias */
 
     bigbro = instance_get( LOCDWORD( r, BIGBRO ) ) ; /* Tengo hermano mayor? */
+    smallbro = instance_get( LOCDWORD( r, SMALLBRO ) ) ; /* Tengo hermano menor? */
+    father = instance_get( LOCDWORD( r, FATHER ) ) ; /* Tengo padre? */
+
+#ifdef SORR_IOS_D3_FIRST_RENDER
+    d3_bigbro_id = LOCDWORD( r, BIGBRO );
+    d3_smallbro_id = LOCDWORD( r, SMALLBRO );
+    d3_father_id = LOCDWORD( r, FATHER );
+    d3_bigbro_smallbro_before = bigbro ? LOCDWORD( bigbro, SMALLBRO ) : 0;
+    d3_smallbro_bigbro_before = smallbro ? LOCDWORD( smallbro, BIGBRO ) : 0;
+    d3_father_son_before = father ? LOCDWORD( father, SON ) : 0;
+#endif
+
     if ( bigbro ) LOCDWORD( bigbro, SMALLBRO ) = LOCDWORD( r, SMALLBRO ) ; /* El hermano menor de mi hermano mayor es mi hermano menor */
 
-    smallbro = instance_get( LOCDWORD( r, SMALLBRO ) ) ; /* Tengo hermano menor? */
     if ( smallbro ) LOCDWORD( smallbro, BIGBRO ) = LOCDWORD( r, BIGBRO ) ; /* El hermano mayor de mi hermano menor es mi hermano mayor */
 
-    father = instance_get( LOCDWORD( r, FATHER ) ) ; /* Tengo padre? */
     if ( father && instance_get( LOCDWORD( father, SON ) ) == r ) LOCDWORD( father, SON ) = LOCDWORD( r, BIGBRO ); /* Si tengo padre y soy el hijo menor, mi hermano mayor pasa a ser el menor hijo de mi padre */
+
+#ifdef SORR_IOS_D3_FIRST_RENDER
+    d3_bigbro_smallbro_after = bigbro ? LOCDWORD( bigbro, SMALLBRO ) : 0;
+    d3_smallbro_bigbro_after = smallbro ? LOCDWORD( smallbro, BIGBRO ) : 0;
+    d3_father_son_after = father ? LOCDWORD( father, SON ) : 0;
+    sorr_ios_d3_note_family_unlink( r,
+                                    d3_father_id,
+                                    d3_father_son_before,
+                                    d3_father_son_after,
+                                    d3_bigbro_id,
+                                    d3_bigbro_smallbro_before,
+                                    d3_bigbro_smallbro_after,
+                                    d3_smallbro_id,
+                                    d3_smallbro_bigbro_before,
+                                    d3_smallbro_bigbro_after );
+#endif
 
     /* Quita la instancia de la lista */
 

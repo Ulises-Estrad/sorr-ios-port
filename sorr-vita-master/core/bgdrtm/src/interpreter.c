@@ -398,6 +398,8 @@ char sorr_ios_d3_visible_event_log_path[1024] = "";
 
 static const char * const sorr_ios_d3_watch_proc_names[] = {
     "CONTROLADOR",
+    "INTRO",
+    "MENU",
     "FASE1",
     "DESCARGA_SISTEMA",
     "SISTEMA_SONIDO",
@@ -412,10 +414,12 @@ static const char * const sorr_ios_d3_watch_proc_names[] = {
     "LETRA_NOMBRE",
     "MINI_CUADRO1",
     "TITULO",
+    "TROPHIES_CALL",
     "TROPHIES_CONTROL",
     "PERSONAJES",
     "CUADRO",
-    "OSCURECE_PANTALLA"
+    "OSCURECE_PANTALLA",
+    "RESOLUCIONX"
 };
 #define SORR_IOS_D3_WATCH_PROC_COUNT ( sizeof( sorr_ios_d3_watch_proc_names ) / sizeof( sorr_ios_d3_watch_proc_names[0] ) )
 #define SORR_IOS_D3_EVENT_SLOT_COUNT 12
@@ -587,6 +591,52 @@ void sorr_ios_d3_note_instance_destroy( const INSTANCE * r )
     sorr_ios_d3_instance_destroyed_count++;
     sorr_ios_d3_copy_proc_name( sorr_ios_d3_last_destroyed_proc_name, sizeof( sorr_ios_d3_last_destroyed_proc_name ), r );
     sorr_ios_d3_note_lifecycle_event( "destroy", r );
+}
+
+void sorr_ios_d3_note_family_unlink( const INSTANCE * r,
+                                     uint32_t father_id,
+                                     uint32_t father_son_before,
+                                     uint32_t father_son_after,
+                                     uint32_t bigbro_id,
+                                     uint32_t bigbro_smallbro_before,
+                                     uint32_t bigbro_smallbro_after,
+                                     uint32_t smallbro_id,
+                                     uint32_t smallbro_bigbro_before,
+                                     uint32_t smallbro_bigbro_after )
+{
+    const char * name = ( r && r->proc && r->proc->name ) ? r->proc->name : "null";
+    int watch_index = sorr_ios_d3_watch_proc_index( name );
+    char line[768];
+
+    if ( watch_index < 0 && father_id == 0 && bigbro_id == 0 && smallbro_id == 0 ) return;
+
+    snprintf(
+        line,
+        sizeof( line ),
+        "runtime_family_unlink %s#%u:s%d:f%d:o%d:p%d father=%u son_before=%u son_after=%u bigbro=%u smallbro_before=%u smallbro_after=%u smallbro=%u bigbro_before=%u bigbro_after=%u father_ok=%d bigbro_ok=%d smallbro_ok=%d watch=%d created=%u destroyed=%u",
+        name,
+        r ? LOCDWORD( r, PROCESS_ID ) : 0,
+        r ? LOCDWORD( r, STATUS ) : 0,
+        r ? LOCINT32( r, FRAME_PERCENT ) : 0,
+        ( r && r->code && r->codeptr ) ? ( int )( r->codeptr - r->code ) : -1,
+        r ? LOCINT32( r, PRIORITY ) : 0,
+        father_id,
+        father_son_before,
+        father_son_after,
+        bigbro_id,
+        bigbro_smallbro_before,
+        bigbro_smallbro_after,
+        smallbro_id,
+        smallbro_bigbro_before,
+        smallbro_bigbro_after,
+        father_id ? ( instance_get( father_id ) != NULL ) : 0,
+        bigbro_id ? ( instance_get( bigbro_id ) != NULL ) : 0,
+        smallbro_id ? ( instance_get( smallbro_id ) != NULL ) : 0,
+        watch_index,
+        sorr_ios_d3_instance_created_count,
+        sorr_ios_d3_instance_destroyed_count
+    );
+    sorr_ios_d3_append_visible_event_line( line );
 }
 
 static void sorr_ios_d3_note_instance_run( const INSTANCE * r )

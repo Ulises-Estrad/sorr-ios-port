@@ -1775,3 +1775,26 @@ Result: success
 ```
 
 The simulator shell job also passed in the same run. The device artifact passed the existing IPA layout/signature/forbidden-asset inspection.
+## D3S Title Re-Entry Diagnostic Artifact
+
+The workflow now produces a D3S follow-up artifact aimed at the post-demo return-to-title transition:
+
+```text
+ios-shell-d3s-title-reentry-diagnostics-device-arm64
+```
+
+IPA:
+
+```text
+build-products/SorrIOSShell-d3s-title-reentry-diagnostics-adhoc.ipa
+```
+
+Purpose:
+
+- keep real BGM/SFX enabled,
+- keep the IPA asset-free and continue using the existing D2-staged private data,
+- watch `INTRO`, `MENU`, `TROPHIES_CALL`, `TROPHIES_CONTROL`, and `RESOLUCIONX`,
+- log `runtime_family_unlink ...` lines with father/son/sibling ids before and after process hierarchy unlinking,
+- keep `destroy_begin` and post-unlink `destroy` lifecycle diagnostics for comparison.
+
+Expected CI checks remain unchanged: build iphoneos arm64, ad-hoc sign for Sideloadly, package `Payload/SorrIOSShell.app`, inspect Info.plist/architecture/signature, and verify the IPA contains no `SorR.dat`, `data/`, FPG/WAV/OGG/SMK/PNG assets, logs, or prepared data.

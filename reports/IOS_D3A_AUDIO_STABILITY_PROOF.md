@@ -500,3 +500,20 @@ Status: produced successfully.
 - Artifact size: `798554` bytes
 
 The IPA remains asset-free and uses only the D2-staged private data on-device. Use this build to capture the next physical-device teardown log around `FASE1`, `DESCARGA_SISTEMA`, `SISTEMA_SONIDO`, `ASIGNADOR_ENEMIGO`, HUD/effect process cleanup, and title/menu re-entry.
+## D3S Title Re-Entry Diagnostic Target
+
+Latest physical diagnostics show the demo teardown gets past enemy/stage cleanup and returns to a tiny title/intro/trophies process set before the app exits. Audio remains healthy and enabled, so this target focuses on process hierarchy integrity during title re-entry.
+
+Target artifact:
+
+- `ios-shell-d3s-title-reentry-diagnostics-device-arm64`
+- `build-products/SorrIOSShell-d3s-title-reentry-diagnostics-adhoc.ipa`
+
+Added diagnostics:
+
+- explicit watchlist entries for `INTRO`, `MENU`, `TROPHIES_CALL`, `TROPHIES_CONTROL`, and `RESOLUCIONX`,
+- direct `runtime_family_unlink ...` lines showing parent/child/sibling ids before and after `instance_destroy` hierarchy unlinking,
+- continued `destroy_begin` and post-unlink `destroy` lifecycle lines with called-by validity,
+- Files-visible README updated to request `runtime_family_unlink` lines after a crash.
+
+Manual test: install the IPA with Sideloadly, leave the app foregrounded/untouched until it exits or 10-15 minutes pass, reopen once if needed, then report the last 150-200 lines of `On My iPhone/SorrIOSShell/SORR_DIAGNOSTICS/ios_d3_runtime_stability_probe.txt`.

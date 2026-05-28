@@ -645,3 +645,13 @@ The D3S demo teardown diagnostic IPA was produced successfully:
 - Artifact size: `798554` bytes
 
 Next manual step is physical iPhone testing with the existing D2-staged data. D4a remains blocked until this teardown transition log identifies the failure point or narrows the crash to a subsystem outside input.
+## D3S Title Re-Entry Follow-Up
+
+The latest D3S phone log indicates the app survives the attract/demo cleanup and then exits during or just after title/intro/trophies/menu re-entry. D3 first render and D3A audio remain achieved; D4a fixed touch input stays blocked while the stability issue is narrowed.
+
+Next diagnostic artifact:
+
+- `ios-shell-d3s-title-reentry-diagnostics-device-arm64`
+- `build-products/SorrIOSShell-d3s-title-reentry-diagnostics-adhoc.ipa`
+
+This build keeps BGM/SFX enabled and logs the process family unlink path for the suspected title re-entry processes. The key new marker is `runtime_family_unlink`, which records father/son/sibling ids before and after `instance_destroy` updates hierarchy links. The goal is to determine whether `MENU` teardown leaves `INTRO`, trophies, or resolution helper processes with stale parent/child/called-by relationships.

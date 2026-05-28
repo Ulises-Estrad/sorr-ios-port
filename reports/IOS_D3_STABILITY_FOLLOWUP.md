@@ -318,3 +318,15 @@ Produced successfully:
 - Artifact size: `798554` bytes
 
 This is the current recommended physical iPhone diagnostic IPA for the five-minute D3S exit. It keeps real BGM/SFX enabled, uses the existing D2-staged data, and does not bundle game data/assets in the IPA.
+## D3S Title Re-Entry Diagnostics
+
+Latest physical demo-teardown feedback narrows the remaining exit to the return-to-title/intro/trophies/menu transition. The final visible state showed `INTRO`, `CONTROLADOR`, and `TROPHIES_CONTROL` alive, with `MENU` as the last destroyed process and `RESOLUCIONX` as the last created process. D3 first render and D3A audio remain achieved; this remains a D3S stability hardening pass, not D4a input work.
+
+Next artifact target:
+
+- `ios-shell-d3s-title-reentry-diagnostics-device-arm64`
+- `build-products/SorrIOSShell-d3s-title-reentry-diagnostics-adhoc.ipa`
+
+This build keeps BGM/SFX enabled and adds focused watch coverage for `INTRO`, `MENU`, `TROPHIES_CALL`, `TROPHIES_CONTROL`, and `RESOLUCIONX`. It also mirrors `runtime_family_unlink ...` lines into the Files-visible diagnostics log, capturing father/son/sibling ids before and after Bennu unlinks a dying process from the hierarchy.
+
+When testing, report the last 150-200 lines from `Documents/SORR_DIAGNOSTICS/ios_d3_runtime_stability_probe.txt`, especially `runtime_family_unlink`, `runtime_lifecycle ... MENU`, `runtime_lifecycle ... INTRO`, `TROPHIES_CALL`, `TROPHIES_CONTROL`, `RESOLUCIONX`, `runtime_snapshot`, and any `signal=` line.
