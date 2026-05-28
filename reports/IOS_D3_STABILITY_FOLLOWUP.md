@@ -436,3 +436,22 @@ Produced successfully:
 - Simulator job result: success
 
 This is the current recommended physical iPhone D3S patch IPA. It keeps real BGM/SFX enabled, uses the existing D2-staged data, does not bundle game data/assets, and should be tested by leaving the app foregrounded for 10-15 minutes.
+
+## D3S ENEMIGO Lookup Guard Patch
+
+The previous enemy/HUD remote-pointer guard did not trigger before the repeated `SIGSEGV`, so the next patch focuses on process-id lookups rather than stack pointer ownership.
+
+Patch details:
+
+- `instance_get(id)` now validates, in the iOS/D3S build only, that the hash-slot candidate is still live and that its `PROCESS_ID` exactly matches the requested id.
+- Dead hash-slot pointers and id mismatches return `NULL` instead of handing a stale or wrong process pointer to enemy/HUD code.
+- A small recently-destroyed process ring records destroyed process id, name, family ids, caller id, and runtime-run count.
+- Guarded enemy/HUD lookup events are mirrored to Files-visible diagnostics as `runtime_enemigo_lookup_guard ...`.
+- Heartbeats and signal logs now include `runtime_lookup_guards`, `runtime_last_lookup_id`, `runtime_last_lookup_result`, and `runtime_last_lookup`.
+
+Next artifact target:
+
+- `ios-shell-d3s-enemigo-lookup-guard-device-arm64`
+- `build-products/SorrIOSShell-d3s-enemigo-lookup-guard-adhoc.ipa`
+
+Testing remains the same: install with Sideloadly, leave the app foregrounded for 10-15 minutes, and report whether it survives past the old five-minute attract/demo crash window. If it still exits, retrieve `Documents/SORR_DIAGNOSTICS/ios_d3_runtime_stability_probe.txt` and report the last 150-250 lines, especially `runtime_enemigo_lookup_guard`, `signal=`, `last_lookup=`, `last_lifecycle=`, `last_family=`, and `last_render=`.

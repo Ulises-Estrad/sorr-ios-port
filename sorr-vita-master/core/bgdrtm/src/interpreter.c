@@ -514,6 +514,10 @@ char sorr_ios_d3_last_destroyed_proc_name[64] = "none";
 char sorr_ios_d3_last_lifecycle_event[384] = "lifecycle=none";
 char sorr_ios_d3_last_family_unlink[768] = "family=none";
 char sorr_ios_d3_last_render_event[768] = "render=none";
+volatile unsigned int sorr_ios_d3_lookup_guard_count = 0;
+volatile unsigned int sorr_ios_d3_last_lookup_id = 0;
+volatile unsigned int sorr_ios_d3_last_lookup_result_id = 0;
+char sorr_ios_d3_last_lookup_event[1024] = "lookup=none";
 char sorr_ios_d3_runtime_snapshot[2048] = "snapshot=uninitialized";
 char sorr_ios_d3_lifecycle_events[1536] = "events=none";
 char sorr_ios_d3_visible_event_log_path[1024] = "";
@@ -539,6 +543,8 @@ static const char * const sorr_ios_d3_watch_proc_names[] = {
     "EFECTO_POLVO",
     "LETRA_NOMBRE",
     "MINI_CUADRO1",
+    "RECUADRO1",
+    "EFECTO_GOLPE",
     "TITULO",
     "TROPHIES_CALL",
     "TROPHIES_CONTROL",
@@ -556,6 +562,24 @@ static volatile unsigned int sorr_ios_d3_watch_create_count[SORR_IOS_D3_WATCH_PR
 static volatile unsigned int sorr_ios_d3_watch_destroy_count[SORR_IOS_D3_WATCH_PROC_COUNT];
 static char sorr_ios_d3_event_slots[SORR_IOS_D3_EVENT_SLOT_COUNT][SORR_IOS_D3_EVENT_SLOT_SIZE];
 static unsigned int sorr_ios_d3_event_slot_pos = 0;
+
+#define SORR_IOS_D3_DESTROYED_RING_COUNT 64
+
+typedef struct SORR_IOS_D3_DESTROYED_ENTRY
+{
+    uint32_t id;
+    uint32_t father_id;
+    uint32_t son_id;
+    uint32_t smallbro_id;
+    uint32_t bigbro_id;
+    uint32_t called_by_id;
+    unsigned int destroy_run_count;
+    unsigned int destroy_seq;
+    char name[64];
+} SORR_IOS_D3_DESTROYED_ENTRY;
+
+static SORR_IOS_D3_DESTROYED_ENTRY sorr_ios_d3_destroyed_ring[SORR_IOS_D3_DESTROYED_RING_COUNT];
+static unsigned int sorr_ios_d3_destroyed_ring_pos = 0;
 
 static int sorr_ios_d3_name_equal_fold( const char * a, const char * b )
 {
@@ -586,6 +610,47 @@ static int sorr_ios_d3_watch_proc_index( const char * name )
     }
 
     return -1;
+}
+
+static int sorr_ios_d3_enemy_related_name( const char * name )
+{
+    static const char * const names[] = {
+        "ENEMIGO",
+        "ESCRIBE_ENEMIGO",
+        "BARRA_NEGRA",
+        "BARRA_SEC_VIDA1",
+        "BARRA_VIDA1",
+        "EFECTO_POLVO",
+        "EFECTO_GOLPE",
+        "LETRA_NOMBRE",
+        "MINI_CUADRO1",
+        "RECUADRO1",
+        "SOMBRA",
+        "ESTIRAMIENTO"
+    };
+    unsigned int n;
+
+    for ( n = 0; n < sizeof( names ) / sizeof( names[0] ); n++ )
+    {
+        if ( sorr_ios_d3_name_equal_fold( name, names[n] ) ) return 1;
+    }
+
+    return 0;
+}
+
+static const SORR_IOS_D3_DESTROYED_ENTRY * sorr_ios_d3_find_recent_destroyed( uint32_t id )
+{
+    unsigned int n;
+
+    if ( !id ) return NULL;
+
+    for ( n = 0; n < SORR_IOS_D3_DESTROYED_RING_COUNT; n++ )
+    {
+        const SORR_IOS_D3_DESTROYED_ENTRY * entry = &sorr_ios_d3_destroyed_ring[n];
+        if ( entry->id == id ) return entry;
+    }
+
+    return NULL;
 }
 
 static void sorr_ios_d3_rebuild_lifecycle_events( void )
@@ -702,6 +767,82 @@ static void sorr_ios_d3_copy_proc_name( char * dst, size_t dst_size, const INSTA
     snprintf( dst, dst_size, "%s", name );
 }
 
+static void sorr_ios_d3_record_recent_destroyed( const INSTANCE * r )
+{
+    SORR_IOS_D3_DESTROYED_ENTRY * entry;
+
+    if ( !r ) return;
+
+    entry = &sorr_ios_d3_destroyed_ring[sorr_ios_d3_destroyed_ring_pos++ % SORR_IOS_D3_DESTROYED_RING_COUNT];
+    memset( entry, 0, sizeof( *entry ) );
+    entry->id = LOCDWORD( r, PROCESS_ID );
+    entry->father_id = LOCDWORD( r, FATHER );
+    entry->son_id = LOCDWORD( r, SON );
+    entry->smallbro_id = LOCDWORD( r, SMALLBRO );
+    entry->bigbro_id = LOCDWORD( r, BIGBRO );
+    entry->called_by_id = ( r->called_by && instance_exists( r->called_by ) ) ? LOCDWORD( r->called_by, PROCESS_ID ) : 0;
+    entry->destroy_run_count = sorr_ios_d3_instance_run_count;
+    entry->destroy_seq = sorr_ios_d3_instance_destroyed_count + 1;
+    sorr_ios_d3_copy_proc_name( entry->name, sizeof( entry->name ), r );
+}
+
+void sorr_ios_d3_note_instance_lookup( int requested_id, const INSTANCE * candidate, const char * reason )
+{
+    const INSTANCE * current = ( const INSTANCE * )( uintptr_t )sorr_ios_d3_current_proc_ptr;
+    int current_exists = current ? instance_exists( ( INSTANCE * )current ) : 0;
+    const char * current_name = ( current_exists && current->proc && current->proc->name ) ? current->proc->name : "dead";
+    uint32_t current_id = current_exists ? LOCDWORD( current, PROCESS_ID ) : 0;
+    int current_status = current_exists ? LOCDWORD( current, STATUS ) : 0;
+    int current_frame = current_exists ? LOCINT32( current, FRAME_PERCENT ) : 0;
+    int current_code_offset = ( current_exists && current->code && current->codeptr ) ? ( int )( current->codeptr - current->code ) : -1;
+    int current_is_enemy = current_exists ? sorr_ios_d3_enemy_related_name( current_name ) : 0;
+    int candidate_exists = candidate ? instance_exists( ( INSTANCE * )candidate ) : 0;
+    const char * candidate_name = ( candidate_exists && candidate->proc && candidate->proc->name ) ? candidate->proc->name : ( candidate ? "dead" : "null" );
+    uint32_t candidate_id = candidate_exists ? LOCDWORD( candidate, PROCESS_ID ) : 0;
+    const SORR_IOS_D3_DESTROYED_ENTRY * recent = sorr_ios_d3_find_recent_destroyed( ( uint32_t )requested_id );
+    int reason_is_mismatch = reason && strcmp( reason, "id-mismatch" ) == 0;
+    int reason_is_dead_slot = reason && strcmp( reason, "dead-slot" ) == 0;
+    char line[1024];
+
+    if ( !current_is_enemy && !recent && !reason_is_mismatch && !reason_is_dead_slot ) return;
+
+    sorr_ios_d3_lookup_guard_count++;
+    sorr_ios_d3_last_lookup_id = ( unsigned int )requested_id;
+    sorr_ios_d3_last_lookup_result_id = candidate_id;
+
+    snprintf(
+        line,
+        sizeof( line ),
+        "runtime_enemigo_lookup_guard guard=%u reason=%s current=%s#%u:s%d:f%d:o%d requested=%d candidate=%s#%u candidate_ptr=%p candidate_exists=%d recent=%d recent_name=%s recent_destroy_run=%u recent_destroy_seq=%u recent_fam=%u/%u/%u/%u recent_cb=%u last_lifecycle=%s last_family=%s last_render=%s",
+        sorr_ios_d3_lookup_guard_count,
+        reason ? reason : "lookup",
+        current_name,
+        current_id,
+        current_status,
+        current_frame,
+        current_code_offset,
+        requested_id,
+        candidate_name,
+        candidate_id,
+        ( const void * )candidate,
+        candidate_exists,
+        recent ? 1 : 0,
+        recent ? recent->name : "none",
+        recent ? recent->destroy_run_count : 0,
+        recent ? recent->destroy_seq : 0,
+        recent ? recent->father_id : 0,
+        recent ? recent->son_id : 0,
+        recent ? recent->smallbro_id : 0,
+        recent ? recent->bigbro_id : 0,
+        recent ? recent->called_by_id : 0,
+        sorr_ios_d3_last_lifecycle_event,
+        sorr_ios_d3_last_family_unlink,
+        sorr_ios_d3_last_render_event
+    );
+    snprintf( sorr_ios_d3_last_lookup_event, sizeof( sorr_ios_d3_last_lookup_event ), "%s", line );
+    sorr_ios_d3_append_visible_event_line( line );
+}
+
 void sorr_ios_d3_note_instance_create( const INSTANCE * r )
 {
     sorr_ios_d3_instance_created_count++;
@@ -715,6 +856,7 @@ void sorr_ios_d3_note_instance_destroy_begin( const INSTANCE * r )
 }
 void sorr_ios_d3_note_instance_destroy( const INSTANCE * r )
 {
+    sorr_ios_d3_record_recent_destroyed( r );
     sorr_ios_d3_instance_destroyed_count++;
     sorr_ios_d3_copy_proc_name( sorr_ios_d3_last_destroyed_proc_name, sizeof( sorr_ios_d3_last_destroyed_proc_name ), r );
     sorr_ios_d3_note_lifecycle_event( "destroy", r );

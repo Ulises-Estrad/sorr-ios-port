@@ -73,6 +73,7 @@ volatile int sorr_ios_d3_live_instance_count = 0;
 void sorr_ios_d3_note_instance_create( const INSTANCE * r );
 void sorr_ios_d3_note_instance_destroy_begin( const INSTANCE * r );
 void sorr_ios_d3_note_instance_destroy( const INSTANCE * r );
+void sorr_ios_d3_note_instance_lookup( int requested_id, const INSTANCE * candidate, const char * reason );
 void sorr_ios_d3_note_family_unlink( const INSTANCE * r,
                                      uint32_t father_id,
                                      uint32_t father_son_before,
@@ -109,7 +110,11 @@ void instance_add_to_list_by_id( INSTANCE * r, uint32_t id )
 
 void instance_remove_from_list_by_id( INSTANCE * r, uint32_t id )
 {
+#ifdef SORR_IOS_D3_FIRST_RENDER
+    if ( hashed_by_id && hashed_by_id[HASH( id )] == r ) hashed_by_id[HASH( id )] = NULL;
+#else
     hashed_by_id[HASH( id )] = NULL;
+#endif
 }
 
 /* ---------------------------------------------------------------------- */
@@ -261,8 +266,33 @@ void instance_dirty( INSTANCE * i )
 
 INSTANCE * instance_get( int id )
 {
+    INSTANCE * r;
+
     if ( !hashed_by_id || !id ) return NULL;
-    return ( hashed_by_id[HASH( id )] );
+
+    r = hashed_by_id[HASH( id )];
+
+#ifdef SORR_IOS_D3_FIRST_RENDER
+    if ( !r )
+    {
+        sorr_ios_d3_note_instance_lookup( id, NULL, "missing" );
+        return NULL;
+    }
+
+    if ( !instance_exists( r ) )
+    {
+        sorr_ios_d3_note_instance_lookup( id, r, "dead-slot" );
+        return NULL;
+    }
+
+    if ( LOCDWORD( r, PROCESS_ID ) != ( uint32_t )id )
+    {
+        sorr_ios_d3_note_instance_lookup( id, r, "id-mismatch" );
+        return NULL;
+    }
+#endif
+
+    return r;
 }
 
 /* ---------------------------------------------------------------------- */

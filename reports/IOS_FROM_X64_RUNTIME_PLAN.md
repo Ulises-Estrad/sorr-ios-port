@@ -737,3 +737,16 @@ The D3S enemy/HUD guard IPA was produced successfully:
 - Simulator job result: success
 
 Next manual step is physical iPhone testing with the existing D2-staged data. D4a remains blocked until this guard build either survives past the old five-minute window or produces new `runtime_stale_process_ref` / `signal=` breadcrumbs.
+
+## D3S ENEMIGO Lookup Guard Follow-Up
+
+The D3S enemy/HUD remote-pointer guard did not fire before the repeated `SIGSEGV`, so the stability path has shifted to a narrow process-id lookup guard while staying before D4a input work.
+
+Next patch artifact:
+
+- `ios-shell-d3s-enemigo-lookup-guard-device-arm64`
+- `build-products/SorrIOSShell-d3s-enemigo-lookup-guard-adhoc.ipa`
+
+The patch keeps BGM/SFX enabled and keeps the IPA asset-free. It validates iOS/D3S `instance_get(id)` candidates before returning them, so a dead hash-slot pointer or an id-mismatched process lookup returns `NULL` instead of a stale process pointer. It also adds a recently-destroyed process ring and visible `runtime_enemigo_lookup_guard ...` diagnostics for ENEMIGO/HUD/effect lookup paths.
+
+D4a remains blocked until this D3S guard build either survives past the old five-minute attract/demo crash window or produces new `runtime_enemigo_lookup_guard` / `signal=` breadcrumbs.
