@@ -19,6 +19,9 @@
 #include "SDL.h"
 
 #ifdef SORR_IOS_D3_FIRST_RENDER
+#if defined(__APPLE__)
+#include <mach/mach.h>
+#endif
 #include "bgdrtm.h"
 #include "files.h"
 #include "instance.h"
@@ -90,6 +93,7 @@ typedef struct sorr_ios_data_layout
     char required_file_path[1024];
     char d2_probe_path[1024];
     char d3_probe_path[1024];
+    char d3_stability_path[1024];
     bool d2_data_ready;
     bool d2_import_seen;
     bool d2_import_failed;
@@ -530,11 +534,71 @@ static int sorr_ios_write_text_file(const char *path, const char *text)
 }
 
 #ifdef SORR_IOS_D3_FIRST_RENDER
+enum sorr_ios_d3_runtime_stage
+{
+    SORR_IOS_D3_STAGE_APP_LAUNCH = 1,
+    SORR_IOS_D3_STAGE_PREFLIGHT,
+    SORR_IOS_D3_STAGE_RUNTIME_PATHS,
+    SORR_IOS_D3_STAGE_DCB_LOAD,
+    SORR_IOS_D3_STAGE_SYSPROC,
+    SORR_IOS_D3_STAGE_RUNTIME_HANDOFF,
+    SORR_IOS_D3_STAGE_RUNTIME_LOOP,
+    SORR_IOS_D3_STAGE_RUNTIME_RETURNED
+};
+
+static volatile int sorr_ios_d3_stage = 0;
+static volatile unsigned int sorr_ios_d3_heartbeat_count = 0;
+
+static const char *sorr_ios_d3_stage_name(int stage)
+{
+    switch (stage)
+    {
+        case SORR_IOS_D3_STAGE_APP_LAUNCH:
+            return "app-launch";
+        case SORR_IOS_D3_STAGE_PREFLIGHT:
+            return "d2-preflight";
+        case SORR_IOS_D3_STAGE_RUNTIME_PATHS:
+            return "runtime-paths";
+        case SORR_IOS_D3_STAGE_DCB_LOAD:
+            return "dcb-load";
+        case SORR_IOS_D3_STAGE_SYSPROC:
+            return "sysproc";
+        case SORR_IOS_D3_STAGE_RUNTIME_HANDOFF:
+            return "runtime-handoff";
+        case SORR_IOS_D3_STAGE_RUNTIME_LOOP:
+            return "runtime-loop";
+        case SORR_IOS_D3_STAGE_RUNTIME_RETURNED:
+            return "runtime-returned";
+        default:
+            return "unknown";
+    }
+}
+
+static void sorr_ios_d3_append_log_file(const char *path, const char *line)
+{
+    FILE *fp;
+
+    if (!path || !path[0] || !line)
+    {
+        return;
+    }
+
+    fp = fopen(path, "ab");
+    if (!fp)
+    {
+        SDL_Log("SORR iOS shell: D3 log append failed path=%s errno=%d", path, errno);
+        return;
+    }
+
+    fputs(line, fp);
+    fputc('\n', fp);
+    fclose(fp);
+}
+
 static void sorr_ios_d3_log(const sorr_ios_data_layout *layout, const char *format, ...)
 {
     char line[1024];
     va_list args;
-    FILE *fp;
 
     if (!format)
     {
@@ -547,23 +611,175 @@ static void sorr_ios_d3_log(const sorr_ios_data_layout *layout, const char *form
 
     SDL_Log("SORR iOS shell: D3 %s", line);
 
-    if (!layout || !layout->d3_probe_path[0])
+    if (!layout)
     {
         return;
     }
 
-    fp = fopen(layout->d3_probe_path, "ab");
+    sorr_ios_d3_append_log_file(layout->d3_probe_path, line);
+    sorr_ios_d3_append_log_file(layout->d3_stability_path, line);
+}
+
+static void sorr_ios_d3_stability_log(const sorr_ios_data_layout *layout, const char *format, ...)
+{
+    char line[1024];
+    va_list args;
+
+    if (!format)
+    {
+        return;
+    }
+
+    va_start(args, format);
+    vsnprintf(line, sizeof(line), format, args);
+    va_end(args);
+
+    SDL_Log("SORR iOS shell: D3 stability %s", line);
+
+    if (layout)
+    {
+        sorr_ios_d3_append_log_file(layout->d3_stability_path, line);
+    }
+}
+
+static void sorr_ios_d3_set_stage(const sorr_ios_data_layout *layout, int stage)
+{
+    sorr_ios_d3_stage = stage;
+    sorr_ios_d3_log(layout, "stage=%s ticks=%u", sorr_ios_d3_stage_name(stage), SDL_GetTicks());
+}
+
+static int sorr_ios_read_last_nonempty_line(const char *path, char *out, size_t out_size)
+{
+    FILE *fp;
+    char line[1024];
+    int found = 0;
+
+    if (!path || !out || out_size == 0)
+    {
+        return 0;
+    }
+
+    out[0] = '\0';
+    fp = fopen(path, "rb");
     if (!fp)
     {
-        SDL_Log("SORR iOS shell: D3 probe log append failed path=%s errno=%d",
-                layout->d3_probe_path,
-                errno);
-        return;
+        return 0;
     }
 
-    fputs(line, fp);
-    fputc('\n', fp);
+    while (fgets(line, sizeof(line), fp))
+    {
+        size_t len = strlen(line);
+        while (len > 0 && (line[len - 1] == '\n' || line[len - 1] == '\r'))
+        {
+            line[--len] = '\0';
+        }
+
+        if (len > 0)
+        {
+            snprintf(out, out_size, "%s", line);
+            found = 1;
+        }
+    }
+
     fclose(fp);
+    return found;
+}
+
+static unsigned long long sorr_ios_d3_resident_memory_bytes(void)
+{
+#if defined(__APPLE__)
+    mach_task_basic_info_data_t info;
+    mach_msg_type_number_t count = MACH_TASK_BASIC_INFO_COUNT;
+
+    if (task_info(mach_task_self(), MACH_TASK_BASIC_INFO, (task_info_t)&info, &count) == KERN_SUCCESS)
+    {
+        return (unsigned long long)info.resident_size;
+    }
+#endif
+    return 0;
+}
+
+static Uint32 sorr_ios_d3_heartbeat_timer(Uint32 interval, void *param)
+{
+    const sorr_ios_data_layout *layout = (const sorr_ios_data_layout *)param;
+    unsigned int heartbeat = ++sorr_ios_d3_heartbeat_count;
+    unsigned long long rss = sorr_ios_d3_resident_memory_bytes();
+
+    sorr_ios_d3_stability_log(layout,
+                              "heartbeat=%u ticks=%u stage=%s rss_bytes=%llu",
+                              heartbeat,
+                              SDL_GetTicks(),
+                              sorr_ios_d3_stage_name(sorr_ios_d3_stage),
+                              rss);
+    return interval;
+}
+
+static const char *sorr_ios_d3_event_name(Uint32 type)
+{
+    switch (type)
+    {
+        case SDL_QUIT:
+            return "SDL_QUIT";
+        case SDL_APP_TERMINATING:
+            return "SDL_APP_TERMINATING";
+        case SDL_APP_LOWMEMORY:
+            return "SDL_APP_LOWMEMORY";
+        case SDL_APP_WILLENTERBACKGROUND:
+            return "SDL_APP_WILLENTERBACKGROUND";
+        case SDL_APP_DIDENTERBACKGROUND:
+            return "SDL_APP_DIDENTERBACKGROUND";
+        case SDL_APP_WILLENTERFOREGROUND:
+            return "SDL_APP_WILLENTERFOREGROUND";
+        case SDL_APP_DIDENTERFOREGROUND:
+            return "SDL_APP_DIDENTERFOREGROUND";
+        default:
+            return "SDL_EVENT";
+    }
+}
+
+static int sorr_ios_d3_event_watch(void *userdata, SDL_Event *event)
+{
+    const sorr_ios_data_layout *layout = (const sorr_ios_data_layout *)userdata;
+
+    if (!event)
+    {
+        return 0;
+    }
+
+    switch (event->type)
+    {
+        case SDL_QUIT:
+        case SDL_APP_TERMINATING:
+        case SDL_APP_LOWMEMORY:
+        case SDL_APP_WILLENTERBACKGROUND:
+        case SDL_APP_DIDENTERBACKGROUND:
+        case SDL_APP_WILLENTERFOREGROUND:
+        case SDL_APP_DIDENTERFOREGROUND:
+            sorr_ios_d3_stability_log(layout,
+                                      "event=%s ticks=%u stage=%s",
+                                      sorr_ios_d3_event_name(event->type),
+                                      SDL_GetTicks(),
+                                      sorr_ios_d3_stage_name(sorr_ios_d3_stage));
+            break;
+
+        case SDL_WINDOWEVENT:
+            if (event->window.event == SDL_WINDOWEVENT_CLOSE ||
+                event->window.event == SDL_WINDOWEVENT_MINIMIZED ||
+                event->window.event == SDL_WINDOWEVENT_FOCUS_LOST)
+            {
+                sorr_ios_d3_stability_log(layout,
+                                          "event=SDL_WINDOWEVENT code=%u ticks=%u stage=%s",
+                                          (unsigned int)event->window.event,
+                                          SDL_GetTicks(),
+                                          sorr_ios_d3_stage_name(sorr_ios_d3_stage));
+            }
+            break;
+
+        default:
+            break;
+    }
+
+    return 0;
 }
 
 static void sorr_ios_set_d3_missing_data_status(const sorr_ios_data_layout *layout)
@@ -621,21 +837,51 @@ static int sorr_ios_run_d3_first_render(sorr_ios_data_layout *layout,
     int ret;
     long sorr_dat_size = 0;
     long required_size = 0;
+    SDL_TimerID heartbeat_timer = 0;
+    char previous_stability_line[256] = "";
+    char previous_status_line[SORR_IOS_STATUS_LINE_LEN];
 
     if (!layout)
     {
         return 1;
     }
 
+    sorr_ios_read_last_nonempty_line(layout->d3_stability_path,
+                                     previous_stability_line,
+                                     sizeof(previous_stability_line));
+
     remove(layout->d3_probe_path);
+    sorr_ios_d3_set_stage(layout, SORR_IOS_D3_STAGE_APP_LAUNCH);
     sorr_ios_d3_log(layout, "probe log path=%s", layout->d3_probe_path);
+    sorr_ios_d3_log(layout, "stability log path=%s", layout->d3_stability_path);
     sorr_ios_d3_log(layout, "app support path=%s", layout->support_root);
     sorr_ios_d3_log(layout, "SorR.dat path=%s", layout->sorr_dat_path);
+    if (previous_stability_line[0])
+    {
+        sorr_ios_d3_log(layout, "previous stability last marker=%s", previous_stability_line);
+    }
+    else
+    {
+        sorr_ios_d3_log(layout, "previous stability log unavailable");
+    }
 
     sorr_ios_status_clear();
     sorr_ios_status_set_waiting();
     sorr_ios_status_add("D3 FIRST RENDER PROBE");
     sorr_ios_status_add("DATA APP SUPPORT/SORR");
+    if (previous_stability_line[0])
+    {
+        sorr_ios_status_add("PREV STABILITY LOG FOUND");
+        snprintf(previous_status_line, sizeof(previous_status_line), "PREV %.88s", previous_stability_line);
+        sorr_ios_status_add(previous_status_line);
+    }
+
+    sorr_ios_d3_set_stage(layout, SORR_IOS_D3_STAGE_PREFLIGHT);
+    sorr_ios_d3_log(layout,
+                    "D2 data preflight ready=%d import_seen=%d import_failed=%d",
+                    layout->d2_data_ready ? 1 : 0,
+                    layout->d2_import_seen ? 1 : 0,
+                    layout->d2_import_failed ? 1 : 0);
 
     if (!layout->d2_data_ready)
     {
@@ -675,6 +921,17 @@ static int sorr_ios_run_d3_first_render(sorr_ios_data_layout *layout,
     }
     sorr_ios_d3_log(layout, "probe log write ok");
 
+    SDL_AddEventWatch(sorr_ios_d3_event_watch, layout);
+    heartbeat_timer = SDL_AddTimer(10000, sorr_ios_d3_heartbeat_timer, layout);
+    if (heartbeat_timer)
+    {
+        sorr_ios_d3_log(layout, "heartbeat timer started interval_ms=10000");
+    }
+    else
+    {
+        sorr_ios_d3_log(layout, "heartbeat timer start failed error=%s", SDL_GetError());
+    }
+
     SDL_setenv("OS_ID", "0", 1);
     SDL_setenv("SORR_PORTABLE_AUDIO_STUB", "1", 1);
     SDL_setenv("SORR_PORTABLE_PUMP_EVENTS", "1", 1);
@@ -695,6 +952,7 @@ static int sorr_ios_run_d3_first_render(sorr_ios_data_layout *layout,
     }
     sorr_ios_d3_log(layout, "chdir ok path=%s", layout->support_root);
 
+    sorr_ios_d3_set_stage(layout, SORR_IOS_D3_STAGE_RUNTIME_PATHS);
     if (!sorr_ios_prepare_runtime_app_paths(layout))
     {
         sorr_ios_d3_log(layout, "runtime app path setup failed");
@@ -712,6 +970,7 @@ static int sorr_ios_run_d3_first_render(sorr_ios_data_layout *layout,
     string_init();
     init_c_type();
 
+    sorr_ios_d3_set_stage(layout, SORR_IOS_D3_STAGE_DCB_LOAD);
     if (!dcb_load("SorR.dat"))
     {
         sorr_ios_d3_log(layout, "dcb_load failed for SorR.dat");
@@ -721,9 +980,11 @@ static int sorr_ios_run_d3_first_render(sorr_ios_data_layout *layout,
     }
     sorr_ios_d3_log(layout, "dcb_load ok");
 
+    sorr_ios_d3_set_stage(layout, SORR_IOS_D3_STAGE_SYSPROC);
     sysproc_init();
     sorr_ios_d3_log(layout, "sysproc_init ok");
 
+    sorr_ios_d3_set_stage(layout, SORR_IOS_D3_STAGE_RUNTIME_HANDOFF);
     runtime_argv[0] = "SorR.dat";
     bgdrtm_entry(1, runtime_argv);
     sorr_ios_d3_log(layout, "runtime init end mainproc=%p", mainproc);
@@ -763,8 +1024,15 @@ static int sorr_ios_run_d3_first_render(sorr_ios_data_layout *layout,
     }
 
     sorr_ios_d3_log(layout, "first frame/render loop handoff begin");
+    sorr_ios_d3_set_stage(layout, SORR_IOS_D3_STAGE_RUNTIME_LOOP);
     ret = instance_go_all();
+    sorr_ios_d3_set_stage(layout, SORR_IOS_D3_STAGE_RUNTIME_RETURNED);
     sorr_ios_d3_log(layout, "instance_go_all returned ret=%d", ret);
+    if (heartbeat_timer)
+    {
+        SDL_RemoveTimer(heartbeat_timer);
+    }
+    SDL_DelEventWatch(sorr_ios_d3_event_watch, layout);
     bgdrtm_exit(ret);
     return ret;
 }
@@ -960,7 +1228,8 @@ static int sorr_ios_prepare_data_layout(sorr_ios_data_layout *layout)
         !sorr_ios_join_path(layout->sorr_dat_path, sizeof(layout->sorr_dat_path), layout->support_root, "SorR.dat") ||
         !sorr_ios_join_path(layout->required_file_path, sizeof(layout->required_file_path), layout->support_root, "mod/system.txt") ||
         !sorr_ios_join_path(layout->d2_probe_path, sizeof(layout->d2_probe_path), layout->logs_dir, "ios_d2_data_import_probe.txt") ||
-        !sorr_ios_join_path(layout->d3_probe_path, sizeof(layout->d3_probe_path), layout->logs_dir, "ios_d3_first_render_probe.txt"))
+        !sorr_ios_join_path(layout->d3_probe_path, sizeof(layout->d3_probe_path), layout->logs_dir, "ios_d3_first_render_probe.txt") ||
+        !sorr_ios_join_path(layout->d3_stability_path, sizeof(layout->d3_stability_path), layout->logs_dir, "ios_d3_runtime_stability_probe.txt"))
     {
         SDL_Log("SORR iOS shell: data layout path construction failed");
         return 0;
@@ -1400,6 +1669,12 @@ int main(int argc, char *argv[])
     SDL_LogSetAllPriority(SDL_LOG_PRIORITY_VERBOSE);
     SDL_Log("SORR iOS shell: app entry");
 
+#if defined(SDL_HINT_IDLE_TIMER_DISABLED)
+    SDL_SetHint(SDL_HINT_IDLE_TIMER_DISABLED, "1");
+#elif defined(SDL_HINT_IOS_IDLE_TIMER_DISABLED)
+    SDL_SetHint(SDL_HINT_IOS_IDLE_TIMER_DISABLED, "1");
+#endif
+
     if (SDL_Init(0) != 0)
     {
         SDL_Log("SORR iOS shell: SDL_Init failed: %s", SDL_GetError());
@@ -1407,6 +1682,9 @@ int main(int argc, char *argv[])
     }
 
     SDL_Log("SORR iOS shell: SDL_Init ok");
+#if defined(SDL_HINT_IDLE_TIMER_DISABLED) || defined(SDL_HINT_IOS_IDLE_TIMER_DISABLED)
+    SDL_Log("SORR iOS shell: iOS idle timer disabled for D3 stability");
+#endif
 
     if (SDL_InitSubSystem(SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_TIMER) != 0)
     {

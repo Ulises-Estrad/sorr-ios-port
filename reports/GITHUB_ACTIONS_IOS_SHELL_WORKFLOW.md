@@ -1322,3 +1322,39 @@ Manual D3 test flow:
 6. If D2 data is missing, the app displays a visible missing-data status screen.
 
 D3 physical first render proof is complete. Do not proceed to D4 controls, D5 gameplay, or audio follow-up work until explicitly instructed.
+
+## D3 Stability Device Artifact
+
+After D3 first render succeeded on physical iPhone, a repeatable idle exit was observed after about five minutes with the app left untouched. This does not redefine D3 as failed; it is a D3 stability hardening pass before D4a controls.
+
+The device job now publishes a separate stability artifact:
+
+```text
+ios-shell-d3-stability-device-arm64
+```
+
+IPA inside artifact:
+
+```text
+build-products/SorrIOSShell-d3-stability-adhoc.ipa
+```
+
+The build remains shell/runtime only and asset-free. It still rejects `SorR.dat`, `data/`, `.fpg`, `.wav`, `.ogg`, `.smk`, and `.png` content during checkout and IPA inspection.
+
+Runtime-side stability diagnostics:
+
+- SDL iOS idle timer disabled before SDL initialization,
+- persistent `Library/Application Support/SORR/logs/ios_d3_runtime_stability_probe.txt`,
+- previous-run last marker read on next launch,
+- 10-second runtime heartbeat,
+- current D3 stage in each heartbeat,
+- resident memory in each heartbeat when available,
+- SDL quit, low-memory, terminating, background, and foreground lifecycle events.
+
+Manual stability test:
+
+1. Keep D2 data staged on the iPhone.
+2. Download `ios-shell-d3-stability-device-arm64`.
+3. Install `build-products/SorrIOSShell-d3-stability-adhoc.ipa` through Sideloadly.
+4. Launch the app and leave it foregrounded and untouched for at least 7 minutes.
+5. If it exits, reopen once and report the previous stability marker from the screen/log.

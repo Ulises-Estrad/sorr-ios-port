@@ -369,6 +369,23 @@ D3 implementation strategy:
 
 D3 remained render-only. Touch controls, gameplay input, audio follow-up, SOR2-only pruning, and App Store/TestFlight signing stay out of scope until explicitly requested.
 
+D3 stability follow-up:
+
+The physical first-render proof is still complete, but a repeatable idle exit was observed after about five minutes. Before D4a touch input, the D3 target now has a stability diagnostic artifact:
+
+```text
+ios-shell-d3-stability-device-arm64
+build-products/SorrIOSShell-d3-stability-adhoc.ipa
+```
+
+This artifact keeps the D2-staged data path, bundles no game data, disables the iOS idle timer through SDL, and writes:
+
+```text
+Library/Application Support/SORR/logs/ios_d3_runtime_stability_probe.txt
+```
+
+The stability log records runtime stages, 10-second heartbeats, resident memory, lifecycle events, low-memory events, background/foreground transitions, and the previous run's last marker on the next launch.
+
 ## Out Of Scope For This Plan
 
 - SOR2-only pruning.

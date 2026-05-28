@@ -264,3 +264,20 @@ D4/D5 status: not started
 ```
 
 The missing audio is a later follow-up, not a D3 failure. Do not proceed to D4 controls, D5 gameplay, or audio follow-up work until explicitly instructed.
+
+## D3 Stability Follow-Up
+
+D3 first render remains complete, but a repeatable idle exit was observed after leaving the physical iPhone app untouched for about five minutes. A D3 stability artifact is now prepared before D4a controls:
+
+```text
+ios-shell-d3-stability-device-arm64
+build-products/SorrIOSShell-d3-stability-adhoc.ipa
+```
+
+Install through the same Windows + Sideloadly route as D1-D3. Keep the D2-staged data on the device. Launch the app, leave it foregrounded and untouched for at least 7 minutes, and if it exits, reopen once and report the previous stability marker.
+
+The stability build still bundles no game data and writes its diagnostic log locally on the iPhone:
+
+```text
+Library/Application Support/SORR/logs/ios_d3_runtime_stability_probe.txt
+```

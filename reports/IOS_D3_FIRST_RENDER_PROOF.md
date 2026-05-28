@@ -311,6 +311,25 @@ Useful markers:
 - first script execution start
 - render-loop handoff begin
 
+## Stability Follow-Up
+
+D3 first render remains complete, but a repeatable physical-device idle exit was observed after about five minutes with the D3 app left untouched.
+
+A D3 stability follow-up build is now tracked separately:
+
+```text
+ios-shell-d3-stability-device-arm64
+build-products/SorrIOSShell-d3-stability-adhoc.ipa
+```
+
+That build keeps the same D2-staged data path and still bundles no game data. It adds an SDL iOS idle-timer disable hint plus a persistent stability log:
+
+```text
+Library/Application Support/SORR/logs/ios_d3_runtime_stability_probe.txt
+```
+
+The stability log records runtime stages, 10-second heartbeats, resident memory, SDL lifecycle events, low-memory events, background/foreground transitions, SDL quit/termination events, and the previous run's last marker on next launch.
+
 ## Out Of Scope
 
 - touch controls,
