@@ -316,6 +316,19 @@ ios-shell-d3a-music-diagnostics-device-arm64
 build-products/SorrIOSShell-d3a-music-diagnostics-adhoc.ipa
 ```
 
+## GitHub-Side D3A Music Diagnostic Artifact Proof
+
+```text
+Actions run: 26590593436
+Device artifact: ios-shell-d3a-music-diagnostics-device-arm64
+Artifact size: 793596 bytes
+IPA: build-products/SorrIOSShell-d3a-music-diagnostics-adhoc.ipa
+Artifact-producing commit: 2e27dda
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
+```
+
 ## D3A Music Test Instructions
 
 1. Keep the D2-staged data on the iPhone, including `mod/music`.

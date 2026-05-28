@@ -544,6 +544,19 @@ ios-shell-d3a-music-diagnostics-device-arm64
 build-products/SorrIOSShell-d3a-music-diagnostics-adhoc.ipa
 ```
 
+GitHub-side D3A music diagnostic artifact proof:
+
+```text
+Actions run: 26590593436
+Artifact: ios-shell-d3a-music-diagnostics-device-arm64
+Artifact size: 793596 bytes
+IPA: build-products/SorrIOSShell-d3a-music-diagnostics-adhoc.ipa
+Artifact-producing commit: 2e27dda
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
+```
+
 D4a touch input remains blocked until D3A proves audible BGM or reaches a genuine SDL2_mixer/decoder blocker.
 
 ## Out Of Scope For This Plan

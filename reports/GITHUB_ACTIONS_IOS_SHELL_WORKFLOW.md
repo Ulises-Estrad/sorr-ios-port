@@ -1658,3 +1658,16 @@ Expected follow-up artifact:
 ios-shell-d3a-music-diagnostics-device-arm64
 build-products/SorrIOSShell-d3a-music-diagnostics-adhoc.ipa
 ```
+
+D3A music diagnostic GitHub-side artifact proof:
+
+```text
+Actions run: 26590593436
+Device artifact: ios-shell-d3a-music-diagnostics-device-arm64
+Artifact size: 793596 bytes
+IPA: build-products/SorrIOSShell-d3a-music-diagnostics-adhoc.ipa
+Artifact-producing commit: 2e27dda
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
+```
