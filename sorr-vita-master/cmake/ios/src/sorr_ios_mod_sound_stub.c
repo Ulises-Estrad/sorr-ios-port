@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
+#include <stdint.h>
 
 #include "bgddl.h"
 #include "dlvaracc.h"
@@ -51,6 +52,8 @@ typedef struct sorr_ios_audio_handle
     int kind;
     Mix_Chunk *chunk;
     Mix_Music *music;
+    void *music_data;
+    size_t music_data_size;
     int volume;
     char path[SORR_IOS_AUDIO_PATH_MAX];
 } sorr_ios_audio_handle;
@@ -81,6 +84,20 @@ volatile unsigned int sorr_ios_audio_zero_wav_query_count = 0;
 volatile unsigned int sorr_ios_audio_zero_wav_volume_count = 0;
 volatile unsigned int sorr_ios_audio_zero_channel_effect_count = 0;
 volatile unsigned int sorr_ios_audio_zero_play_wav_guard_count = 0;
+volatile unsigned int sorr_ios_audio_music_mem_load_ok_count = 0;
+volatile unsigned int sorr_ios_audio_music_mem_load_fail_count = 0;
+volatile unsigned int sorr_ios_audio_music_play_attempt_count = 0;
+volatile unsigned int sorr_ios_audio_music_play_ok_count = 0;
+volatile unsigned int sorr_ios_audio_music_play_fail_count = 0;
+volatile unsigned int sorr_ios_audio_music_control_count = 0;
+volatile unsigned int sorr_ios_audio_music_query_count = 0;
+volatile unsigned int sorr_ios_audio_music_free_count = 0;
+volatile unsigned int sorr_ios_audio_music_halt_count = 0;
+volatile unsigned int sorr_ios_audio_music_last_playing = 0;
+volatile unsigned long long sorr_ios_audio_music_last_bytes = 0;
+volatile unsigned long long sorr_ios_audio_music_total_bytes = 0;
+volatile unsigned long long sorr_ios_audio_music_last_ptr = 0;
+volatile unsigned long long sorr_ios_audio_music_last_handle = 0;
 char sorr_ios_audio_last_music_path[SORR_IOS_AUDIO_PATH_MAX] = "";
 char sorr_ios_audio_last_music_status[64] = "none";
 
@@ -164,6 +181,31 @@ static void sorr_ios_audio_note_music_path(const char *path, const char *status)
              sizeof(sorr_ios_audio_last_music_status),
              "%s",
              status ? status : "(null)");
+}
+
+static const char *sorr_ios_audio_music_type_name(Mix_MusicType type)
+{
+    switch (type)
+    {
+        case MUS_NONE:
+            return "none";
+        case MUS_CMD:
+            return "cmd";
+        case MUS_WAV:
+            return "wav";
+        case MUS_MOD:
+            return "mod";
+        case MUS_MID:
+            return "mid";
+        case MUS_OGG:
+            return "ogg";
+        case MUS_MP3:
+            return "mp3";
+        case MUS_FLAC:
+            return "flac";
+        default:
+            return "unknown";
+    }
 }
 
 static int sorr_ios_audio_should_log_count(unsigned int count)
@@ -345,7 +387,12 @@ static int sorr_ios_audio_find_path(const char *path, int kind)
     return 0;
 }
 
-static int sorr_ios_audio_store_handle(int kind, const char *path, Mix_Chunk *chunk, Mix_Music *music)
+static int sorr_ios_audio_store_handle(int kind,
+                                       const char *path,
+                                       Mix_Chunk *chunk,
+                                       Mix_Music *music,
+                                       void *music_data,
+                                       size_t music_data_size)
 {
     int i;
 
@@ -356,6 +403,8 @@ static int sorr_ios_audio_store_handle(int kind, const char *path, Mix_Chunk *ch
             sorr_ios_audio_handles[i].kind = kind;
             sorr_ios_audio_handles[i].chunk = chunk;
             sorr_ios_audio_handles[i].music = music;
+            sorr_ios_audio_handles[i].music_data = music_data;
+            sorr_ios_audio_handles[i].music_data_size = music_data_size;
             sorr_ios_audio_handles[i].volume = SDL_MIX_MAXVOLUME;
             if (path)
             {
@@ -382,6 +431,19 @@ static int sorr_ios_audio_store_handle(int kind, const char *path, Mix_Chunk *ch
                               path ? path : "(null)",
                               (void *)chunk,
                               (void *)music);
+            if (kind == SORR_IOS_AUDIO_KIND_MUSIC)
+            {
+                sorr_ios_audio_music_last_bytes = (unsigned long long)music_data_size;
+                sorr_ios_audio_music_last_ptr = (unsigned long long)(uintptr_t)music;
+                sorr_ios_audio_music_last_handle = (unsigned long long)i;
+                PORTABLE_DIAG_LOG("AUDIO",
+                                  "iOS D3A music handle store handle=%d music=%p bytes=%llu type=%s path=%s",
+                                  i,
+                                  (void *)music,
+                                  (unsigned long long)music_data_size,
+                                  music ? sorr_ios_audio_music_type_name(Mix_GetMusicType(music)) : "none",
+                                  path ? path : "(null)");
+            }
             return i;
         }
     }
@@ -394,6 +456,7 @@ static int sorr_ios_audio_store_handle(int kind, const char *path, Mix_Chunk *ch
     {
         Mix_FreeMusic(music);
     }
+    free(music_data);
 
     PORTABLE_DIAG_LOG("AUDIO", "iOS D3A audio handle table full path=%s", path ? path : "(null)");
     return 0;
@@ -420,11 +483,32 @@ static void sorr_ios_audio_release_handle(int handle)
     }
     if (sorr_ios_audio_handles[handle].music)
     {
+        PORTABLE_DIAG_LOG("AUDIO",
+                          "iOS D3A music release begin handle=%d music=%p playing=%d path=%s",
+                          handle,
+                          (void *)sorr_ios_audio_handles[handle].music,
+                          sorr_ios_audio_initialized ? Mix_PlayingMusic() : 0,
+                          sorr_ios_audio_handles[handle].path);
         if (Mix_PlayingMusic())
         {
-            Mix_HaltMusic();
+            int halt_result = Mix_HaltMusic();
+            sorr_ios_audio_music_halt_count++;
+            PORTABLE_DIAG_LOG("AUDIO",
+                              "iOS D3A music release halt handle=%d result=%d error=%s",
+                              handle,
+                              halt_result,
+                              Mix_GetError());
         }
         Mix_FreeMusic(sorr_ios_audio_handles[handle].music);
+        sorr_ios_audio_music_free_count++;
+        PORTABLE_DIAG_LOG("AUDIO",
+                          "iOS D3A music release free handle=%d bytes=%llu",
+                          handle,
+                          (unsigned long long)sorr_ios_audio_handles[handle].music_data_size);
+    }
+    if (sorr_ios_audio_handles[handle].music_data)
+    {
+        free(sorr_ios_audio_handles[handle].music_data);
     }
 
     sorr_ios_audio_note_handle_release(kind);
@@ -440,7 +524,79 @@ static int sorr_ios_audio_inert_handle(const char *path, int kind)
         return existing;
     }
 
-    return sorr_ios_audio_store_handle(kind, path, NULL, NULL);
+    return sorr_ios_audio_store_handle(kind, path, NULL, NULL, NULL, 0);
+}
+
+static int sorr_ios_audio_read_file_to_memory(const char *filename, void **out_data, size_t *out_size)
+{
+    file *fp;
+    int size;
+    int total = 0;
+    unsigned char *data;
+
+    if (!filename || !out_data || !out_size)
+    {
+        return 0;
+    }
+
+    *out_data = NULL;
+    *out_size = 0;
+
+    fp = file_open(filename, "rb0");
+    if (!fp)
+    {
+        PORTABLE_DIAG_LOG("AUDIO", "iOS D3A music memory open failed path=%s", filename);
+        return 0;
+    }
+
+    size = file_size(fp);
+    if (size <= 0)
+    {
+        PORTABLE_DIAG_LOG("AUDIO", "iOS D3A music memory size invalid path=%s size=%d", filename, size);
+        file_close(fp);
+        return 0;
+    }
+
+    data = (unsigned char *)malloc((size_t)size);
+    if (!data)
+    {
+        PORTABLE_DIAG_LOG("AUDIO", "iOS D3A music memory malloc failed path=%s size=%d", filename, size);
+        file_close(fp);
+        return 0;
+    }
+
+    while (total < size)
+    {
+        int got = file_read(fp, data + total, size - total);
+        if (got <= 0)
+        {
+            break;
+        }
+        total += got;
+    }
+
+    file_close(fp);
+
+    if (total != size)
+    {
+        PORTABLE_DIAG_LOG("AUDIO",
+                          "iOS D3A music memory read short path=%s expected=%d got=%d",
+                          filename,
+                          size,
+                          total);
+        free(data);
+        return 0;
+    }
+
+    *out_data = data;
+    *out_size = (size_t)size;
+    sorr_ios_audio_music_last_bytes = (unsigned long long)*out_size;
+    sorr_ios_audio_music_total_bytes += (unsigned long long)*out_size;
+    PORTABLE_DIAG_LOG("AUDIO",
+                      "iOS D3A music memory read ok path=%s bytes=%llu",
+                      filename,
+                      (unsigned long long)*out_size);
+    return 1;
 }
 
 static int sorr_ios_audio_init_device(void)
@@ -651,7 +807,7 @@ static int sorr_ios_audio_load_wav_path(const char *filename)
         return sorr_ios_audio_inert_handle(filename, SORR_IOS_AUDIO_KIND_INERT_WAV);
     }
 
-    existing = sorr_ios_audio_store_handle(SORR_IOS_AUDIO_KIND_WAV, filename, chunk, NULL);
+    existing = sorr_ios_audio_store_handle(SORR_IOS_AUDIO_KIND_WAV, filename, chunk, NULL, NULL, 0);
     if (existing)
     {
         sorr_ios_audio_wav_load_ok_count++;
@@ -662,9 +818,10 @@ static int sorr_ios_audio_load_wav_path(const char *filename)
 static int sorr_ios_audio_load_song_path(const char *filename)
 {
     int existing;
-    file *fp;
     SDL_RWops *rwops;
     Mix_Music *music;
+    void *music_data = NULL;
+    size_t music_data_size = 0;
 
     if (!filename || !filename[0])
     {
@@ -687,28 +844,39 @@ static int sorr_ios_audio_load_song_path(const char *filename)
         return 0;
     }
 
-    fp = file_open(filename, "rb0");
-    if (!fp)
+    sorr_ios_audio_note_music_path(filename, "mem-load-start");
+    if (!sorr_ios_audio_read_file_to_memory(filename, &music_data, &music_data_size))
     {
+        sorr_ios_audio_music_mem_load_fail_count++;
         sorr_ios_audio_music_open_fail_count++;
-        sorr_ios_audio_note_music_path(filename, "open-fail");
-        PORTABLE_DIAG_LOG("AUDIO", "iOS D3A LOAD_SONG file open failed path=%s", filename);
+        sorr_ios_audio_note_music_path(filename, "mem-load-fail");
         return 0;
     }
+    sorr_ios_audio_music_mem_load_ok_count++;
 
-    rwops = sorr_ios_audio_rw_from_file(fp);
+    rwops = SDL_RWFromConstMem(music_data, (int)music_data_size);
     if (!rwops)
     {
-        file_close(fp);
+        free(music_data);
         sorr_ios_audio_music_open_fail_count++;
-        sorr_ios_audio_note_music_path(filename, "rwops-fail");
-        PORTABLE_DIAG_LOG("AUDIO", "iOS D3A LOAD_SONG SDL_RWops failed path=%s", filename);
+        sorr_ios_audio_note_music_path(filename, "mem-rwops-fail");
+        PORTABLE_DIAG_LOG("AUDIO", "iOS D3A LOAD_SONG SDL_RWFromConstMem failed path=%s bytes=%llu error=%s",
+                          filename,
+                          (unsigned long long)music_data_size,
+                          SDL_GetError());
         return 0;
     }
 
+    sorr_ios_audio_note_music_path(filename, "mix-load-start");
+    PORTABLE_DIAG_LOG("AUDIO",
+                      "iOS D3A LOAD_SONG Mix_LoadMUS_RW begin path=%s bytes=%llu rwops=%p",
+                      filename,
+                      (unsigned long long)music_data_size,
+                      (void *)rwops);
     music = Mix_LoadMUS_RW(rwops, 1);
     if (!music)
     {
+        free(music_data);
         sorr_ios_audio_music_open_fail_count++;
         sorr_ios_audio_note_music_path(filename, "decode-fail");
         PORTABLE_DIAG_LOG("AUDIO",
@@ -718,7 +886,19 @@ static int sorr_ios_audio_load_song_path(const char *filename)
         return 0;
     }
 
-    existing = sorr_ios_audio_store_handle(SORR_IOS_AUDIO_KIND_MUSIC, filename, NULL, music);
+    PORTABLE_DIAG_LOG("AUDIO",
+                      "iOS D3A LOAD_SONG Mix_LoadMUS_RW ok path=%s music=%p type=%s bytes=%llu",
+                      filename,
+                      (void *)music,
+                      sorr_ios_audio_music_type_name(Mix_GetMusicType(music)),
+                      (unsigned long long)music_data_size);
+
+    existing = sorr_ios_audio_store_handle(SORR_IOS_AUDIO_KIND_MUSIC,
+                                           filename,
+                                           NULL,
+                                           music,
+                                           music_data,
+                                           music_data_size);
     if (existing)
     {
         sorr_ios_audio_music_open_ok_count++;
@@ -944,6 +1124,8 @@ static int sorr_ios_sound_play_song(INSTANCE *my, int *params)
 
     if (params[0] <= 0 || params[0] >= SORR_IOS_AUDIO_HANDLE_MAX)
     {
+        sorr_ios_audio_music_play_attempt_count++;
+        sorr_ios_audio_music_play_fail_count++;
         sorr_ios_audio_note_music_path("(invalid-handle)", "play-invalid");
         PORTABLE_DIAG_LOG("AUDIO", "iOS D3A PLAY_SONG invalid handle=%d", params[0]);
         return -1;
@@ -952,6 +1134,8 @@ static int sorr_ios_sound_play_song(INSTANCE *my, int *params)
     entry = &sorr_ios_audio_handles[params[0]];
     if (entry->kind != SORR_IOS_AUDIO_KIND_MUSIC || !entry->music)
     {
+        sorr_ios_audio_music_play_attempt_count++;
+        sorr_ios_audio_music_play_fail_count++;
         sorr_ios_audio_note_music_path(entry->path, "play-missing-music");
         PORTABLE_DIAG_LOG("AUDIO", "iOS D3A PLAY_SONG missing music handle=%d kind=%d", params[0], entry->kind);
         return -1;
@@ -963,18 +1147,40 @@ static int sorr_ios_sound_play_song(INSTANCE *my, int *params)
     }
     if (!sorr_ios_audio_initialized)
     {
+        sorr_ios_audio_music_play_attempt_count++;
+        sorr_ios_audio_music_play_fail_count++;
         sorr_ios_audio_note_music_path(entry->path, "play-no-mixer");
         return -1;
     }
 
+    sorr_ios_audio_music_play_attempt_count++;
+    sorr_ios_audio_music_last_handle = (unsigned long long)params[0];
+    sorr_ios_audio_music_last_ptr = (unsigned long long)(uintptr_t)entry->music;
+    PORTABLE_DIAG_LOG("AUDIO",
+                      "iOS D3A PLAY_SONG begin handle=%d loops=%d music=%p type=%s bytes=%llu playing_before=%d path=%s",
+                      params[0],
+                      params[1],
+                      (void *)entry->music,
+                      sorr_ios_audio_music_type_name(Mix_GetMusicType(entry->music)),
+                      (unsigned long long)entry->music_data_size,
+                      Mix_PlayingMusic(),
+                      entry->path);
     result = Mix_PlayMusic(entry->music, params[1]);
+    sorr_ios_audio_music_last_playing = (unsigned int)Mix_PlayingMusic();
     if (result == 0)
     {
+        sorr_ios_audio_music_play_ok_count++;
         sorr_ios_audio_note_music_path(entry->path, "play-ok");
-        PORTABLE_DIAG_LOG("AUDIO", "iOS D3A PLAY_SONG ok handle=%d loops=%d path=%s", params[0], params[1], entry->path);
+        PORTABLE_DIAG_LOG("AUDIO",
+                          "iOS D3A PLAY_SONG ok handle=%d loops=%d playing_after=%u path=%s",
+                          params[0],
+                          params[1],
+                          sorr_ios_audio_music_last_playing,
+                          entry->path);
     }
     else
     {
+        sorr_ios_audio_music_play_fail_count++;
         sorr_ios_audio_note_music_path(entry->path, "play-fail");
         PORTABLE_DIAG_LOG("AUDIO", "iOS D3A PLAY_SONG failed handle=%d loops=%d error=%s", params[0], params[1], Mix_GetError());
     }
@@ -990,12 +1196,14 @@ static int sorr_ios_sound_fade_music_in(INSTANCE *my, int *params)
 
     if (params[0] <= 0 || params[0] >= SORR_IOS_AUDIO_HANDLE_MAX)
     {
+        sorr_ios_audio_music_control_count++;
         return -1;
     }
 
     entry = &sorr_ios_audio_handles[params[0]];
     if (entry->kind != SORR_IOS_AUDIO_KIND_MUSIC || !entry->music)
     {
+        sorr_ios_audio_music_control_count++;
         return -1;
     }
 
@@ -1005,10 +1213,22 @@ static int sorr_ios_sound_fade_music_in(INSTANCE *my, int *params)
     }
     if (!sorr_ios_audio_initialized)
     {
+        sorr_ios_audio_music_control_count++;
         return -1;
     }
 
+    sorr_ios_audio_music_control_count++;
+    sorr_ios_audio_note_music_path(entry->path, "fade-in-start");
+    PORTABLE_DIAG_LOG("AUDIO",
+                      "iOS D3A FADE_MUSIC_IN begin handle=%d loops=%d ms=%d music=%p playing_before=%d path=%s",
+                      params[0],
+                      params[1],
+                      params[2],
+                      (void *)entry->music,
+                      Mix_PlayingMusic(),
+                      entry->path);
     result = Mix_FadeInMusic(entry->music, params[1], params[2]);
+    sorr_ios_audio_music_last_playing = (unsigned int)Mix_PlayingMusic();
     if (result == 0)
     {
         sorr_ios_audio_note_music_path(entry->path, "fade-in-ok");
@@ -1027,7 +1247,17 @@ static int sorr_ios_sound_stop_song(INSTANCE *my, int *params)
     (void)params;
     if (sorr_ios_audio_initialized)
     {
-        return Mix_HaltMusic();
+        int result;
+        sorr_ios_audio_music_control_count++;
+        PORTABLE_DIAG_LOG("AUDIO", "iOS D3A STOP_SONG begin playing_before=%d", Mix_PlayingMusic());
+        result = Mix_HaltMusic();
+        sorr_ios_audio_music_halt_count++;
+        sorr_ios_audio_music_last_playing = (unsigned int)Mix_PlayingMusic();
+        PORTABLE_DIAG_LOG("AUDIO", "iOS D3A STOP_SONG end result=%d playing_after=%u error=%s",
+                          result,
+                          sorr_ios_audio_music_last_playing,
+                          Mix_GetError());
+        return result;
     }
     return 0;
 }
@@ -1038,6 +1268,8 @@ static int sorr_ios_sound_pause_song(INSTANCE *my, int *params)
     (void)params;
     if (sorr_ios_audio_initialized)
     {
+        sorr_ios_audio_music_control_count++;
+        PORTABLE_DIAG_LOG("AUDIO", "iOS D3A PAUSE_SONG playing_before=%d", Mix_PlayingMusic());
         Mix_PauseMusic();
         return 0;
     }
@@ -1050,6 +1282,8 @@ static int sorr_ios_sound_resume_song(INSTANCE *my, int *params)
     (void)params;
     if (sorr_ios_audio_initialized)
     {
+        sorr_ios_audio_music_control_count++;
+        PORTABLE_DIAG_LOG("AUDIO", "iOS D3A RESUME_SONG playing_before=%d", Mix_PlayingMusic());
         Mix_ResumeMusic();
         return 0;
     }
@@ -1070,8 +1304,10 @@ static int sorr_ios_sound_set_song_volume(INSTANCE *my, int *params)
     {
         return -1;
     }
+    sorr_ios_audio_music_control_count++;
     if (volume < 0) volume = 0;
     if (volume > 128) volume = 128;
+    PORTABLE_DIAG_LOG("AUDIO", "iOS D3A SET_SONG_VOLUME volume=%d", volume);
     Mix_VolumeMusic(volume);
     return 0;
 }
@@ -1084,7 +1320,17 @@ static int sorr_ios_sound_is_playing_song(INSTANCE *my, int *params)
     {
         return 0;
     }
-    return Mix_PlayingMusic();
+    sorr_ios_audio_music_query_count++;
+    sorr_ios_audio_music_last_playing = (unsigned int)Mix_PlayingMusic();
+    if (sorr_ios_audio_should_log_count(sorr_ios_audio_music_query_count))
+    {
+        PORTABLE_DIAG_LOG("AUDIO",
+                          "iOS D3A IS_PLAYING_SONG result=%u query_count=%u error=%s",
+                          sorr_ios_audio_music_last_playing,
+                          sorr_ios_audio_music_query_count,
+                          Mix_GetError());
+    }
+    return (int)sorr_ios_audio_music_last_playing;
 }
 
 static int sorr_ios_sound_fade_music_off(INSTANCE *my, int *params)
@@ -1094,6 +1340,8 @@ static int sorr_ios_sound_fade_music_off(INSTANCE *my, int *params)
     {
         return 0;
     }
+    sorr_ios_audio_music_control_count++;
+    PORTABLE_DIAG_LOG("AUDIO", "iOS D3A FADE_MUSIC_OFF ms=%d playing_before=%d", params[0], Mix_PlayingMusic());
     return Mix_FadeOutMusic(params[0]);
 }
 
@@ -1104,6 +1352,8 @@ static int sorr_ios_sound_set_music_position(INSTANCE *my, int *params)
     {
         return -1;
     }
+    sorr_ios_audio_music_control_count++;
+    PORTABLE_DIAG_LOG("AUDIO", "iOS D3A SET_MUSIC_POSITION raw=0x%08x", (unsigned int)params[0]);
     return Mix_SetMusicPosition((double)*(float *)&params[0]);
 }
 

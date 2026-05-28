@@ -633,6 +633,20 @@ extern volatile unsigned int sorr_ios_audio_zero_wav_query_count;
 extern volatile unsigned int sorr_ios_audio_zero_wav_volume_count;
 extern volatile unsigned int sorr_ios_audio_zero_channel_effect_count;
 extern volatile unsigned int sorr_ios_audio_zero_play_wav_guard_count;
+extern volatile unsigned int sorr_ios_audio_music_mem_load_ok_count;
+extern volatile unsigned int sorr_ios_audio_music_mem_load_fail_count;
+extern volatile unsigned int sorr_ios_audio_music_play_attempt_count;
+extern volatile unsigned int sorr_ios_audio_music_play_ok_count;
+extern volatile unsigned int sorr_ios_audio_music_play_fail_count;
+extern volatile unsigned int sorr_ios_audio_music_control_count;
+extern volatile unsigned int sorr_ios_audio_music_query_count;
+extern volatile unsigned int sorr_ios_audio_music_free_count;
+extern volatile unsigned int sorr_ios_audio_music_halt_count;
+extern volatile unsigned int sorr_ios_audio_music_last_playing;
+extern volatile unsigned long long sorr_ios_audio_music_last_bytes;
+extern volatile unsigned long long sorr_ios_audio_music_total_bytes;
+extern volatile unsigned long long sorr_ios_audio_music_last_ptr;
+extern volatile unsigned long long sorr_ios_audio_music_last_handle;
 extern char sorr_ios_audio_last_music_path[];
 extern char sorr_ios_audio_last_music_status[];
 
@@ -840,7 +854,7 @@ static Uint32 sorr_ios_d3_heartbeat_timer(Uint32 interval, void *param)
     }
 
     sorr_ios_d3_stability_log(layout,
-                              "heartbeat=%u ticks=%u runtime_ms=%u interval_next_ms=%u stage=%s rss_bytes=%llu frame_count=%u last_frame_ticks=%d frame_ms=%.3f fps_count=%d fps_init=%d max_jump=%d jump=%d instances=%d render_objects=%d opened_files=%d x_files=%d max_x_files=%d audio_stub_zero=%u audio_stub_minus_one=%u audio_init_attempts=%u audio_init_ok=%u audio_init_fail=%u audio_wav_load_ok=%u audio_wav_load_fail=%u audio_wav_play=%u audio_inert_handles=%u audio_queue_clears=%u audio_music_load_attempts=%u audio_music_open_ok=%u audio_music_open_fail=%u audio_live_handles=%u audio_live_wav=%u audio_live_inert_wav=%u audio_live_music=%u audio_max_live_handles=%u audio_zero_music_play=%u audio_zero_music_control=%u audio_zero_music_query=%u audio_zero_wav_control=%u audio_zero_wav_query=%u audio_zero_wav_volume=%u audio_zero_channel_effect=%u audio_zero_play_wav_guard=%u audio_music_last_status=%s audio_music_last_path=%s",
+                              "heartbeat=%u ticks=%u runtime_ms=%u interval_next_ms=%u stage=%s rss_bytes=%llu frame_count=%u last_frame_ticks=%d frame_ms=%.3f fps_count=%d fps_init=%d max_jump=%d jump=%d instances=%d render_objects=%d opened_files=%d x_files=%d max_x_files=%d audio_stub_zero=%u audio_stub_minus_one=%u audio_init_attempts=%u audio_init_ok=%u audio_init_fail=%u audio_wav_load_ok=%u audio_wav_load_fail=%u audio_wav_play=%u audio_inert_handles=%u audio_queue_clears=%u audio_music_load_attempts=%u audio_music_open_ok=%u audio_music_open_fail=%u audio_music_mem_ok=%u audio_music_mem_fail=%u audio_music_play_attempts=%u audio_music_play_ok=%u audio_music_play_fail=%u audio_music_controls=%u audio_music_queries=%u audio_music_free=%u audio_music_halt=%u audio_music_playing=%u audio_music_last_handle=%llu audio_music_last_ptr=0x%llx audio_music_last_bytes=%llu audio_music_total_bytes=%llu audio_live_handles=%u audio_live_wav=%u audio_live_inert_wav=%u audio_live_music=%u audio_max_live_handles=%u audio_zero_music_play=%u audio_zero_music_control=%u audio_zero_music_query=%u audio_zero_wav_control=%u audio_zero_wav_query=%u audio_zero_wav_volume=%u audio_zero_channel_effect=%u audio_zero_play_wav_guard=%u audio_music_last_status=%s audio_music_last_path=%s",
                               heartbeat,
                               ticks,
                               runtime_ms,
@@ -872,6 +886,20 @@ static Uint32 sorr_ios_d3_heartbeat_timer(Uint32 interval, void *param)
                               sorr_ios_audio_music_load_attempt_count,
                               sorr_ios_audio_music_open_ok_count,
                               sorr_ios_audio_music_open_fail_count,
+                              sorr_ios_audio_music_mem_load_ok_count,
+                              sorr_ios_audio_music_mem_load_fail_count,
+                              sorr_ios_audio_music_play_attempt_count,
+                              sorr_ios_audio_music_play_ok_count,
+                              sorr_ios_audio_music_play_fail_count,
+                              sorr_ios_audio_music_control_count,
+                              sorr_ios_audio_music_query_count,
+                              sorr_ios_audio_music_free_count,
+                              sorr_ios_audio_music_halt_count,
+                              sorr_ios_audio_music_last_playing,
+                              sorr_ios_audio_music_last_handle,
+                              sorr_ios_audio_music_last_ptr,
+                              sorr_ios_audio_music_last_bytes,
+                              sorr_ios_audio_music_total_bytes,
                               sorr_ios_audio_live_handle_count,
                               sorr_ios_audio_live_wav_count,
                               sorr_ios_audio_live_inert_wav_count,
@@ -932,10 +960,19 @@ static int sorr_ios_d3_event_watch(void *userdata, SDL_Event *event)
         case SDL_APP_WILLENTERFOREGROUND:
         case SDL_APP_DIDENTERFOREGROUND:
             sorr_ios_d3_stability_log(layout,
-                                      "event=%s ticks=%u stage=%s",
+                                      "event=%s ticks=%u stage=%s audio_music_last_status=%s audio_music_last_path=%s audio_music_play_attempts=%u audio_music_play_ok=%u audio_music_play_fail=%u audio_music_playing=%u audio_music_last_handle=%llu audio_music_last_ptr=0x%llx audio_music_last_bytes=%llu",
                                       sorr_ios_d3_event_name(event->type),
                                       SDL_GetTicks(),
-                                      sorr_ios_d3_stage_name(sorr_ios_d3_stage));
+                                      sorr_ios_d3_stage_name(sorr_ios_d3_stage),
+                                      sorr_ios_audio_last_music_status,
+                                      sorr_ios_audio_last_music_path,
+                                      sorr_ios_audio_music_play_attempt_count,
+                                      sorr_ios_audio_music_play_ok_count,
+                                      sorr_ios_audio_music_play_fail_count,
+                                      sorr_ios_audio_music_last_playing,
+                                      sorr_ios_audio_music_last_handle,
+                                      sorr_ios_audio_music_last_ptr,
+                                      sorr_ios_audio_music_last_bytes);
             break;
 
         case SDL_WINDOWEVENT:

@@ -1639,3 +1639,22 @@ Manual D3A music test:
 5. Confirm whether BGM is audible.
 6. Leave the app foregrounded and untouched for 10-15 minutes.
 7. If it exits, reopen once and retrieve `On My iPhone/SorrIOSShell/SORR_DIAGNOSTICS/ios_d3_runtime_stability_probe.txt`.
+
+Physical result from the first SDL2_mixer music artifact:
+
+```text
+Tested run: 26559098341
+Artifact: ios-shell-d3a-music-device-arm64
+IPA: build-products/SorrIOSShell-d3a-music-adhoc.ipa
+Observed previous marker: event=SDL_APP_TERMINATING ticks=30496 stage=runtime-loop
+Result: early exit, much sooner than the older five-minute idle-window failure
+```
+
+The next workflow artifact keeps BGM enabled and adds music lifetime diagnostics. It also changes the music load path from Bennu-backed streaming `SDL_RWops` to an owned in-memory OGG buffer passed to `Mix_LoadMUS_RW`; the buffer stays alive with the music handle until `Mix_FreeMusic`.
+
+Expected follow-up artifact:
+
+```text
+ios-shell-d3a-music-diagnostics-device-arm64
+build-products/SorrIOSShell-d3a-music-diagnostics-adhoc.ipa
+```

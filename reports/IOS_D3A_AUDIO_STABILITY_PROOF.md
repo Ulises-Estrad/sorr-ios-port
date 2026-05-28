@@ -288,16 +288,44 @@ Game data/assets bundled in IPA: no
 
 The D3A music IPA is expected to render the real SoRR runtime from the existing D2-staged data and to play BGM through SDL2_mixer if `Library/Application Support/SORR/mod/music` is present on the iPhone.
 
+## Physical D3A Music Result
+
+The first SDL2_mixer music IPA crashed/exited much earlier than the previous idle-window issue:
+
+```text
+Tested run: 26559098341
+Artifact: ios-shell-d3a-music-device-arm64
+IPA: build-products/SorrIOSShell-d3a-music-adhoc.ipa
+Observed previous marker: event=SDL_APP_TERMINATING ticks=30496 stage=runtime-loop
+Previous older marker for comparison: heartbeat=49 ticks=274472 runtime_ms=273127
+Interpretation: new D3A music-backend failure, not just the old five-minute idle exit
+```
+
+Follow-up change:
+
+- Keep music enabled; do not return to inert handles.
+- Load OGG/BGM files into an owned memory buffer before `Mix_LoadMUS_RW`.
+- Keep that memory alive in the music handle until `Mix_FreeMusic`.
+- Add visible heartbeat/event counters for music memory load, play attempts, play result, controls, queries, frees, halt calls, playing state, last handle, last pointer, and byte counts.
+- Log `Mix_GetError` around music play/control paths.
+
+Follow-up artifact target:
+
+```text
+ios-shell-d3a-music-diagnostics-device-arm64
+build-products/SorrIOSShell-d3a-music-diagnostics-adhoc.ipa
+```
+
 ## D3A Music Test Instructions
 
 1. Keep the D2-staged data on the iPhone, including `mod/music`.
 2. If the staged data may be stale, regenerate the local-only import ZIP on Windows with `powershell -ExecutionPolicy Bypass -File tools\create_d2_import_package.ps1`, then transfer/extract it through the existing D2 route.
-3. Download `ios-shell-d3a-music-device-arm64` from GitHub Actions run `26559098341`.
+3. Download `ios-shell-d3a-music-diagnostics-device-arm64` from the latest GitHub Actions run.
 4. Extract the artifact on Windows.
-5. Install `build-products/SorrIOSShell-d3a-music-adhoc.ipa` with Sideloadly.
+5. Install `build-products/SorrIOSShell-d3a-music-diagnostics-adhoc.ipa` with Sideloadly.
 6. Launch `SorrIOSShell`.
 7. Confirm real SoRR rendering still appears.
 8. Confirm whether BGM is audible.
 9. Leave the app foregrounded and untouched for 10-15 minutes.
 10. If it exits, reopen once and retrieve `On My iPhone -> SorrIOSShell -> SORR_DIAGNOSTICS -> ios_d3_runtime_stability_probe.txt`.
-11. Report the last 40-60 lines, especially music load/play status and any `SDL_APP_*` lifecycle markers.
+11. Report the last 40-60 lines, especially `audio_music_mem_ok`, `audio_music_play_attempts`, `audio_music_play_ok`, `audio_music_play_fail`, `audio_music_playing`, `audio_music_last_handle`, `audio_music_last_ptr`, `audio_music_last_bytes`, `audio_music_last_status`, and any `SDL_APP_*` lifecycle markers.

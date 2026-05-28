@@ -447,7 +447,7 @@ jobs:
       IOS_DEVICE_ARCH: "arm64"
       IOS_DEVICE_BUILD_DIR: "build-ios-shell-device"
       ARTIFACT_DIR: "ci-artifacts/ios-shell-device"
-      IPA_NAME: "SorrIOSShell-d3a-music-adhoc.ipa"
+      IPA_NAME: "SorrIOSShell-d3a-music-diagnostics-adhoc.ipa"
 
     steps:
       - name: Checkout
@@ -733,7 +733,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ios-shell-d3a-music-device-arm64
+          name: ios-shell-d3a-music-diagnostics-device-arm64
           path: ci-artifacts/ios-shell-device
           if-no-files-found: warn
           retention-days: 14

@@ -535,6 +535,15 @@ Game data/assets bundled in IPA: no
 
 The next manual physical iPhone test should install this IPA through Sideloadly, keep the D2-staged data with `mod/music` in place, confirm real SoRR rendering still appears, confirm whether BGM is audible, and idle foregrounded for 10-15 minutes while preserving diagnostics in `On My iPhone/SorrIOSShell/SORR_DIAGNOSTICS`.
 
+The first physical SDL2_mixer music IPA exited early, with the previous-run marker showing `event=SDL_APP_TERMINATING ticks=30496 stage=runtime-loop`. This is now tracked as a D3A music-backend crash rather than the older five-minute idle-window issue. The follow-up D3A music diagnostic build keeps BGM enabled, loads OGG music into an owned memory buffer for `Mix_LoadMUS_RW`, keeps that buffer alive with the `Mix_Music` handle, and logs music load/play/control/query/finalization counters in the Files-visible diagnostics.
+
+Follow-up artifact target:
+
+```text
+ios-shell-d3a-music-diagnostics-device-arm64
+build-products/SorrIOSShell-d3a-music-diagnostics-adhoc.ipa
+```
+
 D4a touch input remains blocked until D3A proves audible BGM or reaches a genuine SDL2_mixer/decoder blocker.
 
 ## Out Of Scope For This Plan
