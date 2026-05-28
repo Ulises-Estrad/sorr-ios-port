@@ -725,3 +725,15 @@ Next patch artifact:
 The patch keeps BGM/SFX enabled and keeps the IPA asset-free. It extends the iOS/D3S pointer side table so remote process-local/public pointers carry owner process metadata, then guards later dereferences if the owner process has been destroyed or reused. Guard hits are logged as `runtime_stale_process_ref ...` in the Files-visible diagnostics log.
 
 Success criteria for this patch are unchanged from the D3S stability pass: physical iPhone render works, BGM/SFX work, and the app survives foreground idle past the old five-minute attract/demo crash window. If it still crashes, the visible log should contain stronger breadcrumbs for the next patch attempt.
+## D3S Enemy/HUD Guard Artifact Proof
+
+The D3S enemy/HUD guard IPA was produced successfully:
+
+- Actions run: `26603837181`
+- Commit: `2eb36b6`
+- Artifact: `ios-shell-d3s-enemy-hud-guard-device-arm64`
+- IPA: `build-products/SorrIOSShell-d3s-enemy-hud-guard-adhoc.ipa`
+- Device job result: success
+- Simulator job result: success
+
+Next manual step is physical iPhone testing with the existing D2-staged data. D4a remains blocked until this guard build either survives past the old five-minute window or produces new `runtime_stale_process_ref` / `signal=` breadcrumbs.

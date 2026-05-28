@@ -1800,6 +1800,19 @@ Purpose:
 - log guarded stale references as `runtime_stale_process_ref ...` instead of silently dereferencing freed process memory.
 
 Expected CI checks remain unchanged: build iphoneos arm64, ad-hoc sign for Sideloadly, package `Payload/SorrIOSShell.app`, inspect Info.plist/architecture/signature, and verify the IPA contains no `SorR.dat`, `data/`, FPG/WAV/OGG/SMK/PNG assets, logs, or prepared data.
+
+GitHub-side D3S enemy/HUD guard artifact proof:
+
+```text
+Actions run: 26603837181
+Commit: 2eb36b6
+Device artifact: ios-shell-d3s-enemy-hud-guard-device-arm64
+IPA: build-products/SorrIOSShell-d3s-enemy-hud-guard-adhoc.ipa
+Device result: success
+Simulator result: success
+```
+
+The device artifact passed the existing IPA layout/signature/forbidden-asset inspection in CI.
 ## D3S Title Re-Entry Diagnostic Artifact
 
 The workflow now produces a D3S follow-up artifact aimed at the post-demo return-to-title transition:

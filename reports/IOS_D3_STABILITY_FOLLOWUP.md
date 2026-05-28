@@ -424,3 +424,15 @@ Next artifact target:
 - `build-products/SorrIOSShell-d3s-enemy-hud-guard-adhoc.ipa`
 
 When testing, install with Sideloadly, leave the app foregrounded for 10-15 minutes, and report whether it survives past the old five-minute window. If it still exits, retrieve `Documents/SORR_DIAGNOSTICS/ios_d3_runtime_stability_probe.txt` and report the last 150-250 lines, especially `runtime_stale_process_ref`, `signal=`, `last_lifecycle=`, `last_family=`, and `last_render=`.
+## GitHub-Side D3S Enemy/HUD Guard Artifact Proof
+
+Produced successfully:
+
+- Actions run: `26603837181`
+- Commit: `2eb36b6`
+- Artifact: `ios-shell-d3s-enemy-hud-guard-device-arm64`
+- IPA: `build-products/SorrIOSShell-d3s-enemy-hud-guard-adhoc.ipa`
+- Device job result: success
+- Simulator job result: success
+
+This is the current recommended physical iPhone D3S patch IPA. It keeps real BGM/SFX enabled, uses the existing D2-staged data, does not bundle game data/assets, and should be tested by leaving the app foregrounded for 10-15 minutes.
