@@ -189,6 +189,7 @@ if(SORR_IOS_D3_FIRST_RENDER)
     ${SORR_ROOT}/modules/mod_grproc
     ${SORR_ROOT}/modules/libscroll
     ${SORR_ROOT}/modules/mod_scroll
+    ${SORR_ROOT}/modules/libdraw
     ${SORR_ROOT}/modules/mod_draw
     ${SORR_ROOT}/modules/mod_screen
     ${SORR_ROOT}/modules/mod_path

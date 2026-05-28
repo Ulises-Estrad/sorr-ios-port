@@ -1179,6 +1179,16 @@ Cause: mod_flic.c passed FLIC * callbacks to gr_new_object while the render obje
 Fix: FLIC callbacks now accept void * context and cast back to FLIC * inside the callback body
 ```
 
+Sixth D3 CI failure:
+
+```text
+Commit: 1ce7c29
+Run: 26547306387
+Failed step: Build unsigned iOS shell app for device
+Cause: mod_draw.c includes libdraw.h, but the D3 iOS target included mod_draw without adding modules/libdraw to the include path
+Fix: add modules/libdraw to the D3 iOS target include directories
+```
+
 Manual D3 test flow:
 
 1. Keep the D2 data staged on the iPhone.

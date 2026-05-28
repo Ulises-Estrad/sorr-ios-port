@@ -109,6 +109,16 @@ Failure: mod_flic.c used FLIC * callback parameters where the render object API 
 Fix: convert the FLIC render-object callback boundary to void * and cast back to FLIC * inside the callbacks
 ```
 
+Sixth D3 attempt:
+
+```text
+Commit: 1ce7c29
+Run: 26547306387
+Result: device compile failed
+Failure: mod_draw.c could not include libdraw.h because the D3 iOS target missed the libdraw include path
+Fix: add modules/libdraw to the D3 iOS target include directories
+```
+
 The IPA must still contain no:
 
 - `SorR.dat`
