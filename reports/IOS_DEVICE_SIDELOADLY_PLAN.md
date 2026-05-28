@@ -322,3 +322,24 @@ Game data/assets bundled in IPA: no
 ```
 
 After an idle exit, reopen the app once, then open Files and retrieve the last 20 lines from `SORR_DIAGNOSTICS/ios_d3_runtime_stability_probe.txt`.
+
+D3S idle-window diagnostics update:
+
+The visible diagnostics build still exited after about five foreground idle minutes. The iPhone is configured not to auto-lock, so this pass focuses on the runtime window around 240-330 seconds rather than assuming normal lock/sleep behavior.
+
+Artifact target:
+
+```text
+ios-shell-d3s-idle-window-device-arm64
+build-products/SorrIOSShell-d3s-idle-window-adhoc.ipa
+```
+
+This IPA keeps the same D2 data and D3 render path, but logs one-second heartbeats during `runtime_ms=240000..330000` with frame counters, live instance count, render-object count, file counters, and audio-stub call counters.
+
+Install through the same Windows + Sideloadly route. Leave the app foregrounded and untouched for 10-15 minutes. If it exits, reopen it once, then retrieve the last 40-60 lines from:
+
+```text
+On My iPhone/SorrIOSShell/SORR_DIAGNOSTICS/ios_d3_runtime_stability_probe.txt
+```
+
+If present, include the block from `dense_window_start` through `dense_window_end`.

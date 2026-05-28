@@ -1,4 +1,5 @@
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -24,6 +25,7 @@
 #endif
 #include "bgdrtm.h"
 #include "files.h"
+#include "g_frame.h"
 #include "instance.h"
 #include "xctype.h"
 #include "xstrings.h"
@@ -597,6 +599,21 @@ enum sorr_ios_d3_runtime_stage
 
 static volatile int sorr_ios_d3_stage = 0;
 static volatile unsigned int sorr_ios_d3_heartbeat_count = 0;
+static volatile Uint32 sorr_ios_d3_runtime_loop_start_ticks = 0;
+static volatile int sorr_ios_d3_dense_window_marker = 0;
+static volatile int sorr_ios_d3_first_frame_marker = 0;
+
+extern int x_files_count;
+extern int max_x_files;
+extern volatile int sorr_ios_d3_live_instance_count;
+extern volatile int sorr_ios_d3_render_object_count;
+extern volatile unsigned int sorr_ios_sound_stub_zero_count;
+extern volatile unsigned int sorr_ios_sound_stub_minus_one_count;
+
+#define SORR_IOS_D3_HEARTBEAT_NORMAL_MS 10000u
+#define SORR_IOS_D3_HEARTBEAT_DENSE_MS 1000u
+#define SORR_IOS_D3_DENSE_START_MS 240000u
+#define SORR_IOS_D3_DENSE_END_MS 330000u
 
 static const char *sorr_ios_d3_stage_name(int stage)
 {
@@ -646,7 +663,7 @@ static void sorr_ios_d3_append_log_file(const char *path, const char *line)
 
 static void sorr_ios_d3_log(const sorr_ios_data_layout *layout, const char *format, ...)
 {
-    char line[1024];
+    char line[2048];
     va_list args;
 
     if (!format)
@@ -672,7 +689,7 @@ static void sorr_ios_d3_log(const sorr_ios_data_layout *layout, const char *form
 
 static void sorr_ios_d3_stability_log(const sorr_ios_data_layout *layout, const char *format, ...)
 {
-    char line[1024];
+    char line[2048];
     va_list args;
 
     if (!format)
@@ -754,15 +771,71 @@ static Uint32 sorr_ios_d3_heartbeat_timer(Uint32 interval, void *param)
 {
     const sorr_ios_data_layout *layout = (const sorr_ios_data_layout *)param;
     unsigned int heartbeat = ++sorr_ios_d3_heartbeat_count;
+    Uint32 ticks = SDL_GetTicks();
+    Uint32 loop_start = sorr_ios_d3_runtime_loop_start_ticks;
+    Uint32 runtime_ms = loop_start ? ticks - loop_start : 0;
+    Uint32 next_interval = SORR_IOS_D3_HEARTBEAT_NORMAL_MS;
     unsigned long long rss = sorr_ios_d3_resident_memory_bytes();
 
+    (void)interval;
+
+    if (runtime_ms >= SORR_IOS_D3_DENSE_START_MS && runtime_ms <= SORR_IOS_D3_DENSE_END_MS)
+    {
+        next_interval = SORR_IOS_D3_HEARTBEAT_DENSE_MS;
+        if (!sorr_ios_d3_dense_window_marker)
+        {
+            sorr_ios_d3_dense_window_marker = 1;
+            sorr_ios_d3_stability_log(layout,
+                                      "dense_window_start ticks=%u runtime_ms=%u stage=%s",
+                                      ticks,
+                                      runtime_ms,
+                                      sorr_ios_d3_stage_name(sorr_ios_d3_stage));
+        }
+    }
+    else if (runtime_ms > SORR_IOS_D3_DENSE_END_MS && sorr_ios_d3_dense_window_marker == 1)
+    {
+        sorr_ios_d3_dense_window_marker = 2;
+        sorr_ios_d3_stability_log(layout,
+                                  "dense_window_end ticks=%u runtime_ms=%u stage=%s",
+                                  ticks,
+                                  runtime_ms,
+                                  sorr_ios_d3_stage_name(sorr_ios_d3_stage));
+    }
+
+    if (!sorr_ios_d3_first_frame_marker && frame_count > 0)
+    {
+        sorr_ios_d3_first_frame_marker = 1;
+        sorr_ios_d3_stability_log(layout,
+                                  "first_frame_detected ticks=%u runtime_ms=%u frame_count=%u last_frame_ticks=%d",
+                                  ticks,
+                                  runtime_ms,
+                                  frame_count,
+                                  last_frame_ticks);
+    }
+
     sorr_ios_d3_stability_log(layout,
-                              "heartbeat=%u ticks=%u stage=%s rss_bytes=%llu",
+                              "heartbeat=%u ticks=%u runtime_ms=%u interval_next_ms=%u stage=%s rss_bytes=%llu frame_count=%u last_frame_ticks=%d frame_ms=%.3f fps_count=%d fps_init=%d max_jump=%d jump=%d instances=%d render_objects=%d opened_files=%d x_files=%d max_x_files=%d audio_stub_zero=%u audio_stub_minus_one=%u",
                               heartbeat,
-                              SDL_GetTicks(),
+                              ticks,
+                              runtime_ms,
+                              next_interval,
                               sorr_ios_d3_stage_name(sorr_ios_d3_stage),
-                              rss);
-    return interval;
+                              rss,
+                              frame_count,
+                              last_frame_ticks,
+                              frame_ms,
+                              FPS_count,
+                              FPS_init,
+                              max_jump,
+                              jump,
+                              sorr_ios_d3_live_instance_count,
+                              sorr_ios_d3_render_object_count,
+                              opened_files,
+                              x_files_count,
+                              max_x_files,
+                              sorr_ios_sound_stub_zero_count,
+                              sorr_ios_sound_stub_minus_one_count);
+    return next_interval;
 }
 
 static const char *sorr_ios_d3_event_name(Uint32 type)
@@ -981,10 +1054,15 @@ static int sorr_ios_run_d3_first_render(sorr_ios_data_layout *layout,
     sorr_ios_d3_log(layout, "probe log write ok");
 
     SDL_AddEventWatch(sorr_ios_d3_event_watch, layout);
-    heartbeat_timer = SDL_AddTimer(10000, sorr_ios_d3_heartbeat_timer, layout);
+    heartbeat_timer = SDL_AddTimer(SORR_IOS_D3_HEARTBEAT_NORMAL_MS, sorr_ios_d3_heartbeat_timer, layout);
     if (heartbeat_timer)
     {
-        sorr_ios_d3_log(layout, "heartbeat timer started interval_ms=10000");
+        sorr_ios_d3_log(layout,
+                        "heartbeat timer started interval_ms=%u dense_start_ms=%u dense_end_ms=%u dense_interval_ms=%u",
+                        SORR_IOS_D3_HEARTBEAT_NORMAL_MS,
+                        SORR_IOS_D3_DENSE_START_MS,
+                        SORR_IOS_D3_DENSE_END_MS,
+                        SORR_IOS_D3_HEARTBEAT_DENSE_MS);
     }
     else
     {
@@ -1084,6 +1162,12 @@ static int sorr_ios_run_d3_first_render(sorr_ios_data_layout *layout,
 
     sorr_ios_d3_log(layout, "first frame/render loop handoff begin");
     sorr_ios_d3_set_stage(layout, SORR_IOS_D3_STAGE_RUNTIME_LOOP);
+    sorr_ios_d3_runtime_loop_start_ticks = SDL_GetTicks();
+    sorr_ios_d3_log(layout,
+                    "runtime loop start ticks=%u dense_start_ms=%u dense_end_ms=%u",
+                    sorr_ios_d3_runtime_loop_start_ticks,
+                    SORR_IOS_D3_DENSE_START_MS,
+                    SORR_IOS_D3_DENSE_END_MS);
     ret = instance_go_all();
     sorr_ios_d3_set_stage(layout, SORR_IOS_D3_STAGE_RUNTIME_RETURNED);
     sorr_ios_d3_log(layout, "instance_go_all returned ret=%d", ret);
@@ -1323,7 +1407,8 @@ static int sorr_ios_prepare_data_layout(sorr_ios_data_layout *layout)
     {
         sorr_ios_write_text_file(diagnostics_readme_path,
                                  "D3S diagnostics are mirrored here for Files access.\n"
-                                 "After an idle crash, reopen SorrIOSShell once, then copy the last lines of ios_d3_runtime_stability_probe.txt.\n");
+                                 "After an idle crash, reopen SorrIOSShell once, then copy the last lines of ios_d3_runtime_stability_probe.txt.\n"
+                                 "For the five-minute idle issue, include dense_window_start through dense_window_end when present.\n");
     }
 
     if (!sorr_ios_create_dir_marker("savegame", layout->savegame_dir) ||

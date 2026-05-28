@@ -1,6 +1,6 @@
 # iOS D3 Stability Follow-Up
 
-Status: visible diagnostics IPA produced by GitHub Actions.
+Status: idle-window diagnostics in progress.
 
 D3 first render remains complete. This pass hardens the already-rendering D3 build after a repeatable physical-device idle exit was observed at about five minutes.
 
@@ -23,7 +23,20 @@ The D3 iOS build now:
 - records the previous stability log's last marker on the next launch,
 - starts a 10-second heartbeat before runtime handoff,
 - logs the current D3 stage and resident memory in each heartbeat,
+- logs one-second dense heartbeats from runtime `240000` ms through `330000` ms,
+- logs frame/tick counters, live instance count, render-object count, open file counters, and audio-stub call counters,
+- records `dense_window_start`, `dense_window_end`, and first detected render frame markers,
 - logs SDL lifecycle, low-memory, background, foreground, quit, and selected window events.
+
+The idle crash is still treated as a D3 stability follow-up, not a failed D3 first-render proof. The physical D3 render proof remains complete.
+
+User-observed marker from the visible diagnostics build:
+
+```text
+heartbeat=27 ticks=270315 stage=runtime-loop rss_bytes=90652672
+```
+
+The phone is configured not to auto-lock. The lifecycle events remain useful evidence, but normal auto-lock is no longer the lead theory. The next diagnostic pass focuses on what changes during the 240-300 second idle window, including menu/attract timers, event/timer behavior, gradual resource growth, and audio-stub retry patterns.
 
 ## Stability Log
 
@@ -58,9 +71,13 @@ Important markers:
 - `stage=app-launch`
 - `previous stability last marker=...`
 - `D2 data preflight ready=...`
-- `heartbeat timer started interval_ms=10000`
+- `heartbeat timer started interval_ms=10000 dense_start_ms=240000 dense_end_ms=330000 dense_interval_ms=1000`
 - `stage=runtime-loop`
-- `heartbeat=N ticks=... stage=runtime-loop rss_bytes=...`
+- `runtime loop start ticks=... dense_start_ms=240000 dense_end_ms=330000`
+- `first_frame_detected ticks=... runtime_ms=... frame_count=...`
+- `dense_window_start ticks=... runtime_ms=... stage=runtime-loop`
+- `heartbeat=N ticks=... runtime_ms=... interval_next_ms=... stage=runtime-loop rss_bytes=... frame_count=... instances=... render_objects=... opened_files=... audio_stub_zero=... audio_stub_minus_one=...`
+- `dense_window_end ticks=... runtime_ms=... stage=runtime-loop`
 - `event=SDL_APP_WILLENTERBACKGROUND`
 - `event=SDL_APP_DIDENTERBACKGROUND`
 - `event=SDL_APP_LOWMEMORY`
@@ -74,18 +91,18 @@ If the app exits or crashes, reopen it once. The next launch should log and brie
 GitHub Actions device artifact:
 
 ```text
-ios-shell-d3s-visible-diagnostics-device-arm64
+ios-shell-d3s-idle-window-device-arm64
 ```
 
 IPA inside artifact:
 
 ```text
-build-products/SorrIOSShell-d3s-visible-diagnostics-adhoc.ipa
+build-products/SorrIOSShell-d3s-idle-window-adhoc.ipa
 ```
 
 The IPA remains asset-free. The workflow inspection still rejects `SorR.dat`, `data/`, `.fpg`, `.wav`, `.ogg`, `.smk`, and `.png` content.
 
-GitHub-side D3S visible diagnostics artifact proof:
+Previous GitHub-side D3S visible diagnostics artifact proof:
 
 ```text
 Actions run: 26552137370
@@ -97,21 +114,31 @@ Device job result: success
 Game data/assets bundled in IPA: no
 ```
 
+Current idle-window diagnostic target:
+
+```text
+Artifact: ios-shell-d3s-idle-window-device-arm64
+IPA: build-products/SorrIOSShell-d3s-idle-window-adhoc.ipa
+Focus: one-second diagnostics during runtime_ms=240000..330000
+Game data/assets bundled in IPA: no
+```
+
 ## Manual iPhone Test
 
 1. Keep the D2-staged data on the iPhone.
-2. Download `ios-shell-d3s-visible-diagnostics-device-arm64` from GitHub Actions.
+2. Download `ios-shell-d3s-idle-window-device-arm64` from GitHub Actions.
 3. Extract the artifact on Windows.
-4. Install `build-products/SorrIOSShell-d3s-visible-diagnostics-adhoc.ipa` through Sideloadly.
+4. Install `build-products/SorrIOSShell-d3s-idle-window-adhoc.ipa` through Sideloadly.
 5. Open `SorrIOSShell`.
 6. Leave the app foregrounded and untouched until it exits or 10-15 minutes pass.
 7. If it exits, reopen it once.
 8. Open Files: `On My iPhone -> SorrIOSShell -> SORR_DIAGNOSTICS`.
-9. Copy or screenshot the last 20 lines of `ios_d3_runtime_stability_probe.txt`.
-10. Do not start D4a controls until this pass is reviewed.
+9. Copy or screenshot the last 40-60 lines of `ios_d3_runtime_stability_probe.txt`.
+10. If present, include the block from `dense_window_start` through `dense_window_end`.
+11. Do not start D4a controls until this pass is reviewed.
 
 ## Expected Results
 
 Best case: the idle timer fix prevents the five-minute idle exit and the app keeps rendering.
 
-Diagnostic case: if the app still exits, the next launch's previous marker should identify the last heartbeat, lifecycle event, low-memory event, termination event, or runtime return marker before the exit.
+Diagnostic case: if the app still exits, the next launch's previous marker and dense-window heartbeat block should identify the last runtime stage, frame count, process/object/file/audio-stub counters, lifecycle event, low-memory event, termination event, or runtime return marker before the exit.

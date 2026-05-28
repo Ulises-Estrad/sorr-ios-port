@@ -201,7 +201,21 @@ This is the first milestone that should exercise the game data on iOS.
 
 ## Immediate Next Action
 
-D1 now adds a shell-only physical-device artifact before any private data bundle/render proof.
+Current immediate action is D3 stability hardening before D4a touch input.
+
+D3 physical first render is complete, but the rendered app exits after about five foreground idle minutes. The next diagnostic build keeps the D2 data path and D3 render path unchanged while writing Files-visible dense heartbeat diagnostics from runtime `240000` ms through `330000` ms.
+
+```text
+Artifact target: ios-shell-d3s-idle-window-device-arm64
+IPA target: build-products/SorrIOSShell-d3s-idle-window-adhoc.ipa
+Diagnostics path: On My iPhone/SorrIOSShell/SORR_DIAGNOSTICS/ios_d3_runtime_stability_probe.txt
+No D4a touch input yet
+No game data/assets bundled in IPA
+```
+
+Historical notes follow.
+
+D1 added a shell-only physical-device artifact before any private data bundle/render proof.
 
 D1 status: physical iPhone Sideloadly install proof complete.
 
@@ -429,6 +443,17 @@ IPA: build-products/SorrIOSShell-d3s-visible-diagnostics-adhoc.ipa
 Artifact-producing commit: 692c73b
 Device job result: success
 Game data/assets bundled in IPA: no
+```
+
+D3S idle-window follow-up:
+
+The visible diagnostics build still exits at about five foreground idle minutes. The user confirmed the iPhone is set not to auto-lock. The next artifact keeps D2/D3 behavior unchanged and adds one-second diagnostics from runtime `240000` ms through `330000` ms.
+
+```text
+Artifact target: ios-shell-d3s-idle-window-device-arm64
+IPA target: build-products/SorrIOSShell-d3s-idle-window-adhoc.ipa
+Diagnostics: On My iPhone/SorrIOSShell/SORR_DIAGNOSTICS/ios_d3_runtime_stability_probe.txt
+Counters: frame/tick, live instances, render objects, open files, xfiles, audio-stub calls
 ```
 
 ## Out Of Scope For This Plan

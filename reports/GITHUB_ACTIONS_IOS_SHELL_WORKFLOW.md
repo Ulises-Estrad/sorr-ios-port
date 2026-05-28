@@ -130,6 +130,19 @@ Physical import/storage result: superseded by completed SORR_IMPORT proof
 
 Updated D2 `SORR_IMPORT` physical proof is complete.
 
+Current D3S stability target:
+
+```text
+Artifact: ios-shell-d3s-idle-window-device-arm64
+IPA inside artifact: build-products/SorrIOSShell-d3s-idle-window-adhoc.ipa
+Purpose: physical-device first-render stability diagnostics around the repeatable five-minute idle exit
+Diagnostics path on phone: On My iPhone/SorrIOSShell/SORR_DIAGNOSTICS/ios_d3_runtime_stability_probe.txt
+Dense logging window: runtime_ms=240000 through runtime_ms=330000 at one-second cadence
+Game data/assets in IPA: not bundled
+```
+
+This target does not start D4a touch input. It keeps the D2 data path and D3 render path intact while adding denser runtime counters for the 240-330 second window.
+
 ## Workflow Summary
 
 Runner:
@@ -1421,3 +1434,38 @@ Artifact-producing commit: 692c73b
 Device job result: success
 Game data/assets bundled in IPA: no
 ```
+
+## D3S Idle-Window Diagnostics Artifact
+
+The visible diagnostics build proved the Files-visible log path, but the app still exited at about five foreground idle minutes. The user confirmed the iPhone is set not to auto-lock, so this pass treats SDL background/terminating lifecycle events as symptoms to log, not as the assumed root cause.
+
+Expected artifact:
+
+```text
+ios-shell-d3s-idle-window-device-arm64
+```
+
+Expected IPA:
+
+```text
+build-products/SorrIOSShell-d3s-idle-window-adhoc.ipa
+```
+
+D3S idle-window changes:
+
+- keep the D2 import/staging path unchanged,
+- keep the D3 runtime/render path unchanged,
+- mirror diagnostics to `Documents/SORR_DIAGNOSTICS`,
+- log one-second heartbeats from runtime `240000` ms through `330000` ms,
+- log `frame_count`, `last_frame_ticks`, `frame_ms`, FPS counters, skip counters, live instances, render objects, open files, xfile counters, and audio-stub call counters,
+- log `dense_window_start`, `dense_window_end`, and `first_frame_detected`.
+
+Manual D3S idle-window test:
+
+1. Keep D2 data staged on the iPhone.
+2. Install `build-products/SorrIOSShell-d3s-idle-window-adhoc.ipa` with Sideloadly.
+3. Launch the app and leave it foregrounded and untouched until it exits or 10-15 minutes pass.
+4. If it exits, reopen once.
+5. Open Files: `On My iPhone -> SorrIOSShell -> SORR_DIAGNOSTICS`.
+6. Copy or screenshot the last 40-60 lines of `ios_d3_runtime_stability_probe.txt`.
+7. Include the `dense_window_start` through `dense_window_end` block when present.

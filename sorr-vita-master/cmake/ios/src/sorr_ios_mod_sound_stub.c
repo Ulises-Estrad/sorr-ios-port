@@ -4,10 +4,14 @@
 #include "portable_diag.h"
 #endif
 
+volatile unsigned int sorr_ios_sound_stub_zero_count = 0;
+volatile unsigned int sorr_ios_sound_stub_minus_one_count = 0;
+
 static int sorr_ios_sound_zero(INSTANCE *my, int *params)
 {
     (void)my;
     (void)params;
+    sorr_ios_sound_stub_zero_count++;
     PORTABLE_DIAG_LOG("AUDIO", "iOS D3 audio stub returning 0");
     return 0;
 }
@@ -16,6 +20,7 @@ static int sorr_ios_sound_minus_one(INSTANCE *my, int *params)
 {
     (void)my;
     (void)params;
+    sorr_ios_sound_stub_minus_one_count++;
     PORTABLE_DIAG_LOG("AUDIO", "iOS D3 audio stub returning -1");
     return -1;
 }

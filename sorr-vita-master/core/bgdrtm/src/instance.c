@@ -68,6 +68,10 @@ INSTANCE ** hashed_by_priority = NULL;
 
 INSTANCE * first_instance = NULL ;
 
+#ifdef SORR_IOS_D3_FIRST_RENDER
+volatile int sorr_ios_d3_live_instance_count = 0;
+#endif
+
 /* Priority lists */
 
 static INSTANCE * iterator_by_priority  = NULL ;
@@ -380,6 +384,10 @@ INSTANCE * instance_duplicate( INSTANCE * father )
     if ( first_instance ) first_instance->prev = r;
     first_instance = r ;
 
+#ifdef SORR_IOS_D3_FIRST_RENDER
+    sorr_ios_d3_live_instance_count++;
+#endif
+
     instance_add_to_list_by_id( r, pid );
     instance_add_to_list_by_instance( r );
     instance_add_to_list_by_type( r, type );
@@ -495,6 +503,10 @@ INSTANCE * instance_new( PROCDEF * proc, INSTANCE * father )
     r->next = first_instance ;
     if ( first_instance ) first_instance->prev = r;
     first_instance = r ;
+
+#ifdef SORR_IOS_D3_FIRST_RENDER
+    sorr_ios_d3_live_instance_count++;
+#endif
 
     instance_add_to_list_by_id( r, pid );
     instance_add_to_list_by_instance( r );
@@ -629,6 +641,10 @@ void instance_destroy( INSTANCE * r )
     if ( r->next ) r->next->prev = r->prev ;
 
     if ( first_instance == r ) first_instance = r->next ;
+
+#ifdef SORR_IOS_D3_FIRST_RENDER
+    if ( sorr_ios_d3_live_instance_count > 0 ) sorr_ios_d3_live_instance_count--;
+#endif
 
     /* Remove the instance from all hash lists */
 

@@ -40,6 +40,10 @@ static int sequencer = 0;
 
 CONTAINER * sorted_object_list = NULL;
 
+#ifdef SORR_IOS_D3_FIRST_RENDER
+volatile int sorr_ios_d3_render_object_count = 0;
+#endif
+
 #if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
 #define GR_OBJECT_X64_HANDLE_TABLE_SIZE 16384
 static OBJECT * gr_object_x64_handles[GR_OBJECT_X64_HANDLE_TABLE_SIZE];
@@ -208,6 +212,7 @@ int gr_new_object( int z, OBJ_INFO * info, OBJ_DRAW * draw, void * what )
 {
     CONTAINER * ctr ;
     OBJECT * object = ( OBJECT * ) malloc( sizeof( OBJECT ) );
+    int handle;
 
     if ( !object ) return 0;
 
@@ -246,7 +251,11 @@ int gr_new_object( int z, OBJ_INFO * info, OBJ_DRAW * draw, void * what )
 
     ctr->first_in_key = object;
 
-    return gr_object_x64_store_handle( object );
+    handle = gr_object_x64_store_handle( object );
+#ifdef SORR_IOS_D3_FIRST_RENDER
+    if ( handle ) sorr_ios_d3_render_object_count++;
+#endif
+    return handle;
 }
 
 /* --------------------------------------------------------------------------- */
@@ -276,6 +285,10 @@ void gr_destroy_object( int id )
     if ( object->prev ) object->prev->next = object->next;
     if ( object == ctr->first_in_key ) ctr->first_in_key = object->next;
     if ( !ctr->first_in_key ) destroy_container( ctr );
+
+#ifdef SORR_IOS_D3_FIRST_RENDER
+    if ( sorr_ios_d3_render_object_count > 0 ) sorr_ios_d3_render_object_count--;
+#endif
 
     /* Rects */
     if ( object->bbox.x >= 0 || object->bbox.y >= 0 || object->bbox.x2 >= 0 || object->bbox.y2 >= 0 )
