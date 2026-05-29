@@ -1777,6 +1777,27 @@ Result: success
 
 The simulator shell job also passed in the same run. The device artifact passed the existing IPA layout/signature/forbidden-asset inspection.
 
+## D4b Custom Touch Target
+
+Physical testing of the compact D-pad build showed that movement was still too stiff: a held direction could feel locked to the first touch-down direction. The next workflow device artifact combines a D4a movement-feel fix with D4b-lite customization while keeping D3S crash reporting and guards active.
+
+```text
+ios-shell-d4b-custom-touch-device-arm64
+build-products/SorrIOSShell-d4b-custom-touch-adhoc.ipa
+```
+
+Changes in this target:
+
+- the D-pad remains one compact lower-left control owned by one active touch,
+- finger motion continuously recomputes the D-pad direction mask,
+- old direction keys release before new direction keys press,
+- diagonals are narrower so Right to Up prefers releasing Right unless the touch is deliberately diagonal,
+- Attack/Jump/Special/Police/Start/Back keep the existing action-button path,
+- `CFG` opens edit mode for moving controls, resizing the selected control, opacity cycling, overlay show/hide, reset, and save,
+- settings persist in `On My iPhone/SorrIOSShell/SORR_DIAGNOSTICS/ios_touch_controls.ini`.
+
+Expected CI checks remain unchanged: build iphoneos arm64, ad-hoc sign for Sideloadly, package `Payload/SorrIOSShell.app`, inspect Info.plist/architecture/signature, and verify the IPA contains no `SorR.dat`, `data/`, FPG/WAV/OGG/SMK/PNG assets, logs, or prepared data.
+
 ## D3S ENEMIGO Lookup Guard Artifact
 
 The workflow now targets a D3S patch artifact for the repeated attract/demo `SIGSEGV` after the remote process-pointer guard failed to trigger:

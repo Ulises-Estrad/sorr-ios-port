@@ -869,3 +869,36 @@ Simulator job result: success
 Game data/assets bundled in IPA: no
 Physical iPhone result: pending manual D-pad slide test
 ```
+
+## D4b Custom Touch Pass
+
+Physical testing of the compact D-pad artifact showed that movement was still too stiff, with direction changes feeling locked to the initial touch-down. The next pass combines a D4a D-pad feel fix with D4b-lite customization while preserving the working action buttons, Bennu key injection, BGM/SFX, D2 staged-data path, and D3S crash reporting.
+
+Target:
+
+```text
+ios-shell-d4b-custom-touch-device-arm64
+build-products/SorrIOSShell-d4b-custom-touch-adhoc.ipa
+```
+
+Control behavior:
+
+- one active D-pad touch owns movement,
+- each finger-motion event recomputes the direction mask from the current point,
+- old direction keys release before new direction keys press,
+- the deadzone remains centered,
+- diagonal zones are intentionally narrower than the previous compact build,
+- action buttons and Start/Back keep their working path.
+
+Customization behavior:
+
+- `CFG` enters edit mode,
+- drag the D-pad or a button to reposition it,
+- `BIG` / `SML` resize the selected control,
+- `OPAC` cycles opacity,
+- `HIDE` / `SHOW` toggles overlay visibility,
+- `RST` restores defaults,
+- `DONE` saves and exits,
+- settings persist in `On My iPhone/SorrIOSShell/SORR_DIAGNOSTICS/ios_touch_controls.ini`.
+
+This target does not start D5 gameplay polish, D4b advanced customization, App Store/TestFlight signing, or asset bundling.

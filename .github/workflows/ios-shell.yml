@@ -447,7 +447,7 @@ jobs:
       IOS_DEVICE_ARCH: "arm64"
       IOS_DEVICE_BUILD_DIR: "build-ios-shell-device"
       ARTIFACT_DIR: "ci-artifacts/ios-shell-device"
-      IPA_NAME: "SorrIOSShell-d4a-dpad-refine-adhoc.ipa"
+      IPA_NAME: "SorrIOSShell-d4b-custom-touch-adhoc.ipa"
 
     steps:
       - name: Checkout
@@ -733,7 +733,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ios-shell-d4a-dpad-refine-device-arm64
+          name: ios-shell-d4b-custom-touch-device-arm64
           path: ci-artifacts/ios-shell-device
           if-no-files-found: warn
           retention-days: 14

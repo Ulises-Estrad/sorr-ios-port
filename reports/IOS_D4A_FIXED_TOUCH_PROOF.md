@@ -238,3 +238,38 @@ Simulator job result: success
 Game data/assets bundled in IPA: no
 Physical iPhone result: pending manual D-pad slide test
 ```
+
+## D4a/D4b Combined Control Pass
+
+Physical testing of the compact D-pad artifact showed that the D-pad was too stiff: a held direction could feel locked to the first touch-down direction instead of fluidly following finger motion. The next pass keeps the working action buttons and Bennu key injection, but recomputes the D-pad direction continuously on touch motion.
+
+It also adds D4b-lite customization:
+
+- `CFG` enters edit mode,
+- drag the D-pad or any button to reposition it,
+- `BIG` / `SML` resize the selected control,
+- `OPAC` cycles overlay opacity,
+- `HIDE` / `SHOW` toggles overlay visibility,
+- `RST` resets defaults,
+- `DONE` saves and exits edit mode,
+- settings persist in `On My iPhone/SorrIOSShell/SORR_DIAGNOSTICS/ios_touch_controls.ini`.
+
+Artifact target:
+
+```text
+ios-shell-d4b-custom-touch-device-arm64
+```
+
+IPA target:
+
+```text
+build-products/SorrIOSShell-d4b-custom-touch-adhoc.ipa
+```
+
+Manual test focus:
+
+1. Slide Right to Left without lifting: Right should release and Left should press.
+2. Slide Right to Up: Right should release unless the touch is intentionally in a diagonal zone.
+3. Hold a D-pad direction and press Attack/Jump.
+4. Tap `CFG`, drag/resize controls, adjust opacity, save with `DONE`, relaunch, and confirm settings persist.
+5. Confirm BGM/SFX, crash reporting, and the D2 staged-data path still work.

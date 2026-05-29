@@ -504,3 +504,22 @@ Simulator job result: success
 Game data/assets bundled in IPA: no
 Physical iPhone result: pending manual D-pad slide test
 ```
+
+### D4b Custom Touch Follow-Up
+
+Physical testing of the compact D-pad artifact showed that movement can still feel locked to the first held direction. The next artifact combines the D4a movement-feel fix with D4b-lite customization:
+
+```text
+ios-shell-d4b-custom-touch-device-arm64
+build-products/SorrIOSShell-d4b-custom-touch-adhoc.ipa
+```
+
+Install through the same Windows + Sideloadly route. The private D2-staged data remains on the phone; the IPA still bundles no game data.
+
+Test focus:
+
+1. Slide Right to Left without lifting: Right should release and Left should press.
+2. Slide Right to Up: Right should release unless the touch is intentionally in a diagonal zone.
+3. Hold D-pad direction plus Attack/Jump/Special.
+4. Tap `CFG`, drag controls, use `BIG`/`SML`, `OPAC`, `HIDE`/`SHOW`, `RST`, and save with `DONE`.
+5. Relaunch and confirm the layout persists from `On My iPhone/SorrIOSShell/SORR_DIAGNOSTICS/ios_touch_controls.ini`.
