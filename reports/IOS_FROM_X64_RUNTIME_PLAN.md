@@ -1195,3 +1195,5 @@ Device job result: success
 Simulator job result: success
 Game data/assets bundled in IPA: no
 ```
+
+Physical playtest result: the GET_REAL_POINT guard fixed the observed gun-shot crash and Stage 6 beach/water startup crash. Continue with normal playtesting and major bug fixes as they appear.

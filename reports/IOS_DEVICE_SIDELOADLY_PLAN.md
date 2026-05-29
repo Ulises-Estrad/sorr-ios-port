@@ -806,3 +806,5 @@ Device job result: success
 Simulator job result: success
 Game data/assets bundled in IPA: no
 ```
+
+Physical playtest result: guns fire normally and Stage 6 beach/water startup no longer crashes with this artifact.

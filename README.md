@@ -11,6 +11,8 @@ This repo is now the source of truth for the iOS shell/runtime build. It is no l
 
 Remaining work is mostly control tuning, polish, and bug fixes discovered during normal gameplay. The old no-input attract/demo crash appears route-specific and is not blocking active playtesting right now.
 
+Latest physical playtest result: the `ios-shell-playtest-real-point-guard-device-arm64` IPA fixed the reported gun-shot crash and the Stage 6 beach/water startup crash.
+
 ## Install From Scratch
 
 Use [INSTALL_IOS.md](INSTALL_IOS.md) to recover from zero, download the latest IPA, regenerate the SoRR import package from Git LFS data, reset custom controls, and collect crash reports.

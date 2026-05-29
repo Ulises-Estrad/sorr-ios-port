@@ -2390,3 +2390,5 @@ Device job result: success
 Simulator job result: success
 Game data/assets bundled in IPA: no
 ```
+
+Physical playtest result: guns now fire without crashing, and Stage 6 beach/water startup no longer crashes on the physical iPhone. Keep this artifact as the current playtest baseline while continuing normal gameplay bug hunting.
