@@ -238,21 +238,7 @@ static void * portable_x64_stack_get_ptr( int * cell )
         PORTABLE_DIAG_LOG( "SCRIPT", "x64 ptr-get miss cell=%p low=0x%08x fallback=%p", ( void * )cell, ( unsigned int )low_value, ( void * )( uintptr_t )low_value );
     }
 #endif
-#ifdef SORR_IOS_D3_FIRST_RENDER
-    sorr_ios_d3_note_stale_pointer_guard(
-        portable_x64_current_instance_for_guard,
-        "ptr-get-miss",
-        cell,
-        ( void * )( uintptr_t )low_value,
-        NULL,
-        0,
-        "untracked_stack_ptr"
-    );
-    *cell = 0;
-    return ( void * )portable_x64_stale_ptr_sink;
-#else
     return ( void * )( uintptr_t )low_value;
-#endif
 }
 static int portable_x64_stack_peek_ptr( int * cell, uintptr_t * full_ptr )
 {
@@ -336,20 +322,7 @@ static void portable_x64_stack_adjust_ptr( int * cell, intptr_t offset )
     }
     else
     {
-#ifdef SORR_IOS_D3_FIRST_RENDER
-        sorr_ios_d3_note_stale_pointer_guard(
-            portable_x64_current_instance_for_guard,
-            "ptr-adjust-miss",
-            cell,
-            ( void * )( uintptr_t )( uint32_t )*cell,
-            NULL,
-            0,
-            "untracked_stack_ptr"
-        );
-        *cell = 0;
-#else
         *cell += ( int )offset;
-#endif
     }
 }
 

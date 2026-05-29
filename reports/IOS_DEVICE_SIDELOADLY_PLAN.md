@@ -736,3 +736,12 @@ Install it over the current app with Sideloadly, keep the existing staged data, 
 1. Pick up a gun and shoot repeatedly.
 2. Start Stage 6 and verify the beach/water opening.
 3. If the app crashes, reopen once and retrieve `SORR_DIAGNOSTICS/ios_latest_crash_report.txt`.
+
+Follow-up visual regression target:
+
+```text
+ios-shell-playtest-effects-water-gun-visual-fix-device-arm64
+build-products/SorrIOSShell-playtest-effects-water-gun-visual-fix-adhoc.ipa
+```
+
+Use this follow-up if the first guard artifact shows Stage 6 as black or the HUD portrait/lives counter is misplaced/missing.

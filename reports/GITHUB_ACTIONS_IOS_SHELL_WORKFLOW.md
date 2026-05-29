@@ -2308,3 +2308,17 @@ Device job result: success
 Simulator job result: success
 Game data/assets bundled in IPA: no
 ```
+
+## Playtest Effects Visual Regression Follow-Up
+
+Physical testing of the first effects/water/gun guard artifact found that Stage 6 rendered black, the player portrait shifted left of its slot, and the lives counter disappeared. The crash report showed the new fallback guard firing as `ptr-adjust-miss` hundreds of thousands of times, which means the guard was too broad for normal script pointer/math fallback paths.
+
+Follow-up target:
+
+```text
+Device artifact: ios-shell-playtest-effects-water-gun-visual-fix-device-arm64
+IPA: build-products/SorrIOSShell-playtest-effects-water-gun-visual-fix-adhoc.ipa
+Build label: ios-playtest-effects-water-gun-visual-fix
+```
+
+This keeps the pointer-table tombstone fix and focused process diagnostics, but removes the over-broad untracked pointer miss zeroing that caused the visual regression.

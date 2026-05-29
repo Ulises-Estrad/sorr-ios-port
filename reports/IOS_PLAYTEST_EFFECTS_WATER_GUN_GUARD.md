@@ -32,7 +32,7 @@ This points at effect/water/projectile process churn rather than controls, audio
 
 The iOS 64-bit script pointer table now uses tombstones instead of turning deleted probe slots back into empty slots. This preserves linear-probe chains after stale process-owned pointers are retired, preventing later valid script pointer lookups from falling through to truncated 32-bit addresses.
 
-The patch also keeps a last-resort iOS guard for untracked script pointer dereferences. If a pointer lookup still misses, it is logged as `ptr-get-miss` / `ptr-adjust-miss` and redirected to the existing stale-pointer sink instead of taking a raw SIGSEGV.
+The first build also tried a broad last-resort guard for untracked script pointer dereferences. Physical testing showed that was too aggressive for normal script math/render fallback paths, so the follow-up visual-fix build restores the normal untracked pointer fallback while keeping the tombstone fix.
 
 Focused diagnostics now watch the gun/water/effect family:
 
@@ -78,4 +78,28 @@ Game data/assets bundled in IPA: no
 
 ```text
 On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/ios_latest_crash_report.txt
+```
+
+## Visual Regression Follow-Up
+
+Physical testing of the first guard artifact showed a visual regression:
+
+- Stage 6 rendered completely black.
+- The player portrait was shifted left of its slot.
+- The lives counter was missing.
+
+The latest crash report also showed `ptr-adjust-miss` guards firing hundreds of thousands of times with small values such as `0x171`. That means the first guard build treated ordinary script pointer/math fallback paths as dead pointers and zeroed them.
+
+Follow-up patch:
+
+- Keep the pointer-table tombstone fix.
+- Keep the focused gun/water/effect watchlist.
+- Remove the over-broad iOS fallback that zeroed untracked pointer misses.
+- Clean up duplicate local declarations in the render module.
+
+Follow-up artifact target:
+
+```text
+ios-shell-playtest-effects-water-gun-visual-fix-device-arm64
+build-products/SorrIOSShell-playtest-effects-water-gun-visual-fix-adhoc.ipa
 ```

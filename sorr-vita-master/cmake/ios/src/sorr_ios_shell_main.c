@@ -24,11 +24,11 @@
 #include "SDL.h"
 
 #ifndef SORR_IOS_BUILD_LABEL
-#define SORR_IOS_BUILD_LABEL "ios-playtest-effects-water-gun-guard"
+#define SORR_IOS_BUILD_LABEL "ios-playtest-effects-water-gun-visual-fix"
 #endif
 
 #ifndef SORR_IOS_ARTIFACT_LABEL
-#define SORR_IOS_ARTIFACT_LABEL "ios-shell-playtest-effects-water-gun-guard-device-arm64"
+#define SORR_IOS_ARTIFACT_LABEL "ios-shell-playtest-effects-water-gun-visual-fix-device-arm64"
 #endif
 
 #ifdef SORR_IOS_D3_FIRST_RENDER

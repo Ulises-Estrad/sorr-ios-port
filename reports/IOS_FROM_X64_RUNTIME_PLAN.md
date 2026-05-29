@@ -1118,3 +1118,13 @@ Manual test focus:
 1. Pick up a gun and shoot repeatedly.
 2. Start Stage 6 and verify the beach/water opening.
 3. If it still crashes, retrieve `ios_latest_crash_report.txt` from `SORR_DIAGNOSTICS`.
+
+Follow-up visual regression target:
+
+```text
+Artifact: ios-shell-playtest-effects-water-gun-visual-fix-device-arm64
+IPA: build-products/SorrIOSShell-playtest-effects-water-gun-visual-fix-adhoc.ipa
+Build label: ios-playtest-effects-water-gun-visual-fix
+```
+
+Reason: the first guard artifact fired `ptr-adjust-miss` repeatedly on ordinary small script values and zeroed them, causing Stage 6 black rendering and HUD placement/missing-counter problems. The follow-up keeps tombstones and diagnostics, but restores the normal untracked pointer fallback behavior.
