@@ -682,6 +682,30 @@ App display name: Streets of Rage
 Physical iPhone result: pending manual joystick-release/CFG placement test
 ```
 
-This baseline is no longer just a proof-only shell. Real SoRR runs on iPhone, BGM/SFX work, touch controls work, custom controls persist, and D3S crash reporting remains available. Remaining work is playtesting, control tuning, polish, and major bug fixes found during real play.
+## Current Playtest Controls Baseline
+
+This baseline is no longer just a proof-only shell. Real SoRR runs on iPhone, BGM/SFX work, virtual joystick and action controls work, custom controls persist, and crash reporting remains available. Remaining work is playtesting, control tuning, polish, and major bug fixes found during real play.
+
+Current Sideloadly artifact target:
+
+```text
+ios-shell-playtest-controls-device-arm64
+```
+
+Current IPA target:
+
+```text
+build-products/StreetsOfRage-playtest-controls-adhoc.ipa
+```
+
+Manual test focus:
+
+1. Install the current IPA with Sideloadly.
+2. Confirm `Streets of Rage` launches with the existing staged data.
+3. Confirm joystick movement releases correctly.
+4. Confirm `CFG` sits in the left pillar-safe area.
+5. Confirm `START` sits in the right pillar-safe area and `BACK` sits below it.
+6. Confirm edit-mode layout changes require dragging, not just tapping.
+7. Confirm BGM/SFX and crash-report files remain available.
 
 For a full recovery path from zero, use the root `INSTALL_IOS.md` guide.

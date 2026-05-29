@@ -201,14 +201,13 @@ This is the first milestone that should exercise the game data on iOS.
 
 ## Immediate Next Action
 
-Current immediate action is D4a fixed-control refinement. D3 first render, D3A real BGM/SFX, and the first D4a fixed-touch build are proven; the visible-overlay artifact made the controls visible and the game playable. The remaining D4a issue is movement feel: the independent direction rectangles can leave an old direction held while sliding.
+Current immediate action is final playtest-control refinement and normal playtesting. The real game renders and runs on iPhone, BGM/SFX work, touch controls work, custom settings persist, crash reporting remains available, and the app displays as `Streets of Rage`.
 
 ```text
-Artifact target: ios-shell-d4a-dpad-refine-device-arm64
-IPA target: build-products/SorrIOSShell-d4a-dpad-refine-adhoc.ipa
-Control scope: compact single-touch lower-left D-pad, unchanged action buttons, old direction releases before new direction presses, D-pad transition diagnostics
-Keep D3S guards/crash reporting
-No D4b customization yet
+Artifact target: ios-shell-playtest-controls-device-arm64
+IPA target: build-products/StreetsOfRage-playtest-controls-adhoc.ipa
+Control scope: virtual joystick, action buttons, left-side CFG, right-side Start/Back, persisted layout settings
+Keep crash reporting and runtime guards
 No game data/assets bundled in IPA
 ```
 
@@ -1066,3 +1065,26 @@ Game data/assets bundled in IPA: no
 App display name: Streets of Rage
 Physical iPhone result: pending manual joystick-release/CFG placement test
 ```
+
+## Current Playtest Controls Baseline
+
+The current roadmap no longer uses proof-stage labels for active work. The iPhone port is treated as a playable baseline: real SoRR renders and runs on physical iPhone, BGM/SFX work, virtual joystick and action controls work, custom control settings persist, crash reporting remains active, and the app displays as `Streets of Rage`.
+
+Current workflow target:
+
+```text
+Artifact: ios-shell-playtest-controls-device-arm64
+IPA: build-products/StreetsOfRage-playtest-controls-adhoc.ipa
+Build label: ios-playtest-controls
+```
+
+Current control target:
+
+- small `CFG` button in the left pillar-safe area,
+- small `START` button in the right pillar-safe area,
+- small `BACK` button directly below `START`,
+- virtual joystick movement with the existing Bennu arrow-key mapping,
+- persisted custom layout settings,
+- drag-required layout movement in edit mode.
+
+Next work after this baseline is normal playtesting and fixing major bugs one by one as they appear during real play.

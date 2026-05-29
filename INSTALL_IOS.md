@@ -5,7 +5,7 @@ This guide rebuilds the current iPhone setup from zero.
 ## What This Repo Provides
 
 - GitHub Actions builds a Sideloadly-ready iPhone `arm64` IPA.
-- The IPA contains the iOS shell/runtime, D3S crash reporting, BGM/SFX support, D4b custom touch controls, virtual joystick movement, and the app icon.
+- The IPA contains the iOS shell/runtime, visible crash reporting, BGM/SFX support, custom touch controls, virtual joystick movement, and the app icon.
 - The repo keeps the prepared SoRR data under Git LFS so a fresh clone can recreate the import package.
 - The IPA does not bundle SoRR game data or assets.
 - Game data is imported through the user's iPhone Files inbox. Fresh installs may show the folder as `Streets of Rage`; older installs may still show `SorrIOSShell`.
@@ -26,25 +26,23 @@ This guide rebuilds the current iPhone setup from zero.
 1. Open the GitHub repo.
 2. Go to `Actions`.
 3. Open the latest successful `iOS Shell` workflow run.
-4. Download the latest device artifact. Current proven baseline:
+4. Download the latest device artifact. Current workflow target:
 
    ```text
-   Actions run: 26618833984
-   Commit: e4cbf2b
-   Artifact: ios-shell-d4b-joystick-release-cfg-device-arm64
+   Artifact: ios-shell-playtest-controls-device-arm64
    ```
 
    Device artifact target:
 
    ```text
-   ios-shell-d4b-joystick-release-cfg-device-arm64
+   ios-shell-playtest-controls-device-arm64
    ```
 
 5. Extract the downloaded artifact on Windows.
 6. Install the IPA with Sideloadly. Current baseline IPA target:
 
    ```text
-   build-products/SorrIOSShell-d4b-joystick-release-cfg-adhoc.ipa
+   build-products/StreetsOfRage-playtest-controls-adhoc.ipa
    ```
 
 7. If iOS asks, enable Developer Mode and trust the developer profile.
@@ -84,7 +82,7 @@ On My iPhone/
           ...
 ```
 
-Relaunch `SorrIOSShell`. The app will stage the imported data into:
+Relaunch `Streets of Rage`. The app will stage the imported data into:
 
 ```text
 Library/Application Support/SORR
@@ -97,12 +95,13 @@ The game should then render and run using the staged data.
 Controls are configurable in-app through `CFG`.
 
 - Tap `CFG` to enter edit mode.
-- Drag the joystick or a button to reposition it.
+- Drag the joystick or a button to reposition it. A tap selects; controls only move after a real drag.
 - Use `BIG` / `SML` to resize the selected control.
 - Use `OPAC` to cycle opacity.
 - Use `TXT+` / `TXT-` to show or hide gameplay button text.
 - Use `RST` to reset the default layout.
 - Use `DONE` to save and exit.
+- `CFG` lives in the left pillar area. `START` is in the right pillar area, and `BACK` is directly below it.
 
 Settings persist here:
 
@@ -118,7 +117,7 @@ To reset manually, either use `CFG` -> `RST` -> `DONE`, or delete `ios_touch_con
 
 After a crash:
 
-1. Reopen `SorrIOSShell` once.
+1. Reopen `Streets of Rage` once.
 2. In Files, send:
 
    ```text
@@ -156,6 +155,6 @@ After a crash:
 - Virtual joystick/action touch controls work.
 - Custom controls exist and persist.
 - Crash reporting exists.
-- D4b custom touch with virtual joystick movement is the current control baseline.
+- Custom touch with virtual joystick movement is the current control baseline.
 - The IPA remains asset-free.
 - Remaining work is playtesting, control tuning, polish, and major bug fixes discovered during real play.

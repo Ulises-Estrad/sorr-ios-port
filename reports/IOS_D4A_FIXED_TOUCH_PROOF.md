@@ -470,3 +470,28 @@ Game data/assets bundled in IPA: no
 App display name: Streets of Rage
 Physical iPhone result: pending manual joystick-release/CFG placement test
 ```
+
+## Current Playtest Controls Baseline
+
+The active control work is now the playable iPhone baseline. Historical sections above keep the proof trail, but current docs and install steps should use the playtest controls target.
+
+Current target:
+
+```text
+ios-shell-playtest-controls-device-arm64
+build-products/StreetsOfRage-playtest-controls-adhoc.ipa
+```
+
+Current behavior:
+
+- virtual joystick and gameplay buttons remain on the working Bennu key-injection path,
+- `CFG` is a small opaque utility button in the left pillar-safe area,
+- `START` is a similarly sized right-side utility button,
+- `BACK` is directly below `START`,
+- button hitboxes include a small utility-button slop for Start/Back usability,
+- edit-mode repositioning requires a drag instead of a simple tap,
+- custom settings persist,
+- BGM/SFX and crash reporting remain active,
+- the IPA remains asset-free.
+
+Next work is normal playtesting and fixing major bugs found during play.

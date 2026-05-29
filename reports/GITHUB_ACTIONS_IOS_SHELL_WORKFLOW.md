@@ -2247,3 +2247,27 @@ Result: success
 ```
 
 The simulator shell job also passed in the same run. The device artifact passed the existing IPA layout/signature/forbidden-asset inspection.
+
+## Current Playtest Controls Workflow Target
+
+The active workflow target is now the playable iPhone baseline rather than a proof-stage milestone. GitHub Actions should produce:
+
+```text
+Device artifact: ios-shell-playtest-controls-device-arm64
+IPA: build-products/StreetsOfRage-playtest-controls-adhoc.ipa
+Build label: ios-playtest-controls
+```
+
+Expected contents:
+
+- real runtime/render path,
+- BGM/SFX enabled,
+- virtual joystick and gameplay buttons,
+- small left-side `CFG` utility button,
+- small right-side `START` and `BACK` utility buttons,
+- persisted custom control settings,
+- visible crash report files,
+- app icon and `Streets of Rage` display name,
+- no bundled game data, prepared import data, logs, generated zips, or generated IPAs.
+
+The next project phase is playtesting and fixing major bugs found during normal play.

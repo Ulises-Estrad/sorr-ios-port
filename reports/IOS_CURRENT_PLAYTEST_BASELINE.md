@@ -1,0 +1,55 @@
+# iOS Current Playtest Baseline
+
+Status: current playable iPhone baseline.
+
+This project is now a playable iPhone port baseline, not an early proof-only experiment. Historical milestone reports remain in `reports/` as evidence, but current work should use this playtest baseline framing.
+
+## Current State
+
+- Real SoRR renders and runs on a physical iPhone from data staged on the device.
+- BGM works.
+- SFX works.
+- Virtual joystick movement works.
+- Attack, Jump, Special, Police, Start, and Back controls work.
+- Custom control layout, size, opacity, and text visibility settings persist locally.
+- Crash reporting and runtime guards remain active.
+- The app icon and `Streets of Rage` display name are wired into the iPhone build.
+- The IPA remains asset-free; game data is imported locally through the iPhone Files route.
+
+## Current Workflow Target
+
+```text
+Artifact: ios-shell-playtest-controls-device-arm64
+IPA: build-products/StreetsOfRage-playtest-controls-adhoc.ipa
+Build label: ios-playtest-controls
+```
+
+## Control Layout
+
+- `CFG`: small opaque button in the left pillar-safe area.
+- `START`: small utility button in the right pillar-safe area.
+- `BACK`: small utility button directly below `START`.
+- Virtual joystick: lower-left movement area, mapped to the same Bennu arrow keys.
+- Action buttons: right-side gameplay buttons mapped to the existing Bennu key defaults.
+
+In edit mode, tapping selects a control, but rearranging requires dragging. This prevents accidental layout moves from simple taps.
+
+## Current Roadmap
+
+Current: final playtest controls and documentation cleanup.
+
+Next: playtest the game in free time and fix major bugs one by one as they are found during real play.
+
+## Debug Files
+
+If the app crashes, reopen once and retrieve:
+
+```text
+On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/ios_latest_crash_report.txt
+```
+
+If more context is needed, also retrieve:
+
+```text
+On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/ios_current_run_stability_log.txt
+```
