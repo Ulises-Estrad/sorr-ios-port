@@ -2335,3 +2335,27 @@ Device job result: success
 Simulator job result: success
 Game data/assets bundled in IPA: no
 ```
+
+## Playtest Water Pointer / Crash Report Follow-Up
+
+Physical testing of the visual-fix artifact restored the Stage 6 visuals but still crashed in the shared gun/effect/water path. The workflow now targets:
+
+```text
+Device artifact: ios-shell-playtest-water-pointer-crash-report-device-arm64
+IPA: build-products/SorrIOSShell-playtest-water-pointer-crash-report-adhoc.ipa
+Build label: ios-playtest-water-pointer-crash-report
+```
+
+The patch keeps the current playable baseline and asset-free packaging. It focuses on native Chipmunk water/effect helpers by resolving Bennu pointer parameters through the host pointer table, guarding missing ids/bodies, and reading `WaterS` as Bennu script cells on iOS/arm64.
+
+The crash report file is also expanded for debugging. `ios_latest_crash_report.txt` now includes:
+
+- last native/sysproc call and raw/decoded parameters,
+- last native return,
+- last water/effect helper event,
+- runtime/render/file counters,
+- audio counters,
+- lifecycle/family/render rings,
+- current launch log tail.
+
+Manual test focus remains gun shooting and Stage 6 beach/water startup.

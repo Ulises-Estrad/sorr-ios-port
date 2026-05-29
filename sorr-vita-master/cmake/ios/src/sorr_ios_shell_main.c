@@ -24,11 +24,11 @@
 #include "SDL.h"
 
 #ifndef SORR_IOS_BUILD_LABEL
-#define SORR_IOS_BUILD_LABEL "ios-playtest-effects-water-gun-visual-fix"
+#define SORR_IOS_BUILD_LABEL "ios-playtest-water-pointer-crash-report"
 #endif
 
 #ifndef SORR_IOS_ARTIFACT_LABEL
-#define SORR_IOS_ARTIFACT_LABEL "ios-shell-playtest-effects-water-gun-visual-fix-device-arm64"
+#define SORR_IOS_ARTIFACT_LABEL "ios-shell-playtest-water-pointer-crash-report-device-arm64"
 #endif
 
 #ifdef SORR_IOS_D3_FIRST_RENDER
@@ -2087,6 +2087,7 @@ static volatile unsigned int sorr_ios_d3_heartbeat_count = 0;
 static volatile Uint32 sorr_ios_d3_runtime_loop_start_ticks = 0;
 static volatile int sorr_ios_d3_dense_window_marker = 0;
 static volatile int sorr_ios_d3_first_frame_marker = 0;
+static volatile unsigned long long sorr_ios_d3_last_rss_bytes = 0;
 
 extern int x_files_count;
 extern int max_x_files;
@@ -2115,6 +2116,9 @@ extern volatile unsigned int sorr_ios_d3_lookup_guard_count;
 extern volatile unsigned int sorr_ios_d3_last_lookup_id;
 extern volatile unsigned int sorr_ios_d3_last_lookup_result_id;
 extern char sorr_ios_d3_last_lookup_event[];
+extern char sorr_ios_d3_last_native_call_event[];
+extern char sorr_ios_d3_last_native_return_event[];
+extern char sorr_ios_d3_last_effect_water_event[];
 extern char sorr_ios_d3_runtime_snapshot[];
 extern char sorr_ios_d3_lifecycle_events[];
 extern char sorr_ios_d3_destroyed_ring_snapshot[];
@@ -2300,6 +2304,8 @@ static void sorr_ios_d4a_write_crash_report_fd(int fd, int sig)
                                  "SORR IOS LATEST CRASH REPORT\n"
                                  "build=%s\n"
                                  "artifact=%s\n"
+                                 "crash_report_version=2\n"
+                                 "debug_focus=playtest effects/water/gun crash; keep this whole file when reporting\n"
                                  "run_id=%s\n"
                                  "run_number=%u\n"
                                  "signal=%d\n"
@@ -2312,8 +2318,7 @@ static void sorr_ios_d4a_write_crash_report_fd(int fd, int sig)
                                  "last_proc_ptr=0x%llx\n"
                                  "last_lookup_id=%u\n"
                                  "last_lookup_result=%u\n"
-                                 "lookup_guards=%u\n"
-                                 "last_lookup=%s\n",
+                                 "lookup_guards=%u\n",
                                  SORR_IOS_BUILD_LABEL,
                                  SORR_IOS_ARTIFACT_LABEL,
                                  sorr_ios_d4a_run_id,
@@ -2336,8 +2341,52 @@ static void sorr_ios_d4a_write_crash_report_fd(int fd, int sig)
                                  sorr_ios_d3_last_proc_ptr,
                                  sorr_ios_d3_last_lookup_id,
                                  sorr_ios_d3_last_lookup_result_id,
-                                 sorr_ios_d3_lookup_guard_count,
-                                 sorr_ios_d3_last_lookup_event);
+                                 sorr_ios_d3_lookup_guard_count);
+    sorr_ios_signal_write_format(fd, "last_lookup=%s\n", sorr_ios_d3_last_lookup_event);
+    sorr_ios_signal_write_format(fd, "last_native_call=%s\n", sorr_ios_d3_last_native_call_event);
+    sorr_ios_signal_write_format(fd, "last_native_return=%s\n", sorr_ios_d3_last_native_return_event);
+    sorr_ios_signal_write_format(fd, "last_effect_water=%s\n", sorr_ios_d3_last_effect_water_event);
+    sorr_ios_signal_write_format(fd,
+                                 "runtime_counters=heartbeats:%u loops:%u frames:%u runs:%u instances:%d render_objects:%d render_create:%u render_destroy:%u render_invalid:%u opened_files:%d x_files:%d max_x_files:%d rss_bytes:%llu\n",
+                                 sorr_ios_d3_heartbeat_count,
+                                 sorr_ios_d3_instance_go_loop_count,
+                                 sorr_ios_d3_frame_complete_count,
+                                 sorr_ios_d3_instance_run_count,
+                                 sorr_ios_d3_live_instance_count,
+                                 sorr_ios_d3_render_object_count,
+                                 sorr_ios_d3_render_instance_object_created_count,
+                                 sorr_ios_d3_render_instance_object_destroyed_count,
+                                 sorr_ios_d3_render_invalid_callback_count,
+                                 opened_files,
+                                 x_files_count,
+                                 max_x_files,
+                                 sorr_ios_d3_last_rss_bytes);
+    sorr_ios_signal_write_format(fd,
+                                 "audio_counters=stub_zero:%u stub_minus_one:%u init:%u/%u/%u wav_load:%u/%u wav_play:%u music_load:%u open:%u/%u mem:%u/%u play:%u/%u/%u live_handles:%u live_wav:%u live_music:%u playing:%u last_status:%s last_path:%s\n",
+                                 sorr_ios_sound_stub_zero_count,
+                                 sorr_ios_sound_stub_minus_one_count,
+                                 sorr_ios_audio_init_attempt_count,
+                                 sorr_ios_audio_init_ok_count,
+                                 sorr_ios_audio_init_fail_count,
+                                 sorr_ios_audio_wav_load_ok_count,
+                                 sorr_ios_audio_wav_load_fail_count,
+                                 sorr_ios_audio_wav_play_count,
+                                 sorr_ios_audio_music_load_attempt_count,
+                                 sorr_ios_audio_music_open_ok_count,
+                                 sorr_ios_audio_music_open_fail_count,
+                                 sorr_ios_audio_music_mem_load_ok_count,
+                                 sorr_ios_audio_music_mem_load_fail_count,
+                                 sorr_ios_audio_music_play_attempt_count,
+                                 sorr_ios_audio_music_play_ok_count,
+                                 sorr_ios_audio_music_play_fail_count,
+                                 sorr_ios_audio_live_handle_count,
+                                 sorr_ios_audio_live_wav_count,
+                                 sorr_ios_audio_live_music_count,
+                                 sorr_ios_audio_music_last_playing,
+                                 sorr_ios_audio_last_music_status,
+                                 sorr_ios_audio_last_music_path);
+    sorr_ios_signal_write_format(fd,
+                                 "control_note=custom touch/joystick active; crash target is gameplay effect/water/projectile path, not controls unless touch lines appear immediately before signal\n");
     sorr_ios_signal_write_format(fd, "last_lifecycle=%s\n", sorr_ios_d3_last_lifecycle_event);
     sorr_ios_signal_write_format(fd, "last_family=%s\n", sorr_ios_d3_last_family_unlink);
     sorr_ios_signal_write_format(fd, "last_render=%s\n", sorr_ios_d3_last_render_event);
@@ -2698,6 +2747,7 @@ static Uint32 sorr_ios_d3_heartbeat_timer(Uint32 interval, void *param)
     Uint32 runtime_ms = loop_start ? ticks - loop_start : 0;
     Uint32 next_interval = SORR_IOS_D3_HEARTBEAT_NORMAL_MS;
     unsigned long long rss = sorr_ios_d3_resident_memory_bytes();
+    sorr_ios_d3_last_rss_bytes = rss;
 
     (void)interval;
 

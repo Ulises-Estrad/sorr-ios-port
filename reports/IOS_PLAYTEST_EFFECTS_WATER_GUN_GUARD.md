@@ -116,3 +116,49 @@ Device job result: success
 Simulator job result: success
 Game data/assets bundled in IPA: no
 ```
+
+## Water Pointer / Crash Report Follow-Up
+
+Physical testing of the visual-fix artifact confirmed the Stage 6/HUD visuals were restored, but the gun/effect crash still reproduced. The newest crash report still points at the shared effect/water/projectile path:
+
+- `signal=11`
+- `current_process=KEKOS`
+- `last_lifecycle=create SANGRE`
+- `last_render=render_object_create SANGRE`
+- recent process churn: `SALPICA_AGUA`, `SANGRE`, `EFECTO_POLVO`
+
+Patch target:
+
+- make `DRAW_WATER`/`METABALL` pointer parameters use the iOS/64-bit script pointer table,
+- guard missing process ids in water/effect id lists,
+- avoid dereferencing null maps, missing instances, or missing Chipmunk bodies,
+- treat Bennu `WaterS` as 32-bit script cells on iOS instead of as a native arm64 C struct,
+- keep the previous visual-regression fix,
+- keep BGM/SFX, custom controls, app icon/name, and crash reporting.
+
+The latest crash report has also been expanded to include:
+
+- `last_native_call` and decoded raw native/sysproc parameters,
+- `last_native_return`,
+- `last_effect_water`,
+- runtime/render/file counters,
+- audio counters,
+- the existing lifecycle/family/render rings and current-run tail.
+
+Follow-up artifact target:
+
+```text
+ios-shell-playtest-water-pointer-crash-report-device-arm64
+build-products/SorrIOSShell-playtest-water-pointer-crash-report-adhoc.ipa
+Build label: ios-playtest-water-pointer-crash-report
+```
+
+Manual test focus remains:
+
+1. Pick up a gun and shoot repeatedly.
+2. Start Stage 6 and verify the beach/water opening.
+3. If it crashes, reopen once and send:
+
+```text
+On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/ios_latest_crash_report.txt
+```

@@ -751,3 +751,21 @@ Game data/assets bundled in IPA: no
 ```
 
 Use this follow-up if the first guard artifact shows Stage 6 as black or the HUD portrait/lives counter is misplaced/missing.
+
+## Playtest Water Pointer / Crash Report Artifact
+
+The visual-fix artifact restored Stage 6/HUD visuals but the gun/effect crash still reproduced. The next Sideloadly artifact targets native Chipmunk water/effect pointer handling and expands the crash report:
+
+```text
+ios-shell-playtest-water-pointer-crash-report-device-arm64
+build-products/SorrIOSShell-playtest-water-pointer-crash-report-adhoc.ipa
+Build label: ios-playtest-water-pointer-crash-report
+```
+
+Install with the same Windows + Sideloadly route. Test gun shooting and Stage 6 beach/water startup. If it crashes, reopen once and retrieve:
+
+```text
+On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/ios_latest_crash_report.txt
+```
+
+The IPA remains asset-free and keeps BGM/SFX, custom controls, icon/name, and D2-staged data.

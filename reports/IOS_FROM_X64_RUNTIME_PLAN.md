@@ -1134,3 +1134,25 @@ Game data/assets bundled in IPA: no
 ```
 
 Reason: the first guard artifact fired `ptr-adjust-miss` repeatedly on ordinary small script values and zeroed them, causing Stage 6 black rendering and HUD placement/missing-counter problems. The follow-up keeps tombstones and diagnostics, but restores the normal untracked pointer fallback behavior.
+
+## Current Playtest Bug Follow-Up: Water Pointer / Crash Report
+
+Physical testing of the visual-fix artifact restored Stage 6/HUD visuals, but the crash still reproduced during the gun/effect path. The newest report still points at `KEKOS` spawning `SALPICA_AGUA`/`SANGRE`/`EFECTO_POLVO`, so the next patch narrows in on native Chipmunk water/effect pointer handling rather than broad interpreter fallback behavior.
+
+Current artifact target:
+
+```text
+Artifact: ios-shell-playtest-water-pointer-crash-report-device-arm64
+IPA: build-products/SorrIOSShell-playtest-water-pointer-crash-report-adhoc.ipa
+Build label: ios-playtest-water-pointer-crash-report
+```
+
+Patch contents:
+
+- `DRAW_WATER` and `METABALL` now resolve Bennu pointer parameters through the iOS/64-bit script pointer table.
+- Water/effect id lists skip missing instances instead of dereferencing them.
+- Chipmunk water emulation resolves bodies through the module body list rather than using truncated `LOC_BODY` pointer cells.
+- The Bennu `WaterS` struct is read as script cells on iOS/host-pointer builds, avoiding native arm64 C struct pointer-size layout drift.
+- Crash reports now include last native/sysproc call, decoded pointer parameters, last water/effect helper event, runtime counters, and audio counters.
+
+The IPA remains asset-free and keeps the current playable baseline: real render, BGM/SFX, icon/name, joystick/custom controls, D2-staged data, and visible diagnostics.

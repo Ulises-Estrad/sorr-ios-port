@@ -30,6 +30,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+#include <stdarg.h>
 
 #include "bgdrtm.h"
 #include "dcb.h"
@@ -540,6 +541,9 @@ volatile unsigned int sorr_ios_d3_lookup_guard_count = 0;
 volatile unsigned int sorr_ios_d3_last_lookup_id = 0;
 volatile unsigned int sorr_ios_d3_last_lookup_result_id = 0;
 char sorr_ios_d3_last_lookup_event[1024] = "lookup=none";
+char sorr_ios_d3_last_native_call_event[2048] = "native_call=none";
+char sorr_ios_d3_last_native_return_event[1024] = "native_return=none";
+char sorr_ios_d3_last_effect_water_event[1024] = "effect_water=none";
 char sorr_ios_d3_runtime_snapshot[2048] = "snapshot=uninitialized";
 char sorr_ios_d3_lifecycle_events[1536] = "events=none";
 char sorr_ios_d3_destroyed_ring_snapshot[2048] = "destroyed=none";
@@ -1174,6 +1178,125 @@ static void sorr_ios_d3_note_instance_run( const INSTANCE * r )
     }
 }
 
+static void sorr_ios_d3_append_text( char * dst, size_t dst_size, size_t * used, const char * fmt, ... )
+{
+    va_list args;
+    int written;
+
+    if ( !dst || !used || dst_size == 0 || *used >= dst_size ) return;
+
+    va_start( args, fmt );
+    written = vsnprintf( dst + *used, dst_size - *used, fmt, args );
+    va_end( args );
+
+    if ( written <= 0 ) return;
+    if ( ( size_t )written >= dst_size - *used )
+    {
+        *used = dst_size - 1;
+        return;
+    }
+    *used += ( size_t )written;
+}
+
+static void sorr_ios_d3_note_native_call( const char * kind, const SYSPROC * p, const INSTANCE * r, int opcode, int * params, const int * instr_ptr )
+{
+    char raw[640];
+    char decoded[768];
+    size_t raw_used = 0;
+    size_t decoded_used = 0;
+    int n;
+    int max_params = p ? p->params : 0;
+    int code_offset = ( r && r->code && instr_ptr ) ? ( int )( instr_ptr - r->code ) : -1;
+    int stack_depth = ( r && r->stack && params ) ? ( int )( params - r->stack ) : -1;
+
+    raw[0] = '\0';
+    decoded[0] = '\0';
+    if ( max_params > 12 ) max_params = 12;
+
+    for ( n = 0; n < max_params; n++ )
+    {
+        char type_char = ( p && p->paramtypes && p->paramtypes[n] ) ? p->paramtypes[n] : '?';
+        unsigned int raw_value = params ? ( unsigned int )params[n] : 0u;
+        sorr_ios_d3_append_text( raw, sizeof( raw ), &raw_used, "%s%d:%c=0x%08x/%d", n ? "," : "", n, type_char, raw_value, params ? params[n] : 0 );
+
+#if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
+        if ( params )
+        {
+            uintptr_t full_ptr = 0;
+            int has_ptr = portable_x64_stack_peek_ptr( &params[n], &full_ptr );
+            if ( has_ptr || type_char == 'P' || type_char == '+' || type_char == 'V' )
+            {
+                sorr_ios_d3_append_text( decoded,
+                                         sizeof( decoded ),
+                                         &decoded_used,
+                                         "%sp%d:%c=%s0x%llx",
+                                         decoded_used ? "," : "",
+                                         n,
+                                         type_char,
+                                         has_ptr ? "full:" : "low:",
+                                         ( unsigned long long )( has_ptr ? full_ptr : ( uintptr_t )( uint32_t )raw_value ) );
+            }
+        }
+#else
+        if ( type_char == 'P' || type_char == '+' || type_char == 'V' )
+        {
+            sorr_ios_d3_append_text( decoded,
+                                     sizeof( decoded ),
+                                     &decoded_used,
+                                     "%sp%d:%c=0x%llx",
+                                     decoded_used ? "," : "",
+                                     n,
+                                     type_char,
+                                     ( unsigned long long )( uintptr_t )( params ? params[n] : 0 ) );
+        }
+#endif
+    }
+
+    if ( !raw[0] ) snprintf( raw, sizeof( raw ), "params=none" );
+    if ( !decoded[0] ) snprintf( decoded, sizeof( decoded ), "decoded_ptrs=none" );
+
+    snprintf(
+        sorr_ios_d3_last_native_call_event,
+        sizeof( sorr_ios_d3_last_native_call_event ),
+        "native_call kind=%s opcode=%d sys_code=%d name=%s paramtypes=%s params=%d return_type=%d proc=%s#%u:s%d:f%d:o%d stack_depth=%d stack_ptr=%p instr_ptr=%p raw=[%s] decoded=[%s]",
+        kind ? kind : "native",
+        opcode,
+        p ? p->code : 0,
+        ( p && p->name ) ? p->name : "null",
+        ( p && p->paramtypes ) ? p->paramtypes : "",
+        p ? p->params : 0,
+        p ? p->type : 0,
+        ( r && r->proc && r->proc->name ) ? r->proc->name : "null",
+        r ? LOCDWORD( r, PROCESS_ID ) : 0,
+        r ? LOCDWORD( r, STATUS ) : 0,
+        r ? LOCINT32( r, FRAME_PERCENT ) : 0,
+        code_offset,
+        stack_depth,
+        ( void * )params,
+        ( const void * )instr_ptr,
+        raw,
+        decoded
+    );
+}
+
+static void sorr_ios_d3_note_native_return( const char * kind, const SYSPROC * p, const INSTANCE * r, int result, int has_result )
+{
+    snprintf(
+        sorr_ios_d3_last_native_return_event,
+        sizeof( sorr_ios_d3_last_native_return_event ),
+        "native_return kind=%s name=%s proc=%s#%u result=%s%d lookup_guards=%u lifecycle=%s render=%s",
+        kind ? kind : "native",
+        ( p && p->name ) ? p->name : "null",
+        ( r && r->proc && r->proc->name ) ? r->proc->name : "null",
+        r ? LOCDWORD( r, PROCESS_ID ) : 0,
+        has_result ? "" : "void:",
+        has_result ? result : 0,
+        sorr_ios_d3_lookup_guard_count,
+        sorr_ios_d3_last_lifecycle_event,
+        sorr_ios_d3_last_render_event
+    );
+}
+
 static void sorr_ios_d3_append_sample( char * dst, size_t dst_size, size_t * used, const INSTANCE * r, unsigned int index )
 {
     int written;
@@ -1752,16 +1875,27 @@ int instance_go( INSTANCE * r )
                 }
 
                 r->stack_ptr -= p->params ;
+#ifdef SORR_IOS_D3_FIRST_RENDER
+                sorr_ios_d3_note_native_call( "MN_SYSCALL", p, r, ptr[1], r->stack_ptr, ptr );
+#endif
 #if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
                 if ( p->name && p->paramtypes && p->params == 4 && strcmp( p->paramtypes, "SV++" ) == 0 && ( strcmp( p->name, "LOAD" ) == 0 || strcmp( p->name, "SAVE" ) == 0 ) )
                 {
-                    *r->stack_ptr = portable_x64_sysproc_load_save( strcmp( p->name, "SAVE" ) == 0, r->stack_ptr );
+                    int sys_result = portable_x64_sysproc_load_save( strcmp( p->name, "SAVE" ) == 0, r->stack_ptr );
+#ifdef SORR_IOS_D3_FIRST_RENDER
+                    sorr_ios_d3_note_native_return( "MN_SYSCALL", p, r, sys_result, 1 );
+#endif
+                    *r->stack_ptr = sys_result;
                     r->stack_ptr++ ;
                     ptr += 2 ;
                     break ;
                 }
 #endif
-                *r->stack_ptr = ( *p->func )( r, r->stack_ptr ) ;
+                int sys_result = ( *p->func )( r, r->stack_ptr ) ;
+#ifdef SORR_IOS_D3_FIRST_RENDER
+                sorr_ios_d3_note_native_return( "MN_SYSCALL", p, r, sys_result, 1 );
+#endif
+                *r->stack_ptr = sys_result ;
                 r->stack_ptr++ ;
                 ptr += 2 ;
                 break ;
@@ -1774,6 +1908,9 @@ int instance_go( INSTANCE * r )
                     exit( 0 );
                 }
                 r->stack_ptr -= p->params ;
+#ifdef SORR_IOS_D3_FIRST_RENDER
+                sorr_ios_d3_note_native_call( "MN_SYSPROC", p, r, ptr[1], r->stack_ptr, ptr );
+#endif
 #if defined(PORTABLE_RUNTIME_DIAG) && (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
                 PORTABLE_DIAG_LOG( "SCRIPT", "MN_SYSPROC code=%d name=%s params=%d types=%s stack_ptr=%p p0=0x%08x p1=0x%08x p2=0x%08x", ptr[1], p->name ? p->name : "(null)", p->params, p->paramtypes ? p->paramtypes : "(null)", ( void * )r->stack_ptr, p->params > 0 ? ( unsigned int )r->stack_ptr[0] : 0u, p->params > 1 ? ( unsigned int )r->stack_ptr[1] : 0u, p->params > 2 ? ( unsigned int )r->stack_ptr[2] : 0u );
 #endif
@@ -1781,17 +1918,26 @@ int instance_go( INSTANCE * r )
                 if ( p->name && strcmp( p->name, "GET_DESKTOP_SIZE" ) == 0 && p->params == 2 )
                 {
                     portable_x64_sysproc_get_desktop_size( r, r->stack_ptr );
+#ifdef SORR_IOS_D3_FIRST_RENDER
+                    sorr_ios_d3_note_native_return( "MN_SYSPROC", p, r, 0, 0 );
+#endif
                     ptr += 2 ;
                     break ;
                 }
                 if ( p->name && p->paramtypes && p->params == 4 && strcmp( p->paramtypes, "SV++" ) == 0 && ( strcmp( p->name, "LOAD" ) == 0 || strcmp( p->name, "SAVE" ) == 0 ) )
                 {
-                    portable_x64_sysproc_load_save( strcmp( p->name, "SAVE" ) == 0, r->stack_ptr );
+                    int sys_result = portable_x64_sysproc_load_save( strcmp( p->name, "SAVE" ) == 0, r->stack_ptr );
+#ifdef SORR_IOS_D3_FIRST_RENDER
+                    sorr_ios_d3_note_native_return( "MN_SYSPROC", p, r, sys_result, 1 );
+#endif
                     ptr += 2 ;
                     break ;
                 }
 #endif
                 ( *p->func )( r, r->stack_ptr ) ;
+#ifdef SORR_IOS_D3_FIRST_RENDER
+                sorr_ios_d3_note_native_return( "MN_SYSPROC", p, r, 0, 0 );
+#endif
                 ptr += 2 ;
                 break ;
 
