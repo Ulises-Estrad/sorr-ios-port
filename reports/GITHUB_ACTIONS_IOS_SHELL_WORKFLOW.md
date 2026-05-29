@@ -2365,3 +2365,15 @@ The crash report file is also expanded for debugging. `ios_latest_crash_report.t
 - current launch log tail.
 
 Manual test focus remains gun shooting and Stage 6 beach/water startup.
+
+## Playtest GET_REAL_POINT Guard Follow-Up
+
+Physical testing of the water-pointer/crash-report artifact still crashed when shooting the gun. The expanded report showed the last native call before the signal was `GET_REAL_POINT` in `KEKOS`, with pointer output parameters decoded from the iOS/64-bit host pointer table. The workflow now targets:
+
+```text
+Device artifact: ios-shell-playtest-real-point-guard-device-arm64
+IPA: build-products/SorrIOSShell-playtest-real-point-guard-adhoc.ipa
+Build label: ios-playtest-real-point-guard
+```
+
+The patch keeps the current playable baseline and asset-free packaging. It changes `mod_grproc` so `GET_REAL_POINT` writes through resolved host-pointer-table pointers instead of truncated Bennu stack cells, and it logs graph/control-point/output-pointer details into the existing effect/water diagnostic field. Crash reports are versioned to `crash_report_version=3` and now include a compact recent native call/return ring.

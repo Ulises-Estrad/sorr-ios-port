@@ -1162,3 +1162,23 @@ Patch contents:
 - Crash reports now include last native/sysproc call, decoded pointer parameters, last water/effect helper event, runtime counters, and audio counters.
 
 The IPA remains asset-free and keeps the current playable baseline: real render, BGM/SFX, icon/name, joystick/custom controls, D2-staged data, and visible diagnostics.
+
+## Current Playtest Bug Follow-Up: GET_REAL_POINT Guard
+
+The water-pointer/crash-report artifact still reproduced the gun/effect crash. The improved report narrowed the newest signal to `KEKOS` calling `GET_REAL_POINT` with pointer output parameters immediately before the crash, while `last_effect_water=none` showed the water helper was not the final native call.
+
+Current artifact target:
+
+```text
+Artifact: ios-shell-playtest-real-point-guard-device-arm64
+IPA: build-products/SorrIOSShell-playtest-real-point-guard-adhoc.ipa
+Build label: ios-playtest-real-point-guard
+```
+
+Patch contents:
+
+- `GET_REAL_POINT` now resolves Bennu pointer output parameters through the iOS/64-bit host pointer table.
+- The helper guards null output pointers, missing graphs, bad control-point indices, and undefined control points.
+- Crash reports now include `crash_report_version=3`, graph/control-point/output-pointer diagnostics, and a recent native call/return ring.
+
+The playable baseline remains unchanged: real render, BGM/SFX, custom controls, icon/name, D2-staged data, visible diagnostics, and asset-free IPA packaging.

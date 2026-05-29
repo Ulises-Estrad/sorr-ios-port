@@ -28,6 +28,7 @@
 
 /* --------------------------------------------------------------------------- */
 
+#include <stdio.h>
 #include <stdlib.h>
 
 #include "bgdrtm.h"
@@ -83,6 +84,22 @@ enum {
     MOUSEY,
     SCROLLS
 };
+
+/* ----------------------------------------------------------------- */
+
+#if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
+extern void * portable_x64_sysproc_pointer_param( int * cell );
+#define modgrproc_x64_pointer_param(cell) portable_x64_sysproc_pointer_param( cell )
+#else
+#define modgrproc_x64_pointer_param(cell) (( void * )( *( cell ) ))
+#endif
+
+#ifdef SORR_IOS_D3_FIRST_RENDER
+extern char sorr_ios_d3_last_effect_water_event[];
+#define MODGRPROC_NOTE_POINT(...) snprintf( sorr_ios_d3_last_effect_water_event, 1024, __VA_ARGS__ )
+#else
+#define MODGRPROC_NOTE_POINT(...) (( void )0)
+#endif
 
 /* ----------------------------------------------------------------- */
 
@@ -268,14 +285,39 @@ static int grproc_get_dist( INSTANCE * a, int * params )
 static int grproc_get_real_point( INSTANCE * my, int * params )
 {
     GRAPH * b ;
+    int point = params[0];
+    int * out_x = ( int * )modgrproc_x64_pointer_param( &params[1] );
+    int * out_y = ( int * )modgrproc_x64_pointer_param( &params[2] );
     int x, y, r, centerx, centery, px = 0, py = 0, rx = 0, ry = 0 ;
     int _angle = 0, angle = 0;
 
+    if ( !out_x || !out_y )
+    {
+        MODGRPROC_NOTE_POINT( "effect_point=GET_REAL_POINT result=null-output proc=%s#%u point=%d raw_out=0x%08x/0x%08x out=%p/%p",
+                              ( my && my->proc && my->proc->name ) ? my->proc->name : "null",
+                              my ? LOCDWORD( my, PROCESS_ID ) : 0,
+                              point,
+                              ( unsigned int )params[1],
+                              ( unsigned int )params[2],
+                              ( void * )out_x,
+                              ( void * )out_y );
+        return 0;
+    }
+
     b = instance_graph( my ) ;
-    if ( !b )  return 0 ;
+    if ( !b )
+    {
+        MODGRPROC_NOTE_POINT( "effect_point=GET_REAL_POINT result=no-graph proc=%s#%u point=%d out=%p/%p",
+                              ( my && my->proc && my->proc->name ) ? my->proc->name : "null",
+                              my ? LOCDWORD( my, PROCESS_ID ) : 0,
+                              point,
+                              ( void * )out_x,
+                              ( void * )out_y );
+        return 0 ;
+    }
 
     /* Point 0 is the graphic center, but it may be not defined */
-    if ( params[0] == 0 && ( b->ncpoints == 0 || b->cpoints[0].x == CPOINT_UNDEFINED ) )
+    if ( point == 0 && ( b->ncpoints == 0 || b->cpoints[0].x == CPOINT_UNDEFINED ) )
     {
         if ( b->ncpoints == 0 )
             bitmap_add_cpoint( b, b->width / 2, b->height / 2 );
@@ -286,11 +328,33 @@ static int grproc_get_real_point( INSTANCE * my, int * params )
         }
     }
     else
-        if (( uint32_t )params[0] >= b->ncpoints || params[0] < 0)
+        if (( uint32_t )point >= b->ncpoints || point < 0)
+        {
+            MODGRPROC_NOTE_POINT( "effect_point=GET_REAL_POINT result=bad-point proc=%s#%u point=%d ncpoints=%u graph=%p size=%dx%d out=%p/%p",
+                                  ( my && my->proc && my->proc->name ) ? my->proc->name : "null",
+                                  my ? LOCDWORD( my, PROCESS_ID ) : 0,
+                                  point,
+                                  ( unsigned int )b->ncpoints,
+                                  ( void * )b,
+                                  b->width,
+                                  b->height,
+                                  ( void * )out_x,
+                                  ( void * )out_y );
             return 0 ;
+        }
 
-    if ( b->cpoints[params[0]].x == CPOINT_UNDEFINED && b->cpoints[params[0]].y == CPOINT_UNDEFINED )
+    if ( b->cpoints[point].x == CPOINT_UNDEFINED && b->cpoints[point].y == CPOINT_UNDEFINED )
+    {
+        MODGRPROC_NOTE_POINT( "effect_point=GET_REAL_POINT result=undefined-point proc=%s#%u point=%d ncpoints=%u graph=%p out=%p/%p",
+                              ( my && my->proc && my->proc->name ) ? my->proc->name : "null",
+                              my ? LOCDWORD( my, PROCESS_ID ) : 0,
+                              point,
+                              ( unsigned int )b->ncpoints,
+                              ( void * )b,
+                              ( void * )out_x,
+                              ( void * )out_y );
         return 0;
+    }
 
     r = LOCINT32( mod_grproc, my, REGIONID ) ;
     if ( r < 0 || r > 31 ) r = 0 ;
@@ -312,46 +376,46 @@ static int grproc_get_real_point( INSTANCE * my, int * params )
         _angle = angle = LOCINT32( mod_grproc, my, ANGLE ) ;
     }
 
-/* if ( b->cpoints[params[0]].x >= 0 )
+/* if ( b->cpoints[point].x >= 0 )
     {
         if ( LOCDWORD( mod_grproc, my, FLAGS ) & B_HMIRROR )
-            px = centerx - b->cpoints[params[0]].x - 1 ;
+            px = centerx - b->cpoints[point].x - 1 ;
         else
-            px = b->cpoints[params[0]].x - centerx ;
+            px = b->cpoints[point].x - centerx ;
 
         if ( LOCDWORD( mod_grproc, my, FLAGS ) & B_VMIRROR )
-            py = centery - b->cpoints[params[0]].y - 1 ;
+            py = centery - b->cpoints[point].y - 1 ;
         else
-            py = b->cpoints[params[0]].y - centery ;
+            py = b->cpoints[point].y - centery ;
     }
     else
         px = py = 0 ; */
 
-    if ( params[0] > 0 )
+    if ( point > 0 )
     {
-        px = b->cpoints[params[0]].x - centerx ;
-        py = b->cpoints[params[0]].y - centery ;
+        px = b->cpoints[point].x - centerx ;
+        py = b->cpoints[point].y - centery ;
 
         if ( LOCDWORD( mod_grproc, my, FLAGS ) & B_HMIRROR )
         {
             if (_angle)
             {
-                py = (centery - b->cpoints[params[0]].y) ;
+                py = (centery - b->cpoints[point].y) ;
                 angle = 90000 + ( 90000 - angle );
             }
             else
-                px = (centerx - b->cpoints[params[0]].x) ;
+                px = (centerx - b->cpoints[point].x) ;
         }
 
         if ( LOCDWORD( mod_grproc, my, FLAGS ) & B_VMIRROR )
         {
             if (_angle)
             {
-                px = (centerx - b->cpoints[params[0]].x) ;
+                px = (centerx - b->cpoints[point].x) ;
                 angle = 360000 + ( 180000 - angle );
             }
             else
-                py = (centery - b->cpoints[params[0]].y) ;
+                py = (centery - b->cpoints[point].y) ;
         }
     }
 
@@ -405,8 +469,27 @@ static int grproc_get_real_point( INSTANCE * my, int * params )
         ry /= -LOCINT32( mod_grproc, my, RESOLUTION );
     }
 
-    *( int * )params[1] = rx ;
-    *( int * )params[2] = ry ;
+    *out_x = rx ;
+    *out_y = ry ;
+
+    MODGRPROC_NOTE_POINT( "effect_point=GET_REAL_POINT result=ok proc=%s#%u point=%d ncpoints=%u graph=%p size=%dx%d center=%d/%d cpoint=%d/%d out=%p/%p value=%d/%d angle=%d flags=%u",
+                          ( my && my->proc && my->proc->name ) ? my->proc->name : "null",
+                          my ? LOCDWORD( my, PROCESS_ID ) : 0,
+                          point,
+                          ( unsigned int )b->ncpoints,
+                          ( void * )b,
+                          b->width,
+                          b->height,
+                          centerx,
+                          centery,
+                          b->cpoints[point].x,
+                          b->cpoints[point].y,
+                          ( void * )out_x,
+                          ( void * )out_y,
+                          rx,
+                          ry,
+                          angle,
+                          ( unsigned int )LOCDWORD( mod_grproc, my, FLAGS ) );
 
     return 1 ;
 }

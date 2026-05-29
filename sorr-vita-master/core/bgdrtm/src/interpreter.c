@@ -543,6 +543,7 @@ volatile unsigned int sorr_ios_d3_last_lookup_result_id = 0;
 char sorr_ios_d3_last_lookup_event[1024] = "lookup=none";
 char sorr_ios_d3_last_native_call_event[2048] = "native_call=none";
 char sorr_ios_d3_last_native_return_event[1024] = "native_return=none";
+char sorr_ios_d3_native_call_events[3072] = "native_events=none";
 char sorr_ios_d3_last_effect_water_event[1024] = "effect_water=none";
 char sorr_ios_d3_runtime_snapshot[2048] = "snapshot=uninitialized";
 char sorr_ios_d3_lifecycle_events[1536] = "events=none";
@@ -607,6 +608,8 @@ static char sorr_ios_d3_family_event_slots[SORR_IOS_D3_WIDE_EVENT_SLOT_COUNT][SO
 static unsigned int sorr_ios_d3_family_event_slot_pos = 0;
 static char sorr_ios_d3_render_event_slots[SORR_IOS_D3_WIDE_EVENT_SLOT_COUNT][SORR_IOS_D3_WIDE_EVENT_SLOT_SIZE];
 static unsigned int sorr_ios_d3_render_event_slot_pos = 0;
+static char sorr_ios_d3_native_event_slots[SORR_IOS_D3_WIDE_EVENT_SLOT_COUNT][SORR_IOS_D3_WIDE_EVENT_SLOT_SIZE];
+static unsigned int sorr_ios_d3_native_event_slot_pos = 0;
 
 #define SORR_IOS_D3_DESTROYED_RING_COUNT 64
 
@@ -1277,6 +1280,29 @@ static void sorr_ios_d3_note_native_call( const char * kind, const SYSPROC * p, 
         raw,
         decoded
     );
+
+    snprintf( sorr_ios_d3_native_event_slots[sorr_ios_d3_native_event_slot_pos++ % SORR_IOS_D3_WIDE_EVENT_SLOT_COUNT],
+              SORR_IOS_D3_WIDE_EVENT_SLOT_SIZE,
+              "native_call name=%s kind=%s opcode=%d sys=%d proc=%s#%u:s%d:f%d:o%d stack_depth=%d stack=%p instr=%p raw=[%.128s] decoded=[%.160s]",
+              ( p && p->name ) ? p->name : "null",
+              kind ? kind : "native",
+              opcode,
+              p ? p->code : 0,
+              ( r && r->proc && r->proc->name ) ? r->proc->name : "null",
+              r ? LOCDWORD( r, PROCESS_ID ) : 0,
+              r ? LOCDWORD( r, STATUS ) : 0,
+              r ? LOCINT32( r, FRAME_PERCENT ) : 0,
+              code_offset,
+              stack_depth,
+              ( void * )params,
+              ( const void * )instr_ptr,
+              raw,
+              decoded );
+    sorr_ios_d3_rebuild_wide_event_ring( sorr_ios_d3_native_event_slots,
+                                         sorr_ios_d3_native_event_slot_pos,
+                                         sorr_ios_d3_native_call_events,
+                                         sizeof( sorr_ios_d3_native_call_events ),
+                                         "native_events=none" );
 }
 
 static void sorr_ios_d3_note_native_return( const char * kind, const SYSPROC * p, const INSTANCE * r, int result, int has_result )
@@ -1295,6 +1321,24 @@ static void sorr_ios_d3_note_native_return( const char * kind, const SYSPROC * p
         sorr_ios_d3_last_lifecycle_event,
         sorr_ios_d3_last_render_event
     );
+
+    snprintf( sorr_ios_d3_native_event_slots[sorr_ios_d3_native_event_slot_pos++ % SORR_IOS_D3_WIDE_EVENT_SLOT_COUNT],
+              SORR_IOS_D3_WIDE_EVENT_SLOT_SIZE,
+              "native_return name=%s kind=%s proc=%s#%u result=%s%d lookup_guards=%u lifecycle=%.96s render=%.96s",
+              ( p && p->name ) ? p->name : "null",
+              kind ? kind : "native",
+              ( r && r->proc && r->proc->name ) ? r->proc->name : "null",
+              r ? LOCDWORD( r, PROCESS_ID ) : 0,
+              has_result ? "" : "void:",
+              has_result ? result : 0,
+              sorr_ios_d3_lookup_guard_count,
+              sorr_ios_d3_last_lifecycle_event,
+              sorr_ios_d3_last_render_event );
+    sorr_ios_d3_rebuild_wide_event_ring( sorr_ios_d3_native_event_slots,
+                                         sorr_ios_d3_native_event_slot_pos,
+                                         sorr_ios_d3_native_call_events,
+                                         sizeof( sorr_ios_d3_native_call_events ),
+                                         "native_events=none" );
 }
 
 static void sorr_ios_d3_append_sample( char * dst, size_t dst_size, size_t * used, const INSTANCE * r, unsigned int index )

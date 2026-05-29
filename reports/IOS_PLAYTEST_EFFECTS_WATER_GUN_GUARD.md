@@ -175,3 +175,30 @@ Manual test focus remains:
 ```text
 On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/ios_latest_crash_report.txt
 ```
+
+## GET_REAL_POINT Guard Follow-Up
+
+Physical testing of the water-pointer/crash-report artifact still reproduced the gun/effect crash, and the expanded crash report finally narrowed the signal to a native graph-control-point helper:
+
+- `signal=11`
+- `current_process=KEKOS`
+- `last_native_call=GET_REAL_POINT`
+- output pointer parameters decoded through the host pointer table
+- recent effect churn still includes `SALPICA_AGUA`, `SANGRE`, and `EFECTO_POLVO`
+- `last_effect_water=none`, so the water helper itself was not the final call before the crash
+
+Patch target:
+
+- make `GET_REAL_POINT` resolve output pointer parameters through the iOS/64-bit script pointer table,
+- guard null output pointers, missing graphs, bad control-point indices, and undefined control points,
+- log the resolved graph/control-point/output-pointer details into the crash report,
+- add a recent native call/return ring to `ios_latest_crash_report.txt`,
+- keep BGM/SFX, custom controls, app icon/name, visible diagnostics, and asset-free packaging.
+
+Follow-up artifact target:
+
+```text
+ios-shell-playtest-real-point-guard-device-arm64
+build-products/SorrIOSShell-playtest-real-point-guard-adhoc.ipa
+Build label: ios-playtest-real-point-guard
+```

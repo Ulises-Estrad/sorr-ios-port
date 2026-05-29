@@ -775,3 +775,21 @@ On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/ios_latest_crash_report.txt
 ```
 
 The IPA remains asset-free and keeps BGM/SFX, custom controls, icon/name, and D2-staged data.
+
+## Playtest GET_REAL_POINT Guard Artifact
+
+The water-pointer/crash-report artifact still crashed when firing the gun, but its expanded diagnostics made the next target narrower: `KEKOS` called `GET_REAL_POINT` immediately before the signal. The next Sideloadly artifact guards that graph-control-point helper and expands the compact crash report again:
+
+```text
+ios-shell-playtest-real-point-guard-device-arm64
+build-products/SorrIOSShell-playtest-real-point-guard-adhoc.ipa
+Build label: ios-playtest-real-point-guard
+```
+
+Install with the same Windows + Sideloadly route. Test repeated gun shots and Stage 6 beach/water startup. If it crashes, reopen once and retrieve:
+
+```text
+On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/ios_latest_crash_report.txt
+```
+
+The IPA remains asset-free and keeps BGM/SFX, custom controls, icon/name, D2-staged data, and visible diagnostics.
