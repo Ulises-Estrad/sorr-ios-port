@@ -287,3 +287,22 @@ Simulator job result: success
 Game data/assets bundled in IPA: no
 Physical iPhone result: pending manual D-pad/customization test
 ```
+
+## Consolidated D4b Baseline With App Icon
+
+D4b custom touch is the current usable baseline. The next device artifact adds the temporary app icon while keeping the same real-game runtime, BGM/SFX, custom controls, D3S crash reports, and asset-free packaging.
+
+```text
+ios-shell-d4b-custom-touch-icon-device-arm64
+build-products/SorrIOSShell-d4b-custom-touch-icon-adhoc.ipa
+```
+
+Current project status:
+
+- real SoRR renders and runs on iPhone,
+- BGM works,
+- SFX works,
+- touch controls work,
+- custom controls exist and persist,
+- crash reporting exists,
+- remaining work is playtesting, control tuning, polish, and major bug fixes found during real play.

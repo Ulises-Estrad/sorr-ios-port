@@ -447,7 +447,7 @@ jobs:
       IOS_DEVICE_ARCH: "arm64"
       IOS_DEVICE_BUILD_DIR: "build-ios-shell-device"
       ARTIFACT_DIR: "ci-artifacts/ios-shell-device"
-      IPA_NAME: "SorrIOSShell-d4b-custom-touch-adhoc.ipa"
+      IPA_NAME: "SorrIOSShell-d4b-custom-touch-icon-adhoc.ipa"
 
     steps:
       - name: Checkout
@@ -471,6 +471,7 @@ jobs:
                 -o -name '*.png' \) \
               -not -path './.git/*' \
               -not -path './ci-artifacts/*' \
+              -not -path './sorr-vita-master/cmake/ios/Assets.xcassets/AppIcon.appiconset/*' \
               -print | head -n 20)"
             if [[ -n "$matches" ]]; then
               echo "::error::Game assets are present in the checkout. Remove them from the repository before running the iOS shell workflow."
@@ -679,6 +680,14 @@ jobs:
             plutil -p "$APP_PATH/Info.plist"
             echo "Device app bundle tree:"
             find "$APP_PATH" -maxdepth 3 -print | sort
+            if [[ -f "$APP_PATH/Assets.car" ]]; then
+              echo "Asset catalog present:"
+              ls -l "$APP_PATH/Assets.car"
+              assetutil --info "$APP_PATH/Assets.car" | tee "$ARTIFACT_DIR/logs/appicon-assets.log" || true
+            else
+              echo "::error::Assets.car is missing; app icon asset catalog was not bundled."
+              exit 1
+            fi
             echo "Executable architecture:"
             lipo -info "$APP_PATH/SorrIOSShell"
             echo "Code signature display before ad-hoc signing:"
@@ -701,6 +710,7 @@ jobs:
             unzip -q "$ARTIFACT_DIR/build-products/$IPA_NAME" -d "$IPA_INSPECT"
             echo "Inspected IPA tree:"
             find "$IPA_INSPECT" -maxdepth 4 -print | sort
+            test -f "$IPA_INSPECT/Payload/SorrIOSShell.app/Assets.car"
             echo "Inspected IPA Info.plist:"
             plutil -p "$IPA_INSPECT/Payload/SorrIOSShell.app/Info.plist"
             echo "Inspected IPA executable:"
@@ -715,7 +725,7 @@ jobs:
               echo "$forbidden"
               exit 1
             fi
-            echo "IPA inspection passed: no SorR.dat, data/, FPG, WAV, OGG, SMK, or PNG content."
+            echo "IPA inspection passed: no SorR.dat, data/, FPG, WAV, OGG, SMK, or raw PNG content."
             test -d "$IPA_INSPECT/Payload/SorrIOSShell.app"
             test -x "$IPA_INSPECT/Payload/SorrIOSShell.app/SorrIOSShell"
             /usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$IPA_INSPECT/Payload/SorrIOSShell.app/Info.plist" | grep -Fx 'SorrIOSShell'
@@ -733,7 +743,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ios-shell-d4b-custom-touch-device-arm64
+          name: ios-shell-d4b-custom-touch-icon-device-arm64
           path: ci-artifacts/ios-shell-device
           if-no-files-found: warn
           retention-days: 14

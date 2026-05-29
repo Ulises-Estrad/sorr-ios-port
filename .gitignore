@@ -17,6 +17,12 @@ DerivedData/
 *.pyc
 __pycache__/
 
+# Tracked iOS app icon source assets only. Keep game PNGs ignored.
+!sorr-vita-master/cmake/ios/Assets.xcassets/
+!sorr-vita-master/cmake/ios/Assets.xcassets/AppIcon.appiconset/
+!sorr-vita-master/cmake/ios/Assets.xcassets/AppIcon.appiconset/Contents.json
+!sorr-vita-master/cmake/ios/Assets.xcassets/AppIcon.appiconset/*.png
+
 # Local portable toolchains and dependencies
 portable-tools/
 portable-deps/

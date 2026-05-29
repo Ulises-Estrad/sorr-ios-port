@@ -10,6 +10,7 @@ set(SORR_IOS_SDL2_MIXER_ROOT "" CACHE PATH "Path to an SDL2_mixer iOS install pr
 set(SORR_IOS_SDL2_FRAMEWORK "" CACHE PATH "Path to SDL2.framework for iOS")
 option(SORR_IOS_SHELL_USE_SDL_MAIN_HANDLED "Define SDL_MAIN_HANDLED for the iOS shell app" OFF)
 option(SORR_IOS_D3_FIRST_RENDER "Build the D3 runtime-linked first-render probe" OFF)
+set(SORR_IOS_ASSET_CATALOG "${CMAKE_CURRENT_LIST_DIR}/Assets.xcassets")
 
 find_package(ZLIB REQUIRED)
 
@@ -116,14 +117,18 @@ endif()
 
 add_executable(SorrIOSShell MACOSX_BUNDLE
   src/sorr_ios_shell_main.c
+  "${SORR_IOS_ASSET_CATALOG}"
   ${SORR_IOS_RUNTIME_SOURCE_FILES})
+
+set_source_files_properties("${SORR_IOS_ASSET_CATALOG}" PROPERTIES
+  MACOSX_PACKAGE_LOCATION Resources)
 
 set_target_properties(SorrIOSShell PROPERTIES
   MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_LIST_DIR}/Info.plist.in"
   XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER "${SORR_IOS_BUNDLE_IDENTIFIER}"
   XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY "1"
   XCODE_ATTRIBUTE_SUPPORTED_PLATFORMS "iphoneos iphonesimulator"
-  XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_APPICON_NAME ""
+  XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_APPICON_NAME "AppIcon"
   XCODE_ATTRIBUTE_INFOPLIST_KEY_UIRequiresFullScreen "YES"
   XCODE_ATTRIBUTE_INFOPLIST_KEY_UISupportedInterfaceOrientations "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight")
 
