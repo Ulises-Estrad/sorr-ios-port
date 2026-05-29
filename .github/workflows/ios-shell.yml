@@ -65,6 +65,7 @@ jobs:
                 -o -name '*.png' \) \
               -not -path './.git/*' \
               -not -path './ci-artifacts/*' \
+              -not -path './sorr-vita-master/cmake/ios/Assets.xcassets/AppIcon.appiconset/*' \
               -print | head -n 20)"
             if [[ -n "$matches" ]]; then
               echo "::error::Game assets are present in the checkout. Remove them from the repository before running the iOS shell workflow."
