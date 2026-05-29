@@ -721,8 +721,14 @@ For a full recovery path from zero, use the root `INSTALL_IOS.md` guide.
 The next Sideloadly artifact keeps the current controls and runtime features, but targets the gun-shot / Stage 6 water crash class:
 
 ```text
+Actions run: 26623394798
+Commit: 20bbdfc
 ios-shell-playtest-effects-water-gun-guard-device-arm64
 build-products/SorrIOSShell-playtest-effects-water-gun-guard-adhoc.ipa
+Artifact size: 1954581 bytes
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
 ```
 
 Install it over the current app with Sideloadly, keep the existing staged data, then test:

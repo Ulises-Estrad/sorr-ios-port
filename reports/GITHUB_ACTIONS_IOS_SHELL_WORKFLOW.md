@@ -2295,3 +2295,16 @@ Manual test focus:
 1. Pick up a gun and shoot repeatedly.
 2. Start Stage 6 and verify the beach/water opening.
 3. If either crashes, reopen once and send `SORR_DIAGNOSTICS/ios_latest_crash_report.txt`.
+
+GitHub-side artifact proof:
+
+```text
+Actions run: 26623394798
+Commit: 20bbdfc
+Device artifact: ios-shell-playtest-effects-water-gun-guard-device-arm64
+IPA: build-products/SorrIOSShell-playtest-effects-water-gun-guard-adhoc.ipa
+Artifact size: 1954581 bytes
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
+```

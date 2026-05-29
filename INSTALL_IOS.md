@@ -29,6 +29,8 @@ This guide rebuilds the current iPhone setup from zero.
 4. Download the latest device artifact. Current workflow target:
 
    ```text
+   Actions run: 26623394798
+   Commit: 20bbdfc
    Artifact: ios-shell-playtest-effects-water-gun-guard-device-arm64
    ```
 

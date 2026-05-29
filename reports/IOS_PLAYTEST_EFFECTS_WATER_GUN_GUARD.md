@@ -55,6 +55,19 @@ ios-shell-playtest-effects-water-gun-guard-device-arm64
 build-products/SorrIOSShell-playtest-effects-water-gun-guard-adhoc.ipa
 ```
 
+GitHub-side artifact proof:
+
+```text
+Actions run: 26623394798
+Commit: 20bbdfc
+Artifact: ios-shell-playtest-effects-water-gun-guard-device-arm64
+IPA: build-products/SorrIOSShell-playtest-effects-water-gun-guard-adhoc.ipa
+Artifact size: 1954581 bytes
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
+```
+
 ## Test Plan
 
 1. Install the IPA through Sideloadly.
@@ -66,4 +79,3 @@ build-products/SorrIOSShell-playtest-effects-water-gun-guard-adhoc.ipa
 ```text
 On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/ios_latest_crash_report.txt
 ```
-

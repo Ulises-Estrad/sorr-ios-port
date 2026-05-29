@@ -1100,9 +1100,15 @@ The next active work is a normal-playtest crash fix, not a new proof milestone. 
 Current artifact target:
 
 ```text
+Actions run: 26623394798
+Commit: 20bbdfc
 Artifact: ios-shell-playtest-effects-water-gun-guard-device-arm64
 IPA: build-products/SorrIOSShell-playtest-effects-water-gun-guard-adhoc.ipa
 Build label: ios-playtest-effects-water-gun-guard
+Artifact size: 1954581 bytes
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
 ```
 
 The patch preserves the playable baseline: real render, BGM/SFX, custom controls, icon/name, visible crash reporting, D2-staged private data, and asset-free IPA packaging. The runtime change fixes the iOS/64-bit script pointer table so stale pointer removal does not break later linear-probe lookups during heavy effect churn.
