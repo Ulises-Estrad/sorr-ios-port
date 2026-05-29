@@ -560,6 +560,31 @@ Simulator job result: success
 Game data/assets bundled in IPA: no
 ```
 
+## D4b Joystick Control Artifact
+
+After physical testing, the app icon is accepted and the current remaining control issue is movement feel: the compact D-pad can still feel locked or stiff. The next device IPA keeps the existing action buttons, custom-control persistence, BGM/SFX, D3S guards, and asset-free package, but swaps the movement UI/behavior to a virtual joystick that maps to the same Bennu arrow keys.
+
+Artifact target:
+
+```text
+ios-shell-d4b-joystick-controls-icon-device-arm64
+```
+
+IPA target:
+
+```text
+build-products/SorrIOSShell-d4b-joystick-controls-icon-adhoc.ipa
+```
+
+Manual test focus:
+
+1. Install the IPA with Sideloadly over the previous build.
+2. Confirm the app icon remains correct.
+3. Confirm `CFG` responds consistently and edit mode still saves settings.
+4. Confirm joystick movement is fluid: Right to Left and Up to Down should update without lifting.
+5. Confirm joystick plus Attack/Jump/Special/Police works.
+6. Confirm BGM/SFX and crash-report files remain available.
+
 This baseline is no longer just a proof-only shell. Real SoRR runs on iPhone, BGM/SFX work, touch controls work, custom controls persist, and D3S crash reporting remains available. Remaining work is playtesting, control tuning, polish, and major bug fixes found during real play.
 
 For a full recovery path from zero, use the root `INSTALL_IOS.md` guide.

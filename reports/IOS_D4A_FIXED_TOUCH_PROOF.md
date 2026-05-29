@@ -319,3 +319,46 @@ Current project status:
 - custom controls exist and persist,
 - crash reporting exists,
 - remaining work is playtesting, control tuning, polish, and major bug fixes found during real play.
+
+## D4b Joystick Control Follow-Up
+
+Physical testing of the app-icon custom-touch build confirmed that the game is playable, BGM/SFX work, and custom controls persist, but the compact D-pad still did not feel natural enough. The next control pass preserves the working action buttons, Start/Back buttons, Bennu key injection, custom layout persistence, D3S guards, and crash reporting, while replacing the visible/behavioral movement control with a virtual joystick.
+
+The joystick still maps to the same movement keys:
+
+- Up -> Bennu key 72
+- Down -> Bennu key 80
+- Left -> Bennu key 75
+- Right -> Bennu key 77
+
+The joystick behavior is:
+
+- one active movement touch owns the joystick,
+- finger motion continuously recomputes the direction mask,
+- old direction keys release before new direction keys press,
+- a center deadzone prevents accidental drift,
+- diagonals require intentional off-axis movement,
+- action buttons remain on their existing working path,
+- `CFG` has a larger hit target to improve edit-mode entry reliability.
+
+Artifact target:
+
+```text
+ios-shell-d4b-joystick-controls-icon-device-arm64
+```
+
+IPA target:
+
+```text
+build-products/SorrIOSShell-d4b-joystick-controls-icon-adhoc.ipa
+```
+
+Manual test focus:
+
+1. Confirm the icon remains visible on the iPhone home screen.
+2. Confirm `CFG` enters edit mode consistently.
+3. Slide the joystick from Right to Left without lifting: Right should release and Left should press.
+4. Slide from Right to Up: Right should release unless the stick is deliberately held in a diagonal zone.
+5. Hold joystick movement plus Attack/Jump/Special/Police.
+6. Confirm layout resize/reposition/opacity/visibility still persist after relaunch.
+7. Confirm BGM/SFX, D3S crash reporting, and the D2 staged-data path still work.

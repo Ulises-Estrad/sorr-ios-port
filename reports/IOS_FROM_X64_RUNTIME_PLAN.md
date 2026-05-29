@@ -953,3 +953,33 @@ Game data/assets bundled in IPA: no
 ```
 
 Next priority after consolidation is to playtest in free time and debug major bugs encountered during real play.
+
+## D4b Joystick Control Baseline
+
+The app-icon build is visually correct, but physical testing showed the compact D-pad still does not feel fluid enough. The next baseline changes only the movement control feel and CFG reliability:
+
+- replace the visible/behavioral D-pad with a virtual joystick,
+- keep the same Bennu movement key mapping,
+- keep Attack/Jump/Special/Police/Start/Back on their existing working path,
+- keep D4b customization and persisted settings,
+- keep BGM/SFX enabled,
+- keep D3S crash reporting and stale-reference guards,
+- keep the IPA asset-free.
+
+Target:
+
+```text
+ios-shell-d4b-joystick-controls-icon-device-arm64
+build-products/SorrIOSShell-d4b-joystick-controls-icon-adhoc.ipa
+```
+
+Joystick behavior:
+
+- one active movement touch owns the joystick,
+- finger motion continuously recomputes direction,
+- old direction keys release before new direction keys press,
+- the center deadzone prevents accidental drift,
+- diagonals require intentional off-axis movement,
+- `CFG` uses a larger touch target for more reliable edit-mode entry.
+
+This is still a control-scheme finalization pass, not D5 gameplay work or the broader playtest/debugging phase.

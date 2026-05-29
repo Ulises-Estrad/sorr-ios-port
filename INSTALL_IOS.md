@@ -5,7 +5,7 @@ This guide rebuilds the current iPhone setup from zero.
 ## What This Repo Provides
 
 - GitHub Actions builds a Sideloadly-ready iPhone `arm64` IPA.
-- The IPA contains the iOS shell/runtime, D3S crash reporting, BGM/SFX support, D4b custom touch controls, and the app icon.
+- The IPA contains the iOS shell/runtime, D3S crash reporting, BGM/SFX support, D4b custom touch controls, virtual joystick movement, and the app icon.
 - The repo keeps the prepared SoRR data under Git LFS so a fresh clone can recreate the import package.
 - The IPA does not bundle SoRR game data or assets.
 - Game data is imported through the user's iPhone Files inbox.
@@ -29,22 +29,22 @@ This guide rebuilds the current iPhone setup from zero.
 4. Download the latest device artifact. Current proven baseline:
 
    ```text
-   Actions run: 26613847549
-   Commit: 444d0a0
-   Artifact: ios-shell-d4b-custom-touch-icon-device-arm64
+   Latest proven run before joystick retest: 26613847549
+   Latest proven commit before joystick retest: 444d0a0
+   Current joystick artifact target: ios-shell-d4b-joystick-controls-icon-device-arm64
    ```
 
    Device artifact target:
 
    ```text
-   ios-shell-d4b-custom-touch-icon-device-arm64
+   ios-shell-d4b-joystick-controls-icon-device-arm64
    ```
 
 5. Extract the downloaded artifact on Windows.
 6. Install the IPA with Sideloadly. Current baseline IPA target:
 
    ```text
-   build-products/SorrIOSShell-d4b-custom-touch-icon-adhoc.ipa
+   build-products/SorrIOSShell-d4b-joystick-controls-icon-adhoc.ipa
    ```
 
 7. If iOS asks, enable Developer Mode and trust the developer profile.
@@ -97,7 +97,7 @@ The game should then render and run using the staged data.
 Controls are configurable in-app through `CFG`.
 
 - Tap `CFG` to enter edit mode.
-- Drag the D-pad or a button to reposition it.
+- Drag the joystick or a button to reposition it.
 - Use `BIG` / `SML` to resize the selected control.
 - Use `OPAC` to cycle opacity.
 - Use `HIDE` / `SHOW` to toggle the overlay.
@@ -151,9 +151,9 @@ After a crash:
 - Real SoRR renders and runs on iPhone.
 - BGM works.
 - SFX works.
-- Touch controls work.
+- Virtual joystick/action touch controls work.
 - Custom controls exist and persist.
 - Crash reporting exists.
-- D4b custom touch is the current usable baseline.
+- D4b custom touch with virtual joystick movement is the current control baseline.
 - The IPA remains asset-free.
 - Remaining work is playtesting, control tuning, polish, and major bug fixes discovered during real play.

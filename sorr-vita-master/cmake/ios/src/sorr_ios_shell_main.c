@@ -1,6 +1,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdarg.h>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -23,11 +24,11 @@
 #include "SDL.h"
 
 #ifndef SORR_IOS_BUILD_LABEL
-#define SORR_IOS_BUILD_LABEL "ios-shell-d4b-custom-touch"
+#define SORR_IOS_BUILD_LABEL "ios-shell-d4b-joystick-controls"
 #endif
 
 #ifndef SORR_IOS_ARTIFACT_LABEL
-#define SORR_IOS_ARTIFACT_LABEL "ios-shell-d4b-custom-touch-device-arm64"
+#define SORR_IOS_ARTIFACT_LABEL "ios-shell-d4b-joystick-controls-device-arm64"
 #endif
 
 #ifdef SORR_IOS_D3_FIRST_RENDER
@@ -354,6 +355,11 @@ static void sorr_ios_touch_set_bennu_key(int code, int pressed)
 #define SORR_IOS_D4A_DPAD_DEADZONE 0.28f
 #define SORR_IOS_D4A_DPAD_AXIS_THRESHOLD 0.28f
 #define SORR_IOS_D4A_DPAD_DIAGONAL_RATIO 1.15f
+#define SORR_IOS_D4A_JOYSTICK_CAPTURE_SCALE 1.45f
+#define SORR_IOS_D4A_JOYSTICK_DEADZONE 0.22f
+#define SORR_IOS_D4A_JOYSTICK_AXIS_THRESHOLD 0.30f
+#define SORR_IOS_D4A_JOYSTICK_DIAGONAL_RATIO 0.58f
+#define SORR_IOS_D4A_CONFIG_HIT_SLOP 0.025f
 
 #define SORR_IOS_D4A_DPAD_UP 1
 #define SORR_IOS_D4A_DPAD_DOWN 2
@@ -433,6 +439,8 @@ static sorr_ios_d4a_control_layout sorr_ios_d4a_controls;
 static int sorr_ios_d4a_dpad_active = 0;
 static SDL_FingerID sorr_ios_d4a_dpad_finger_id = 0;
 static int sorr_ios_d4a_dpad_mask = 0;
+static float sorr_ios_d4a_joystick_norm_x = 0.0f;
+static float sorr_ios_d4a_joystick_norm_y = 0.0f;
 static int sorr_ios_d4a_edit_mode = 0;
 static int sorr_ios_d4a_selected_target = SORR_IOS_D4A_EDIT_TARGET_DPAD;
 
@@ -682,12 +690,22 @@ static int sorr_ios_d4a_button_for_point(float x, float y)
     return -1;
 }
 
+static int sorr_ios_d4a_dpad_mask_for_point_ex(float x, float y, int *inside, float *norm_x, float *norm_y);
+
 static int sorr_ios_d4a_dpad_mask_for_point(float x, float y, int *inside)
+{
+    return sorr_ios_d4a_dpad_mask_for_point_ex(x, y, inside, NULL, NULL);
+}
+
+static int sorr_ios_d4a_dpad_mask_for_point_ex(float x, float y, int *inside, float *norm_x, float *norm_y)
 {
     float dx;
     float dy;
     float ax;
     float ay;
+    float dist_sq;
+    float visual_x;
+    float visual_y;
     int mask = 0;
 
     sorr_ios_d4a_ensure_control_config();
@@ -695,43 +713,53 @@ static int sorr_ios_d4a_dpad_mask_for_point(float x, float y, int *inside)
     dy = (y - sorr_ios_d4a_controls.dpad_center_y) / sorr_ios_d4a_controls.dpad_radius_y;
     ax = dx < 0.0f ? -dx : dx;
     ay = dy < 0.0f ? -dy : dy;
+    dist_sq = dx * dx + dy * dy;
+
+    visual_x = dx;
+    visual_y = dy;
+    if (dist_sq > 1.0f)
+    {
+        float inv_len = 1.0f / sqrtf(dist_sq);
+        visual_x *= inv_len;
+        visual_y *= inv_len;
+    }
+    if (norm_x) *norm_x = visual_x;
+    if (norm_y) *norm_y = visual_y;
 
     if (inside)
     {
-        *inside = ax <= 1.0f && ay <= 1.0f;
+        float capture = SORR_IOS_D4A_JOYSTICK_CAPTURE_SCALE;
+        *inside = dist_sq <= capture * capture;
     }
-    if (ax > 1.0f || ay > 1.0f)
-    {
-        return 0;
-    }
-    if (ax < SORR_IOS_D4A_DPAD_DEADZONE && ay < SORR_IOS_D4A_DPAD_DEADZONE)
+
+    if (dist_sq < SORR_IOS_D4A_JOYSTICK_DEADZONE * SORR_IOS_D4A_JOYSTICK_DEADZONE)
     {
         return 0;
     }
 
-    if (ax >= SORR_IOS_D4A_DPAD_AXIS_THRESHOLD && ay >= SORR_IOS_D4A_DPAD_AXIS_THRESHOLD)
+    if (ax >= ay)
     {
-        if (ax > ay * SORR_IOS_D4A_DPAD_DIAGONAL_RATIO)
+        if (ax >= SORR_IOS_D4A_JOYSTICK_AXIS_THRESHOLD)
         {
             mask |= dx < 0.0f ? SORR_IOS_D4A_DPAD_LEFT : SORR_IOS_D4A_DPAD_RIGHT;
-        }
-        else if (ay > ax * SORR_IOS_D4A_DPAD_DIAGONAL_RATIO)
-        {
-            mask |= dy < 0.0f ? SORR_IOS_D4A_DPAD_UP : SORR_IOS_D4A_DPAD_DOWN;
-        }
-        else
-        {
-            mask |= dx < 0.0f ? SORR_IOS_D4A_DPAD_LEFT : SORR_IOS_D4A_DPAD_RIGHT;
-            mask |= dy < 0.0f ? SORR_IOS_D4A_DPAD_UP : SORR_IOS_D4A_DPAD_DOWN;
+            if (ay >= SORR_IOS_D4A_JOYSTICK_AXIS_THRESHOLD &&
+                ay >= ax * SORR_IOS_D4A_JOYSTICK_DIAGONAL_RATIO)
+            {
+                mask |= dy < 0.0f ? SORR_IOS_D4A_DPAD_UP : SORR_IOS_D4A_DPAD_DOWN;
+            }
         }
     }
-    else if (ax >= ay && ax >= SORR_IOS_D4A_DPAD_AXIS_THRESHOLD)
+    else
     {
-        mask |= dx < 0.0f ? SORR_IOS_D4A_DPAD_LEFT : SORR_IOS_D4A_DPAD_RIGHT;
-    }
-    else if (ay >= SORR_IOS_D4A_DPAD_AXIS_THRESHOLD)
-    {
-        mask |= dy < 0.0f ? SORR_IOS_D4A_DPAD_UP : SORR_IOS_D4A_DPAD_DOWN;
+        if (ay >= SORR_IOS_D4A_JOYSTICK_AXIS_THRESHOLD)
+        {
+            mask |= dy < 0.0f ? SORR_IOS_D4A_DPAD_UP : SORR_IOS_D4A_DPAD_DOWN;
+            if (ax >= SORR_IOS_D4A_JOYSTICK_AXIS_THRESHOLD &&
+                ax >= ay * SORR_IOS_D4A_JOYSTICK_DIAGONAL_RATIO)
+            {
+                mask |= dx < 0.0f ? SORR_IOS_D4A_DPAD_LEFT : SORR_IOS_D4A_DPAD_RIGHT;
+            }
+        }
     }
 
     return mask;
@@ -741,13 +769,13 @@ static void sorr_ios_d4a_apply_dpad_key(int old_mask, int new_mask, int bit, int
 {
     (void)bit;
     sorr_ios_touch_set_bennu_key(key, pressed);
-    sorr_ios_d4a_touch_log("dpad key=%s action=%s key=%d old_mask=%d new_mask=%d reason=%s",
+    sorr_ios_d4a_touch_log("joystick key=%s action=%s key=%d old_mask=%d new_mask=%d reason=%s",
                            name,
                            pressed ? "down" : "up",
                            key,
                            old_mask,
                            new_mask,
-                           reason ? reason : "dpad");
+                           reason ? reason : "joystick");
 }
 
 static void sorr_ios_d4a_set_dpad_mask(int new_mask, const char *reason)
@@ -759,10 +787,10 @@ static void sorr_ios_d4a_set_dpad_mask(int new_mask, const char *reason)
         return;
     }
 
-    sorr_ios_d4a_touch_log("dpad transition old_mask=%d new_mask=%d reason=%s",
+    sorr_ios_d4a_touch_log("joystick transition old_mask=%d new_mask=%d reason=%s",
                            old_mask,
                            new_mask,
-                           reason ? reason : "dpad");
+                           reason ? reason : "joystick");
     if ((old_mask & SORR_IOS_D4A_DPAD_UP) && !(new_mask & SORR_IOS_D4A_DPAD_UP))
         sorr_ios_d4a_apply_dpad_key(old_mask, new_mask, SORR_IOS_D4A_DPAD_UP, 72, "up", 0, reason);
     if ((old_mask & SORR_IOS_D4A_DPAD_DOWN) && !(new_mask & SORR_IOS_D4A_DPAD_DOWN))
@@ -881,6 +909,8 @@ static void sorr_ios_d4a_release_all(const char *reason)
     sorr_ios_d4a_set_dpad_mask(0, reason ? reason : "release-all");
     sorr_ios_d4a_dpad_active = 0;
     sorr_ios_d4a_dpad_finger_id = 0;
+    sorr_ios_d4a_joystick_norm_x = 0.0f;
+    sorr_ios_d4a_joystick_norm_y = 0.0f;
 
     for (i = 0; i < SORR_IOS_D4A_TOUCH_BUTTON_COUNT; i++)
     {
@@ -905,7 +935,7 @@ typedef enum sorr_ios_d4a_config_button
 
 static sorr_ios_d4a_rectf sorr_ios_d4a_config_button_rect(sorr_ios_d4a_config_button button)
 {
-    sorr_ios_d4a_rectf rect = {0.02f, 0.03f, 0.12f, 0.075f};
+    sorr_ios_d4a_rectf rect = {0.015f, 0.025f, 0.17f, 0.105f};
 
     if (!sorr_ios_d4a_edit_mode)
     {
@@ -950,12 +980,19 @@ static int sorr_ios_d4a_point_in_rect(float x, float y, const sorr_ios_d4a_rectf
            y >= rect->y && y <= rect->y + rect->h;
 }
 
+static int sorr_ios_d4a_point_in_rect_slop(float x, float y, const sorr_ios_d4a_rectf *rect, float slop)
+{
+    return rect &&
+           x >= rect->x - slop && x <= rect->x + rect->w + slop &&
+           y >= rect->y - slop && y <= rect->y + rect->h + slop;
+}
+
 static sorr_ios_d4a_config_button sorr_ios_d4a_config_button_for_point(float x, float y)
 {
     if (!sorr_ios_d4a_edit_mode)
     {
         sorr_ios_d4a_rectf cfg = sorr_ios_d4a_config_button_rect(SORR_IOS_D4A_CONFIG_TOGGLE);
-        return sorr_ios_d4a_point_in_rect(x, y, &cfg) ? SORR_IOS_D4A_CONFIG_TOGGLE : SORR_IOS_D4A_CONFIG_NONE;
+        return sorr_ios_d4a_point_in_rect_slop(x, y, &cfg, SORR_IOS_D4A_CONFIG_HIT_SLOP) ? SORR_IOS_D4A_CONFIG_TOGGLE : SORR_IOS_D4A_CONFIG_NONE;
     }
 
     {
@@ -971,7 +1008,7 @@ static sorr_ios_d4a_config_button sorr_ios_d4a_config_button_for_point(float x, 
         for (i = 0; i < (int)(sizeof(buttons) / sizeof(buttons[0])); i++)
         {
             sorr_ios_d4a_rectf rect = sorr_ios_d4a_config_button_rect(buttons[i]);
-            if (sorr_ios_d4a_point_in_rect(x, y, &rect))
+            if (sorr_ios_d4a_point_in_rect_slop(x, y, &rect, SORR_IOS_D4A_CONFIG_HIT_SLOP))
             {
                 return buttons[i];
             }
@@ -1100,7 +1137,9 @@ static void sorr_ios_d4a_update_finger(SDL_FingerID finger_id, float x, float y,
 {
     int finger_slot = sorr_ios_d4a_find_finger(finger_id);
     int dpad_inside = 0;
-    int new_dpad_mask = is_down ? sorr_ios_d4a_dpad_mask_for_point(x, y, &dpad_inside) : 0;
+    float joystick_norm_x = 0.0f;
+    float joystick_norm_y = 0.0f;
+    int new_dpad_mask = is_down ? sorr_ios_d4a_dpad_mask_for_point_ex(x, y, &dpad_inside, &joystick_norm_x, &joystick_norm_y) : 0;
     int new_button = -1;
     int old_button = -1;
     int is_motion = reason && strcmp(reason, "move") == 0;
@@ -1192,14 +1231,17 @@ static void sorr_ios_d4a_update_finger(SDL_FingerID finger_id, float x, float y,
     {
         if (is_down)
         {
-            sorr_ios_d4a_set_dpad_mask(dpad_inside ? new_dpad_mask : 0,
-                                       dpad_inside ? reason : "dpad-outside");
+            sorr_ios_d4a_joystick_norm_x = joystick_norm_x;
+            sorr_ios_d4a_joystick_norm_y = joystick_norm_y;
+            sorr_ios_d4a_set_dpad_mask(new_dpad_mask, reason ? reason : "joystick");
         }
         else
         {
-            sorr_ios_d4a_set_dpad_mask(0, reason ? reason : "dpad-release");
+            sorr_ios_d4a_set_dpad_mask(0, reason ? reason : "joystick-release");
             sorr_ios_d4a_dpad_active = 0;
             sorr_ios_d4a_dpad_finger_id = 0;
+            sorr_ios_d4a_joystick_norm_x = 0.0f;
+            sorr_ios_d4a_joystick_norm_y = 0.0f;
             sorr_ios_d4a_touch_fingers[finger_slot].active = 0;
             sorr_ios_d4a_touch_fingers[finger_slot].button_index = -1;
             sorr_ios_d4a_touch_fingers[finger_slot].is_dpad = 0;
@@ -1376,6 +1418,64 @@ static void sorr_ios_d4a_draw_labeled_rect(SDL_Renderer *renderer,
     }
 }
 
+static void sorr_ios_d4a_draw_ellipse(SDL_Renderer *renderer,
+                                      int cx,
+                                      int cy,
+                                      int rx,
+                                      int ry,
+                                      Uint8 r,
+                                      Uint8 g,
+                                      Uint8 b,
+                                      Uint8 a,
+                                      int filled)
+{
+    int y;
+
+    if (!renderer || rx <= 0 || ry <= 0)
+    {
+        return;
+    }
+
+    SDL_SetRenderDrawColor(renderer, r, g, b, a);
+    for (y = -ry; y <= ry; y++)
+    {
+        float yf = (float)y / (float)ry;
+        int x_span = (int)((float)rx * sqrtf(1.0f - yf * yf));
+        if (filled)
+        {
+            SDL_RenderDrawLine(renderer, cx - x_span, cy + y, cx + x_span, cy + y);
+        }
+        else
+        {
+            SDL_RenderDrawPoint(renderer, cx - x_span, cy + y);
+            SDL_RenderDrawPoint(renderer, cx + x_span, cy + y);
+        }
+    }
+}
+
+static void sorr_ios_d4a_draw_ellipse_outline(SDL_Renderer *renderer,
+                                              int cx,
+                                              int cy,
+                                              int rx,
+                                              int ry,
+                                              int thickness,
+                                              Uint8 r,
+                                              Uint8 g,
+                                              Uint8 b,
+                                              Uint8 a)
+{
+    int i;
+
+    if (thickness < 1)
+    {
+        thickness = 1;
+    }
+    for (i = 0; i < thickness; i++)
+    {
+        sorr_ios_d4a_draw_ellipse(renderer, cx, cy, rx - i, ry - i, r, g, b, a, 0);
+    }
+}
+
 static void sorr_ios_d4a_draw_config_button(SDL_Renderer *renderer,
                                             int width,
                                             int height,
@@ -1449,63 +1549,58 @@ void sorr_ios_d4a_draw_touch_overlay(SDL_Renderer *renderer)
 
     if (sorr_ios_d4a_controls.overlay_visible || sorr_ios_d4a_edit_mode)
     {
-        int dpad_x = (int)((sorr_ios_d4a_controls.dpad_center_x - sorr_ios_d4a_controls.dpad_radius_x) * (float)width);
-        int dpad_y = (int)((sorr_ios_d4a_controls.dpad_center_y - sorr_ios_d4a_controls.dpad_radius_y) * (float)height);
-        int dpad_w = (int)(sorr_ios_d4a_controls.dpad_radius_x * 2.0f * (float)width);
-        int dpad_h = (int)(sorr_ios_d4a_controls.dpad_radius_y * 2.0f * (float)height);
-        int arm_w;
-        int arm_h;
-        SDL_Rect outer;
-        SDL_Rect center;
-        SDL_Rect up;
-        SDL_Rect down;
-        SDL_Rect left;
-        SDL_Rect right;
+        int cx = (int)(sorr_ios_d4a_controls.dpad_center_x * (float)width);
+        int cy = (int)(sorr_ios_d4a_controls.dpad_center_y * (float)height);
+        int rx = (int)(sorr_ios_d4a_controls.dpad_radius_x * (float)width);
+        int ry = (int)(sorr_ios_d4a_controls.dpad_radius_y * (float)height);
+        int knob_rx;
+        int knob_ry;
+        int knob_x;
+        int knob_y;
+        int dead_rx;
+        int dead_ry;
         int selected = sorr_ios_d4a_edit_mode && sorr_ios_d4a_selected_target == SORR_IOS_D4A_EDIT_TARGET_DPAD;
 
-        if (dpad_w < 120) dpad_w = 120;
-        if (dpad_h < 120) dpad_h = 120;
-        if (dpad_x < margin) dpad_x = margin;
-        if (dpad_y + dpad_h > height - margin) dpad_y = height - margin - dpad_h;
-        if (dpad_y < margin) dpad_y = margin;
+        if (rx < 58) rx = 58;
+        if (ry < 58) ry = 58;
+        if (cx - rx < margin) cx = margin + rx;
+        if (cx + rx > width - margin) cx = width - margin - rx;
+        if (cy - ry < margin) cy = margin + ry;
+        if (cy + ry > height - margin) cy = height - margin - ry;
 
-        arm_w = dpad_w / 3;
-        arm_h = dpad_h / 3;
-        outer.x = dpad_x;
-        outer.y = dpad_y;
-        outer.w = dpad_w;
-        outer.h = dpad_h;
-        center.x = dpad_x + arm_w;
-        center.y = dpad_y + arm_h;
-        center.w = arm_w;
-        center.h = arm_h;
-        up.x = center.x;
-        up.y = dpad_y;
-        up.w = arm_w;
-        up.h = arm_h;
-        down.x = center.x;
-        down.y = dpad_y + arm_h * 2;
-        down.w = arm_w;
-        down.h = arm_h;
-        left.x = dpad_x;
-        left.y = center.y;
-        left.w = arm_w;
-        left.h = arm_h;
-        right.x = dpad_x + arm_w * 2;
-        right.y = center.y;
-        right.w = arm_w;
-        right.h = arm_h;
+        knob_rx = rx / 3;
+        knob_ry = ry / 3;
+        if (knob_rx < 24) knob_rx = 24;
+        if (knob_ry < 24) knob_ry = 24;
+        dead_rx = (int)((float)rx * SORR_IOS_D4A_JOYSTICK_DEADZONE);
+        dead_ry = (int)((float)ry * SORR_IOS_D4A_JOYSTICK_DEADZONE);
+        if (dead_rx < 14) dead_rx = 14;
+        if (dead_ry < 14) dead_ry = 14;
 
-        SDL_SetRenderDrawColor(renderer, 0, 0, 0, sorr_ios_d4a_alpha(selected ? 130 : 80));
-        SDL_RenderFillRect(renderer, &outer);
-        SDL_SetRenderDrawColor(renderer, selected ? 84 : 255, selected ? 190 : 255, 255, sorr_ios_d4a_alpha(220));
-        SDL_RenderDrawRect(renderer, &outer);
+        knob_x = cx + (int)(sorr_ios_d4a_joystick_norm_x * (float)(rx - knob_rx));
+        knob_y = cy + (int)(sorr_ios_d4a_joystick_norm_y * (float)(ry - knob_ry));
 
-        sorr_ios_d4a_draw_labeled_rect(renderer, &center, "", label_scale, selected, 0, 1);
-        sorr_ios_d4a_draw_labeled_rect(renderer, &up, "U", label_scale, selected, (sorr_ios_d4a_dpad_mask & SORR_IOS_D4A_DPAD_UP) != 0, 1);
-        sorr_ios_d4a_draw_labeled_rect(renderer, &down, "D", label_scale, selected, (sorr_ios_d4a_dpad_mask & SORR_IOS_D4A_DPAD_DOWN) != 0, 1);
-        sorr_ios_d4a_draw_labeled_rect(renderer, &left, "L", label_scale, selected, (sorr_ios_d4a_dpad_mask & SORR_IOS_D4A_DPAD_LEFT) != 0, 1);
-        sorr_ios_d4a_draw_labeled_rect(renderer, &right, "R", label_scale, selected, (sorr_ios_d4a_dpad_mask & SORR_IOS_D4A_DPAD_RIGHT) != 0, 1);
+        sorr_ios_d4a_draw_ellipse(renderer, cx, cy, rx, ry, 0, 0, 0, sorr_ios_d4a_alpha(selected ? 145 : 95), 1);
+        sorr_ios_d4a_draw_ellipse_outline(renderer, cx, cy, rx, ry, selected ? 4 : 3, selected ? 84 : 255, selected ? 190 : 255, 255, sorr_ios_d4a_alpha(230));
+        sorr_ios_d4a_draw_ellipse_outline(renderer, cx, cy, dead_rx, dead_ry, 2, 255, 255, 255, sorr_ios_d4a_alpha(95));
+        SDL_SetRenderDrawColor(renderer, 255, 255, 255, sorr_ios_d4a_alpha(115));
+        SDL_RenderDrawLine(renderer, cx - rx, cy, cx + rx, cy);
+        SDL_RenderDrawLine(renderer, cx, cy - ry, cx, cy + ry);
+        sorr_ios_d4a_draw_ellipse(renderer,
+                                  knob_x,
+                                  knob_y,
+                                  knob_rx,
+                                  knob_ry,
+                                  (sorr_ios_d4a_dpad_mask != 0) ? 84 : 32,
+                                  (sorr_ios_d4a_dpad_mask != 0) ? 190 : 32,
+                                  (sorr_ios_d4a_dpad_mask != 0) ? 255 : 255,
+                                  sorr_ios_d4a_alpha((sorr_ios_d4a_dpad_mask != 0) ? 205 : 160),
+                                  1);
+        sorr_ios_d4a_draw_ellipse_outline(renderer, knob_x, knob_y, knob_rx, knob_ry, 3, 255, 255, 255, sorr_ios_d4a_alpha(240));
+        if (sorr_ios_d4a_controls.labels_visible)
+        {
+            sorr_ios_draw_text(renderer, cx - 18 * label_scale / 2, cy - 7 * label_scale / 2, label_scale, "JOY");
+        }
     }
 
     if (sorr_ios_d4a_controls.overlay_visible || sorr_ios_d4a_edit_mode)

@@ -1817,6 +1817,28 @@ Result: success
 
 The simulator shell job also passed in the same run. The device artifact passed the existing IPA layout/signature/forbidden-asset inspection.
 
+## D4b Joystick Controls Icon Target
+
+Physical testing of the icon/custom-touch baseline confirmed the icon, rendering, BGM, SFX, and touch actions work, but the movement D-pad still needs to be replaced with a smoother control. The workflow now targets a virtual-joystick control pass:
+
+```text
+ios-shell-d4b-joystick-controls-icon-device-arm64
+build-products/SorrIOSShell-d4b-joystick-controls-icon-adhoc.ipa
+```
+
+Changes in this target:
+
+- movement is a virtual joystick instead of a traditional D-pad,
+- the joystick still maps to the same Bennu arrow keys,
+- finger motion continuously recomputes direction from the current thumb position,
+- old direction keys release before new direction keys press,
+- diagonals require intentional off-axis movement,
+- Attack/Jump/Special/Police/Start/Back keep the existing action-button path,
+- `CFG` keeps the existing edit-mode workflow but has a larger touch target for more reliable presses,
+- D4b control persistence, D3S crash reporting/guards, BGM/SFX, the app icon, and asset-free IPA packaging remain active.
+
+Expected CI checks remain unchanged: build iphoneos arm64, ad-hoc sign for Sideloadly, package `Payload/SorrIOSShell.app`, inspect Info.plist/architecture/signature, require the compiled app icon asset, and verify the IPA contains no `SorR.dat`, `data/`, FPG/WAV/OGG/SMK/PNG game assets, logs, or prepared data.
+
 ## D4b Custom Touch Target
 
 Physical testing of the compact D-pad build showed that movement was still too stiff: a held direction could feel locked to the first touch-down direction. The next workflow device artifact combines a D4a movement-feel fix with D4b-lite customization while keeping D3S crash reporting and guards active.
