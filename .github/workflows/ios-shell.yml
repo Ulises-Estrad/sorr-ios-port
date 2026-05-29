@@ -689,6 +689,10 @@ jobs:
               echo "::error::Assets.car is missing; app icon asset catalog was not bundled."
               exit 1
             fi
+            if [[ -d "$APP_PATH/Assets.xcassets" ]]; then
+              echo "Removing raw asset catalog sources from app bundle after compiled Assets.car verification."
+              rm -rf "$APP_PATH/Assets.xcassets"
+            fi
             echo "Executable architecture:"
             lipo -info "$APP_PATH/SorrIOSShell"
             echo "Code signature display before ad-hoc signing:"
