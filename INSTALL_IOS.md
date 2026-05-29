@@ -6,8 +6,9 @@ This guide rebuilds the current iPhone setup from zero.
 
 - GitHub Actions builds a Sideloadly-ready iPhone `arm64` IPA.
 - The IPA contains the iOS shell/runtime, D3S crash reporting, BGM/SFX support, D4b custom touch controls, and the app icon.
-- The IPA does not bundle private SoRR game data or assets.
-- Game data is imported locally on the user's iPhone.
+- The repo keeps the prepared SoRR data under Git LFS so a fresh clone can recreate the import package.
+- The IPA does not bundle SoRR game data or assets.
+- Game data is imported through the user's iPhone Files inbox.
 - The install path is Windows + Sideloadly + a physical iPhone.
 
 ## Requirements
@@ -18,8 +19,7 @@ This guide rebuilds the current iPhone setup from zero.
 - Apple ID for Sideloadly signing.
 - Physical iPhone with Developer Mode enabled.
 - USB cable.
-- Local SoRR data source on the PC.
-- Local checkout of this repo only if regenerating the local import package.
+- Local checkout of this repo with Git LFS files pulled if regenerating the import package.
 
 ## Download And Install The Latest IPA
 
@@ -52,15 +52,20 @@ This guide rebuilds the current iPhone setup from zero.
 
 ## Prepare And Import Game Data Locally
 
-Do not commit, upload, or bundle game data.
+From a local checkout of this repo on Windows, make sure Git LFS has downloaded the data:
 
-From a local checkout of this repo on Windows, run:
+```powershell
+git lfs install
+git lfs pull
+```
+
+Then run:
 
 ```powershell
 .\tools\create_d2_import_package.ps1
 ```
 
-The helper creates:
+The helper uses the repo's `sorr-vita-master/data` folder by default and creates:
 
 ```text
 out/local-only/SORR_IMPORT.zip

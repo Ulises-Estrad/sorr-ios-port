@@ -27,7 +27,8 @@ __pycache__/
 portable-tools/
 portable-deps/
 
-# Local game data and redistributed assets
+# Additional generated or copied game-data outputs stay ignored. The canonical
+# prepared data under sorr-vita-master/data is tracked explicitly through Git LFS.
 SorR.dat
 **/SorR.dat
 data/

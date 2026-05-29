@@ -1,6 +1,6 @@
 # SoRR iPhone Port
 
-Current baseline: the real SoRR runtime runs on a physical iPhone from private data staged on the device. The game renders, BGM works, SFX works, fixed touch controls work, D4b custom controls persist, and D3S crash reporting/guards remain active.
+Current baseline: the real SoRR runtime runs on a physical iPhone from SoRR data staged on the device. The game renders, BGM works, SFX works, fixed touch controls work, D4b custom controls persist, and D3S crash reporting/guards remain active.
 
 This repo is now the source of truth for the iOS shell/runtime build. It is no longer just an early proof-only experiment.
 
@@ -13,8 +13,8 @@ Remaining work is mostly control tuning, polish, and bug fixes discovered during
 
 ## Install From Scratch
 
-Use [INSTALL_IOS.md](INSTALL_IOS.md) to recover from zero, download the latest IPA, import private SoRR data locally, reset custom controls, and collect crash reports.
+Use [INSTALL_IOS.md](INSTALL_IOS.md) to recover from zero, download the latest IPA, regenerate the SoRR import package from Git LFS data, reset custom controls, and collect crash reports.
 
-## Important Asset Rule
+## Data And IPA Rule
 
-The GitHub Actions IPA does not bundle `SorR.dat`, `data/`, FPG/WAV/OGG/SMK/PNG game assets, prepared data, logs, zips, or generated IPAs. Private game data stays local and is imported onto the iPhone by the user.
+The repo now keeps the prepared SoRR data under Git LFS so a fresh clone can regenerate the iPhone import package. The GitHub Actions IPA still does not bundle `SorR.dat`, `data/`, FPG/WAV/OGG/SMK/PNG game assets, prepared data, logs, zips, or generated IPAs. The app continues to use the Files import/staging route on the iPhone.

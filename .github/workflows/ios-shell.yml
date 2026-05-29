@@ -47,33 +47,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Guard against bundled game assets
+      - name: Report repository data policy
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p "$ARTIFACT_DIR/logs"
           {
-            echo "Checking checkout for game assets that must not be committed or uploaded..."
-            matches="$(find . \
-              \( -name 'SorR.dat' \
-                -o -path './sorr-vita-master/data' \
-                -o -path './sorr-vita-master/data/*' \
-                -o -name '*.fpg' \
-                -o -name '*.wav' \
-                -o -name '*.ogg' \
-                -o -name '*.smk' \
-                -o -name '*.png' \) \
-              -not -path './.git/*' \
-              -not -path './ci-artifacts/*' \
-              -not -path './sorr-vita-master/cmake/ios/Assets.xcassets/AppIcon.appiconset/*' \
-              -print | head -n 20)"
-            if [[ -n "$matches" ]]; then
-              echo "::error::Game assets are present in the checkout. Remove them from the repository before running the iOS shell workflow."
-              echo "$matches"
-              exit 1
-            fi
-            echo "No prohibited game assets found in checkout."
-          } 2>&1 | tee "$ARTIFACT_DIR/logs/asset-guard.log"
+            echo "Repository checkout may contain LFS-managed SoRR data for recovery."
+            echo "The IPA packaging step remains the enforcement point and fails if game data/assets are bundled into SorrIOSShell.app."
+          } 2>&1 | tee "$ARTIFACT_DIR/logs/data-policy.log"
 
       - name: Print tool versions
         shell: bash
@@ -454,33 +436,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Guard against bundled game assets
+      - name: Report repository data policy
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p "$ARTIFACT_DIR/logs"
           {
-            echo "Checking checkout for game assets that must not be committed or uploaded..."
-            matches="$(find . \
-              \( -name 'SorR.dat' \
-                -o -path './sorr-vita-master/data' \
-                -o -path './sorr-vita-master/data/*' \
-                -o -name '*.fpg' \
-                -o -name '*.wav' \
-                -o -name '*.ogg' \
-                -o -name '*.smk' \
-                -o -name '*.png' \) \
-              -not -path './.git/*' \
-              -not -path './ci-artifacts/*' \
-              -not -path './sorr-vita-master/cmake/ios/Assets.xcassets/AppIcon.appiconset/*' \
-              -print | head -n 20)"
-            if [[ -n "$matches" ]]; then
-              echo "::error::Game assets are present in the checkout. Remove them from the repository before running the iOS shell workflow."
-              echo "$matches"
-              exit 1
-            fi
-            echo "No prohibited game assets found in checkout."
-          } 2>&1 | tee "$ARTIFACT_DIR/logs/asset-guard.log"
+            echo "Repository checkout may contain LFS-managed SoRR data for recovery."
+            echo "The IPA packaging step remains the enforcement point and fails if game data/assets are bundled into SorrIOSShell.app."
+          } 2>&1 | tee "$ARTIFACT_DIR/logs/data-policy.log"
 
       - name: Print device build tool versions
         shell: bash

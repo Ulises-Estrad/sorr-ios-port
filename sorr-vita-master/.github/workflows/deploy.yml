@@ -1,0 +1,37 @@
+name: Build PSVita
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Build with VitaSDK
+        run: |
+          docker run --rm \
+            -v ${{ github.workspace }}:/workdir \
+            -w /workdir \
+            vitasdk/vitasdk \
+            bash -ic "cmake -B build && cmake --build build"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: vpk
+          path: build/*.vpk
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: build/*.vpk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
