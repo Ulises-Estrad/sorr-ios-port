@@ -295,7 +295,7 @@ static int grproc_get_real_point( INSTANCE * my, int * params )
     {
         MODGRPROC_NOTE_POINT( "effect_point=GET_REAL_POINT result=null-output proc=%s#%u point=%d raw_out=0x%08x/0x%08x out=%p/%p",
                               ( my && my->proc && my->proc->name ) ? my->proc->name : "null",
-                              my ? LOCDWORD( my, PROCESS_ID ) : 0,
+                              my ? LOCDWORD( mod_grproc, my, PROCESS_ID ) : 0,
                               point,
                               ( unsigned int )params[1],
                               ( unsigned int )params[2],
@@ -309,7 +309,7 @@ static int grproc_get_real_point( INSTANCE * my, int * params )
     {
         MODGRPROC_NOTE_POINT( "effect_point=GET_REAL_POINT result=no-graph proc=%s#%u point=%d out=%p/%p",
                               ( my && my->proc && my->proc->name ) ? my->proc->name : "null",
-                              my ? LOCDWORD( my, PROCESS_ID ) : 0,
+                              my ? LOCDWORD( mod_grproc, my, PROCESS_ID ) : 0,
                               point,
                               ( void * )out_x,
                               ( void * )out_y );
@@ -332,7 +332,7 @@ static int grproc_get_real_point( INSTANCE * my, int * params )
         {
             MODGRPROC_NOTE_POINT( "effect_point=GET_REAL_POINT result=bad-point proc=%s#%u point=%d ncpoints=%u graph=%p size=%dx%d out=%p/%p",
                                   ( my && my->proc && my->proc->name ) ? my->proc->name : "null",
-                                  my ? LOCDWORD( my, PROCESS_ID ) : 0,
+                                  my ? LOCDWORD( mod_grproc, my, PROCESS_ID ) : 0,
                                   point,
                                   ( unsigned int )b->ncpoints,
                                   ( void * )b,
@@ -347,7 +347,7 @@ static int grproc_get_real_point( INSTANCE * my, int * params )
     {
         MODGRPROC_NOTE_POINT( "effect_point=GET_REAL_POINT result=undefined-point proc=%s#%u point=%d ncpoints=%u graph=%p out=%p/%p",
                               ( my && my->proc && my->proc->name ) ? my->proc->name : "null",
-                              my ? LOCDWORD( my, PROCESS_ID ) : 0,
+                              my ? LOCDWORD( mod_grproc, my, PROCESS_ID ) : 0,
                               point,
                               ( unsigned int )b->ncpoints,
                               ( void * )b,
@@ -474,7 +474,7 @@ static int grproc_get_real_point( INSTANCE * my, int * params )
 
     MODGRPROC_NOTE_POINT( "effect_point=GET_REAL_POINT result=ok proc=%s#%u point=%d ncpoints=%u graph=%p size=%dx%d center=%d/%d cpoint=%d/%d out=%p/%p value=%d/%d angle=%d flags=%u",
                           ( my && my->proc && my->proc->name ) ? my->proc->name : "null",
-                          my ? LOCDWORD( my, PROCESS_ID ) : 0,
+                          my ? LOCDWORD( mod_grproc, my, PROCESS_ID ) : 0,
                           point,
                           ( unsigned int )b->ncpoints,
                           ( void * )b,
