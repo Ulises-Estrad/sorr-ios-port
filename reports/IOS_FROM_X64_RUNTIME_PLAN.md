@@ -997,3 +997,23 @@ Simulator job result: success
 Game data/assets bundled in IPA: no
 Physical iPhone result: pending manual joystick/CFG test
 ```
+
+## D4b CFG / Toolbar Control Fix
+
+The joystick-control build still needs a config-menu usability fix before moving into the broader playtest/debug loop. Physical testing showed that CFG and DONE only worked from narrow regions, matching an iOS touch-plus-synthetic-mouse duplicate-event problem. The next target suppresses synthetic mouse events after real touch events, moves the edit toolbar away from Start/Back, and replaces the old hide/show overlay control with a gameplay text-label toggle.
+
+Target:
+
+```text
+ios-shell-d4b-config-joystick-icon-device-arm64
+build-products/SorrIOSShell-d4b-config-joystick-icon-adhoc.ipa
+```
+
+Expected behavior:
+
+- CFG opens consistently,
+- DONE closes consistently,
+- config toolbar appears as a vertical left-side strip,
+- Start/Back remain unobstructed,
+- gameplay button text is hidden by default but can be toggled with `TXT+` / `TXT-`,
+- joystick/action controls, BGM/SFX, D3S diagnostics, and asset-free packaging remain unchanged.

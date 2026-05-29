@@ -6,7 +6,7 @@ This repo is now the source of truth for the iOS shell/runtime build. It is no l
 
 ## Current Roadmap
 
-- Current: GitHub consolidation is complete; the app-icon joystick-control IPA is available from GitHub Actions run `26617138664`.
+- Current: GitHub consolidation is complete; the next app-icon joystick-control IPA fixes CFG/DONE taps, moves the config toolbar off Start/Back, and replaces the overlay hide button with gameplay text-label toggling.
 - Next: playtest the game in free time and debug major bugs found during real play.
 
 Remaining work is mostly control tuning, polish, and bug fixes discovered during normal gameplay. The old no-input attract/demo crash appears route-specific and is not blocking active playtesting right now.

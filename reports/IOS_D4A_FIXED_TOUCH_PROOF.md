@@ -376,3 +376,36 @@ Simulator job result: success
 Game data/assets bundled in IPA: no
 Physical iPhone result: pending manual joystick/CFG test
 ```
+
+## D4b CFG / Joystick Config Fix
+
+Physical testing of the joystick-control icon build showed that the movement control path is now the right direction, but CFG/DONE taps were unreliable. The likely cause is iOS delivering both a touch event and a synthetic mouse event for one tap: CFG opened on the touch and then immediately closed on the synthetic mouse event hitting DONE, while DONE could close and immediately re-open CFG.
+
+The next control artifact keeps the joystick, action buttons, BGM/SFX, D3S guards, crash reporting, app icon, and asset-free packaging, with these control UI fixes:
+
+- suppress synthetic mouse events briefly after real touch events,
+- move the config toolbar to a vertical left-side strip so it no longer covers Start/Back,
+- remove the overlay hide/show behavior from the toolbar,
+- replace it with `TXT+` / `TXT-` for gameplay button text labels,
+- hide gameplay button text by default while still showing labels in edit mode,
+- preserve the existing configurable joystick/button layout file.
+
+Artifact target:
+
+```text
+ios-shell-d4b-config-joystick-icon-device-arm64
+```
+
+IPA target:
+
+```text
+build-products/SorrIOSShell-d4b-config-joystick-icon-adhoc.ipa
+```
+
+Manual test focus:
+
+1. Tap `CFG`: edit mode should open consistently.
+2. Tap `DONE`: edit mode should close consistently.
+3. Confirm the config buttons do not cover Start/Back.
+4. Confirm `TXT+` / `TXT-` toggles gameplay button labels while config labels remain visible.
+5. Confirm joystick movement and action buttons still work.

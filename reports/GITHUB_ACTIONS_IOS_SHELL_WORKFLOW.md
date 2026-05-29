@@ -1852,6 +1852,26 @@ Simulator job result: success
 Game data/assets bundled in IPA: no
 ```
 
+## D4b CFG / Joystick Config Fix Target
+
+Physical testing of the joystick-control icon artifact found that CFG and DONE had unreliable hit behavior. The workflow now targets a config UI fix while preserving the joystick/action input path:
+
+```text
+ios-shell-d4b-config-joystick-icon-device-arm64
+build-products/SorrIOSShell-d4b-config-joystick-icon-adhoc.ipa
+```
+
+Changes in this target:
+
+- suppress synthetic mouse events briefly after real iOS touch events so CFG/DONE do not immediately undo themselves,
+- move the edit toolbar into a vertical left-side strip instead of the Start/Back row,
+- remove the old overlay hide/show toolbar action,
+- add `TXT+` / `TXT-` to toggle gameplay button labels,
+- default gameplay labels to hidden while keeping config/edit labels visible,
+- keep joystick movement, action buttons, BGM/SFX, D3S crash reporting/guards, app icon, and asset-free packaging.
+
+Expected CI checks remain unchanged: build iphoneos arm64, ad-hoc sign for Sideloadly, package `Payload/SorrIOSShell.app`, inspect Info.plist/architecture/signature, require the compiled app icon asset, and verify the IPA contains no `SorR.dat`, `data/`, FPG/WAV/OGG/SMK/PNG game assets, logs, or prepared data.
+
 ## D4b Custom Touch Target
 
 Physical testing of the compact D-pad build showed that movement was still too stiff: a held direction could feel locked to the first touch-down direction. The next workflow device artifact combines a D4a movement-feel fix with D4b-lite customization while keeping D3S crash reporting and guards active.

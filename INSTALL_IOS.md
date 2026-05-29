@@ -29,22 +29,22 @@ This guide rebuilds the current iPhone setup from zero.
 4. Download the latest device artifact. Current proven baseline:
 
    ```text
-   Actions run: 26617138664
-   Commit: 64dee98
-   Artifact: ios-shell-d4b-joystick-controls-icon-device-arm64
+   Latest proven run before CFG retest: 26617138664
+   Latest proven commit before CFG retest: 64dee98
+   Current CFG/joystick artifact target: ios-shell-d4b-config-joystick-icon-device-arm64
    ```
 
    Device artifact target:
 
    ```text
-   ios-shell-d4b-joystick-controls-icon-device-arm64
+   ios-shell-d4b-config-joystick-icon-device-arm64
    ```
 
 5. Extract the downloaded artifact on Windows.
 6. Install the IPA with Sideloadly. Current baseline IPA target:
 
    ```text
-   build-products/SorrIOSShell-d4b-joystick-controls-icon-adhoc.ipa
+   build-products/SorrIOSShell-d4b-config-joystick-icon-adhoc.ipa
    ```
 
 7. If iOS asks, enable Developer Mode and trust the developer profile.
@@ -100,7 +100,7 @@ Controls are configurable in-app through `CFG`.
 - Drag the joystick or a button to reposition it.
 - Use `BIG` / `SML` to resize the selected control.
 - Use `OPAC` to cycle opacity.
-- Use `HIDE` / `SHOW` to toggle the overlay.
+- Use `TXT+` / `TXT-` to show or hide gameplay button text.
 - Use `RST` to reset the default layout.
 - Use `DONE` to save and exit.
 

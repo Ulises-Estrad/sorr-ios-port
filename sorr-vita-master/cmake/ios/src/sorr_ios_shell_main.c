@@ -24,11 +24,11 @@
 #include "SDL.h"
 
 #ifndef SORR_IOS_BUILD_LABEL
-#define SORR_IOS_BUILD_LABEL "ios-shell-d4b-joystick-controls"
+#define SORR_IOS_BUILD_LABEL "ios-shell-d4b-config-joystick-icon"
 #endif
 
 #ifndef SORR_IOS_ARTIFACT_LABEL
-#define SORR_IOS_ARTIFACT_LABEL "ios-shell-d4b-joystick-controls-device-arm64"
+#define SORR_IOS_ARTIFACT_LABEL "ios-shell-d4b-config-joystick-icon-device-arm64"
 #endif
 
 #ifdef SORR_IOS_D3_FIRST_RENDER
@@ -360,6 +360,8 @@ static void sorr_ios_touch_set_bennu_key(int code, int pressed)
 #define SORR_IOS_D4A_JOYSTICK_AXIS_THRESHOLD 0.30f
 #define SORR_IOS_D4A_JOYSTICK_DIAGONAL_RATIO 0.58f
 #define SORR_IOS_D4A_CONFIG_HIT_SLOP 0.025f
+#define SORR_IOS_D4A_TOUCH_MOUSE_SUPPRESS_MS 450
+#define SORR_IOS_D4A_CONTROL_CONFIG_VERSION 2
 
 #define SORR_IOS_D4A_DPAD_UP 1
 #define SORR_IOS_D4A_DPAD_DOWN 2
@@ -418,6 +420,7 @@ typedef struct sorr_ios_d4a_control_layout
     float opacity;
     int overlay_visible;
     int labels_visible;
+    int config_version;
     int initialized;
     int loaded_from_disk;
     sorr_ios_d4a_rectf buttons[SORR_IOS_D4A_TOUCH_BUTTON_COUNT];
@@ -441,6 +444,7 @@ static SDL_FingerID sorr_ios_d4a_dpad_finger_id = 0;
 static int sorr_ios_d4a_dpad_mask = 0;
 static float sorr_ios_d4a_joystick_norm_x = 0.0f;
 static float sorr_ios_d4a_joystick_norm_y = 0.0f;
+static Uint32 sorr_ios_d4a_ignore_mouse_until_ticks = 0;
 static int sorr_ios_d4a_edit_mode = 0;
 static int sorr_ios_d4a_selected_target = SORR_IOS_D4A_EDIT_TARGET_DPAD;
 
@@ -489,7 +493,8 @@ static void sorr_ios_d4a_reset_control_defaults(void)
     sorr_ios_d4a_controls.dpad_radius_y = SORR_IOS_D4A_DPAD_RADIUS_Y;
     sorr_ios_d4a_controls.opacity = 0.70f;
     sorr_ios_d4a_controls.overlay_visible = 1;
-    sorr_ios_d4a_controls.labels_visible = 1;
+    sorr_ios_d4a_controls.labels_visible = 0;
+    sorr_ios_d4a_controls.config_version = SORR_IOS_D4A_CONTROL_CONFIG_VERSION;
     sorr_ios_d4a_controls.initialized = 1;
     for (i = 0; i < SORR_IOS_D4A_TOUCH_BUTTON_COUNT; i++)
     {
@@ -509,8 +514,12 @@ static void sorr_ios_d4a_clamp_control_layout(void)
     sorr_ios_d4a_controls.dpad_center_x = sorr_ios_d4a_clampf(sorr_ios_d4a_controls.dpad_center_x, sorr_ios_d4a_controls.dpad_radius_x, 1.0f - sorr_ios_d4a_controls.dpad_radius_x);
     sorr_ios_d4a_controls.dpad_center_y = sorr_ios_d4a_clampf(sorr_ios_d4a_controls.dpad_center_y, sorr_ios_d4a_controls.dpad_radius_y, 1.0f - sorr_ios_d4a_controls.dpad_radius_y);
     sorr_ios_d4a_controls.opacity = sorr_ios_d4a_clampf(sorr_ios_d4a_controls.opacity, 0.20f, 1.0f);
-    sorr_ios_d4a_controls.overlay_visible = sorr_ios_d4a_controls.overlay_visible ? 1 : 0;
+    sorr_ios_d4a_controls.overlay_visible = 1;
     sorr_ios_d4a_controls.labels_visible = sorr_ios_d4a_controls.labels_visible ? 1 : 0;
+    if (sorr_ios_d4a_controls.config_version <= 0)
+    {
+        sorr_ios_d4a_controls.config_version = SORR_IOS_D4A_CONTROL_CONFIG_VERSION;
+    }
 
     for (i = 0; i < SORR_IOS_D4A_TOUCH_BUTTON_COUNT; i++)
     {
@@ -541,7 +550,7 @@ static void sorr_ios_d4a_save_control_config(void)
         return;
     }
 
-    fprintf(fp, "version=1\n");
+    fprintf(fp, "version=%d\n", SORR_IOS_D4A_CONTROL_CONFIG_VERSION);
     fprintf(fp, "overlay_visible=%d\n", sorr_ios_d4a_controls.overlay_visible);
     fprintf(fp, "labels_visible=%d\n", sorr_ios_d4a_controls.labels_visible);
     fprintf(fp, "opacity=%.4f\n", sorr_ios_d4a_controls.opacity);
@@ -572,7 +581,11 @@ static void sorr_ios_d4a_apply_config_value(const char *key, const char *value)
         return;
     }
 
-    if (strcmp(key, "overlay_visible") == 0 && sscanf(value, "%d", &int_value) == 1)
+    if (strcmp(key, "version") == 0 && sscanf(value, "%d", &int_value) == 1)
+    {
+        sorr_ios_d4a_controls.config_version = int_value;
+    }
+    else if (strcmp(key, "overlay_visible") == 0 && sscanf(value, "%d", &int_value) == 1)
     {
         sorr_ios_d4a_controls.overlay_visible = int_value ? 1 : 0;
     }
@@ -647,6 +660,13 @@ static void sorr_ios_d4a_load_control_config(void)
         }
     }
     fclose(fp);
+    if (sorr_ios_d4a_controls.config_version < SORR_IOS_D4A_CONTROL_CONFIG_VERSION)
+    {
+        sorr_ios_d4a_controls.labels_visible = 0;
+        sorr_ios_d4a_controls.config_version = SORR_IOS_D4A_CONTROL_CONFIG_VERSION;
+        sorr_ios_d4a_touch_log("control config migrated version=%d labels_visible=0",
+                               SORR_IOS_D4A_CONTROL_CONFIG_VERSION);
+    }
     sorr_ios_d4a_controls.loaded_from_disk = 1;
     sorr_ios_d4a_clamp_control_layout();
     sorr_ios_d4a_touch_log("control config loaded path=%s", sorr_ios_d4a_active_layout->d4_touch_config_path);
@@ -928,7 +948,7 @@ typedef enum sorr_ios_d4a_config_button
     SORR_IOS_D4A_CONFIG_DONE,
     SORR_IOS_D4A_CONFIG_RESET,
     SORR_IOS_D4A_CONFIG_OPACITY,
-    SORR_IOS_D4A_CONFIG_VISIBILITY,
+    SORR_IOS_D4A_CONFIG_LABELS,
     SORR_IOS_D4A_CONFIG_BIGGER,
     SORR_IOS_D4A_CONFIG_SMALLER
 } sorr_ios_d4a_config_button;
@@ -942,32 +962,32 @@ static sorr_ios_d4a_rectf sorr_ios_d4a_config_button_rect(sorr_ios_d4a_config_bu
         return rect;
     }
 
-    rect.w = 0.115f;
+    rect.x = 0.015f;
+    rect.w = 0.17f;
     rect.h = 0.075f;
-    rect.y = 0.03f;
     switch (button)
     {
         case SORR_IOS_D4A_CONFIG_DONE:
-            rect.x = 0.02f;
+            rect.y = 0.025f;
             break;
         case SORR_IOS_D4A_CONFIG_RESET:
-            rect.x = 0.145f;
+            rect.y = 0.115f;
             break;
         case SORR_IOS_D4A_CONFIG_OPACITY:
-            rect.x = 0.27f;
+            rect.y = 0.205f;
             break;
-        case SORR_IOS_D4A_CONFIG_VISIBILITY:
-            rect.x = 0.395f;
+        case SORR_IOS_D4A_CONFIG_LABELS:
+            rect.y = 0.295f;
             break;
         case SORR_IOS_D4A_CONFIG_BIGGER:
-            rect.x = 0.52f;
+            rect.y = 0.385f;
             break;
         case SORR_IOS_D4A_CONFIG_SMALLER:
-            rect.x = 0.645f;
+            rect.y = 0.475f;
             break;
         case SORR_IOS_D4A_CONFIG_TOGGLE:
         default:
-            rect.x = 0.02f;
+            rect.y = 0.025f;
             break;
     }
     return rect;
@@ -1000,7 +1020,7 @@ static sorr_ios_d4a_config_button sorr_ios_d4a_config_button_for_point(float x, 
             SORR_IOS_D4A_CONFIG_DONE,
             SORR_IOS_D4A_CONFIG_RESET,
             SORR_IOS_D4A_CONFIG_OPACITY,
-            SORR_IOS_D4A_CONFIG_VISIBILITY,
+            SORR_IOS_D4A_CONFIG_LABELS,
             SORR_IOS_D4A_CONFIG_BIGGER,
             SORR_IOS_D4A_CONFIG_SMALLER
         };
@@ -1117,10 +1137,10 @@ static void sorr_ios_d4a_handle_config_button(sorr_ios_d4a_config_button button)
         case SORR_IOS_D4A_CONFIG_OPACITY:
             sorr_ios_d4a_cycle_opacity();
             break;
-        case SORR_IOS_D4A_CONFIG_VISIBILITY:
-            sorr_ios_d4a_controls.overlay_visible = !sorr_ios_d4a_controls.overlay_visible;
+        case SORR_IOS_D4A_CONFIG_LABELS:
+            sorr_ios_d4a_controls.labels_visible = !sorr_ios_d4a_controls.labels_visible;
             sorr_ios_d4a_save_control_config();
-            sorr_ios_d4a_touch_log("config overlay_visible=%d", sorr_ios_d4a_controls.overlay_visible);
+            sorr_ios_d4a_touch_log("config labels_visible=%d", sorr_ios_d4a_controls.labels_visible);
             break;
         case SORR_IOS_D4A_CONFIG_BIGGER:
             sorr_ios_d4a_resize_selected(1.12f);
@@ -1293,6 +1313,7 @@ void sorr_ios_d4a_process_sdl_event(const SDL_Event *event)
         case SDL_FINGERUP:
             x = event->tfinger.x;
             y = event->tfinger.y;
+            sorr_ios_d4a_ignore_mouse_until_ticks = SDL_GetTicks() + SORR_IOS_D4A_TOUCH_MOUSE_SUPPRESS_MS;
             sorr_ios_d4a_update_finger(event->tfinger.fingerId,
                                        x,
                                        y,
@@ -1305,6 +1326,10 @@ void sorr_ios_d4a_process_sdl_event(const SDL_Event *event)
             SDL_Window *focus = SDL_GetMouseFocus();
             int width = 1;
             int height = 1;
+            if ((Sint32)(SDL_GetTicks() - sorr_ios_d4a_ignore_mouse_until_ticks) < 0)
+            {
+                break;
+            }
             if (focus)
             {
                 SDL_GetWindowSize(focus, &width, &height);
@@ -1325,6 +1350,10 @@ void sorr_ios_d4a_process_sdl_event(const SDL_Event *event)
             SDL_Window *focus = SDL_GetMouseFocus();
             int width = 1;
             int height = 1;
+            if ((Sint32)(SDL_GetTicks() - sorr_ios_d4a_ignore_mouse_until_ticks) < 0)
+            {
+                break;
+            }
             if (!(event->motion.state & SDL_BUTTON_LMASK))
             {
                 break;
@@ -1405,7 +1434,7 @@ static void sorr_ios_d4a_draw_labeled_rect(SDL_Renderer *renderer,
     SDL_RenderDrawRect(renderer, rect);
     SDL_RenderDrawRect(renderer, &inner);
 
-    if (label && sorr_ios_d4a_controls.labels_visible)
+    if (label && (sorr_ios_d4a_controls.labels_visible || !use_config_alpha || sorr_ios_d4a_edit_mode || selected))
     {
         label_len = (int)strlen(label);
         text_w = label_len * 6 * label_scale;
@@ -1635,7 +1664,7 @@ void sorr_ios_d4a_draw_touch_overlay(SDL_Renderer *renderer)
         sorr_ios_d4a_draw_config_button(renderer, width, height, SORR_IOS_D4A_CONFIG_DONE, "DONE", label_scale);
         sorr_ios_d4a_draw_config_button(renderer, width, height, SORR_IOS_D4A_CONFIG_RESET, "RST", label_scale);
         sorr_ios_d4a_draw_config_button(renderer, width, height, SORR_IOS_D4A_CONFIG_OPACITY, "OPAC", label_scale);
-        sorr_ios_d4a_draw_config_button(renderer, width, height, SORR_IOS_D4A_CONFIG_VISIBILITY, sorr_ios_d4a_controls.overlay_visible ? "HIDE" : "SHOW", label_scale);
+        sorr_ios_d4a_draw_config_button(renderer, width, height, SORR_IOS_D4A_CONFIG_LABELS, sorr_ios_d4a_controls.labels_visible ? "TXT-" : "TXT+", label_scale);
         sorr_ios_d4a_draw_config_button(renderer, width, height, SORR_IOS_D4A_CONFIG_BIGGER, "BIG", label_scale);
         sorr_ios_d4a_draw_config_button(renderer, width, height, SORR_IOS_D4A_CONFIG_SMALLER, "SML", label_scale);
     }

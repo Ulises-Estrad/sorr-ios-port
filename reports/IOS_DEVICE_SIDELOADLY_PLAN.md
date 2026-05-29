@@ -599,6 +599,36 @@ Game data/assets bundled in IPA: no
 Physical iPhone result: pending manual joystick/CFG test
 ```
 
+## D4b CFG / Joystick Config Fix Artifact
+
+Physical testing found that the enlarged CFG visual did not match reliable tap behavior and DONE could fail similarly. The next Sideloadly IPA keeps the joystick and working gameplay controls, but fixes the config UI:
+
+- suppress duplicate synthetic mouse events after iOS touch events,
+- place the edit toolbar vertically on the left instead of across Start/Back,
+- replace `HIDE` / `SHOW` with `TXT+` / `TXT-` for gameplay button labels,
+- hide gameplay button text by default while preserving labels in edit mode,
+- keep BGM/SFX, D3S guards, crash reporting, app icon, and asset-free packaging.
+
+Artifact target:
+
+```text
+ios-shell-d4b-config-joystick-icon-device-arm64
+```
+
+IPA target:
+
+```text
+build-products/SorrIOSShell-d4b-config-joystick-icon-adhoc.ipa
+```
+
+Manual test focus:
+
+1. Tap `CFG` repeatedly and confirm it opens edit mode consistently.
+2. Tap `DONE` repeatedly and confirm it exits edit mode consistently.
+3. Confirm Start/Back are not covered by the edit toolbar.
+4. Confirm `TXT+` / `TXT-` toggles gameplay text labels.
+5. Confirm joystick/action gameplay controls still work.
+
 This baseline is no longer just a proof-only shell. Real SoRR runs on iPhone, BGM/SFX work, touch controls work, custom controls persist, and D3S crash reporting remains available. Remaining work is playtesting, control tuning, polish, and major bug fixes found during real play.
 
 For a full recovery path from zero, use the root `INSTALL_IOS.md` guide.
