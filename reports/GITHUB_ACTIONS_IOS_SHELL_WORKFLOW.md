@@ -1839,6 +1839,20 @@ Changes in this target:
 
 Expected CI checks remain unchanged: build iphoneos arm64, ad-hoc sign for Sideloadly, package `Payload/SorrIOSShell.app`, inspect Info.plist/architecture/signature, require the compiled app icon asset, and verify the IPA contains no `SorR.dat`, `data/`, FPG/WAV/OGG/SMK/PNG game assets, logs, or prepared data.
 
+GitHub-side D4b joystick-release / pillar CFG artifact proof:
+
+```text
+Actions run: 26618833984
+Commit: e4cbf2b
+Device artifact: ios-shell-d4b-joystick-release-cfg-device-arm64
+IPA: build-products/SorrIOSShell-d4b-joystick-release-cfg-adhoc.ipa
+Artifact size: 1956468 bytes
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
+App display name: Streets of Rage
+```
+
 GitHub-side D4b CFG/joystick config artifact proof:
 
 ```text

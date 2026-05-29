@@ -667,6 +667,21 @@ Manual test focus:
 4. Confirm CFG opens and DONE exits.
 5. Confirm Start/Back and action buttons are still usable.
 
+GitHub-side D4b joystick-release / pillar CFG artifact proof:
+
+```text
+Actions run: 26618833984
+Commit: e4cbf2b
+Artifact: ios-shell-d4b-joystick-release-cfg-device-arm64
+IPA: build-products/SorrIOSShell-d4b-joystick-release-cfg-adhoc.ipa
+Artifact size: 1956468 bytes
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
+App display name: Streets of Rage
+Physical iPhone result: pending manual joystick-release/CFG placement test
+```
+
 This baseline is no longer just a proof-only shell. Real SoRR runs on iPhone, BGM/SFX work, touch controls work, custom controls persist, and D3S crash reporting remains available. Remaining work is playtesting, control tuning, polish, and major bug fixes found during real play.
 
 For a full recovery path from zero, use the root `INSTALL_IOS.md` guide.
