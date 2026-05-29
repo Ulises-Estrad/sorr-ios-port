@@ -1897,7 +1897,7 @@ Expected fix:
 
 - force black game-frame clears before the game texture copy,
 - reset SDL logical size, viewport, clip rect, scale, and blend mode before drawing the overlay,
-- draw the translucent button fills, double outlines, labels, and `D4A TOUCH` marker in full drawable coordinates,
+- draw the translucent button fills, double outlines, and labels in full drawable coordinates,
 - restore the previous renderer state after overlay drawing.
 
 D4a visible-touch/viewport GitHub-side artifact proof:
@@ -1912,6 +1912,17 @@ Device job result: success
 Simulator job result: success
 Game data/assets bundled in IPA: no
 ```
+
+Physical testing confirmed that the visible-overlay artifact makes the controls visible and keeps the game playable, but the movement side still behaved like independent direction buttons. Sliding from Right to another direction could leave Right held while adding the new direction.
+
+The next D4a workflow target refines only the D-pad:
+
+```text
+ios-shell-d4a-dpad-refine-device-arm64
+build-products/SorrIOSShell-d4a-dpad-refine-adhoc.ipa
+```
+
+This target keeps Attack/Jump/Special/Police/Start/Back on the existing button path. Movement is now one compact lower-left D-pad touch owner that recomputes a direction mask from its center point, releases old direction keys before pressing new ones, supports sliding without lifting, and logs old/new direction masks plus key transitions.
 
 ## D3S Enemy/HUD Guard Artifact
 

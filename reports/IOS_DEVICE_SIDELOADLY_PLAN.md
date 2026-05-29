@@ -479,3 +479,14 @@ Device job result: success
 Simulator job result: success
 Game data/assets bundled in IPA: no
 ```
+
+### D4a Compact D-Pad Follow-Up
+
+Physical testing confirmed the visible overlay and working gameplay controls, but the movement layout needs a traditional compact D-pad. The next artifact preserves the existing action buttons and changes only movement handling:
+
+```text
+ios-shell-d4a-dpad-refine-device-arm64
+build-products/SorrIOSShell-d4a-dpad-refine-adhoc.ipa
+```
+
+Install through the same Windows + Sideloadly route. Test sliding Right to Left, Right to Up, and Up to Down without lifting. The previous direction should release unless the touch is intentionally in a diagonal zone. Also confirm direction plus Attack/Jump multitouch still works.

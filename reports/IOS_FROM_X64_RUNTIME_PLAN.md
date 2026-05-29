@@ -201,16 +201,14 @@ This is the first milestone that should exercise the game data on iOS.
 
 ## Immediate Next Action
 
-Current immediate action is D3A audio/stability hardening before D4a touch input.
-
-D3 physical first render is complete, but the rendered app exits after about five foreground idle minutes. The latest dense heartbeat diagnostics did not show an obvious file-handle spike. The first D3A audio pass proved real SDL SFX audio can initialize, load WAV effects, and queue playback, but the app still exited around the same five-minute window. The next build keeps the D2 data path and D3 render path unchanged while adding named audio no-op counters and music/BGM file-open diagnostics.
+Current immediate action is D4a fixed-control refinement. D3 first render, D3A real BGM/SFX, and the first D4a fixed-touch build are proven; the visible-overlay artifact made the controls visible and the game playable. The remaining D4a issue is movement feel: the independent direction rectangles can leave an old direction held while sliding.
 
 ```text
-Artifact target: ios-shell-d3a-audio-diagnostics-device-arm64
-IPA target: build-products/SorrIOSShell-d3a-audio-diagnostics-adhoc.ipa
-Diagnostics path: On My iPhone/SorrIOSShell/SORR_DIAGNOSTICS/ios_d3_runtime_stability_probe.txt
-Audio scope: SDL audio device init, WAV decode/queue through Bennu file_open, inert handles for unsupported music/OGG, named audio zero categories, live audio handle counters, last music/BGM file-open status/path
-No D4a touch input yet
+Artifact target: ios-shell-d4a-dpad-refine-device-arm64
+IPA target: build-products/SorrIOSShell-d4a-dpad-refine-adhoc.ipa
+Control scope: compact single-touch lower-left D-pad, unchanged action buttons, old direction releases before new direction presses, D-pad transition diagnostics
+Keep D3S guards/crash reporting
+No D4b customization yet
 No game data/assets bundled in IPA
 ```
 
@@ -846,3 +844,14 @@ Device job result: success
 Simulator job result: success
 Game data/assets bundled in IPA: no
 ```
+
+Physical testing of the visible-overlay artifact confirmed the app is playable and the overlay is visible. The next D4a refinement keeps BGM/SFX, D3S guards, crash reporting, and the existing action buttons, but replaces independent movement rectangles with a compact single-touch D-pad.
+
+Target:
+
+```text
+ios-shell-d4a-dpad-refine-device-arm64
+build-products/SorrIOSShell-d4a-dpad-refine-adhoc.ipa
+```
+
+The D-pad computes a direction mask from a center point with a deadzone and releases old direction keys before pressing new ones. This should fix slide changes such as Right to Left or Up to Down without changing the action-button path or starting D4b customization.

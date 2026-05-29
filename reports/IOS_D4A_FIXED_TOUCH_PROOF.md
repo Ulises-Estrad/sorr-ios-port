@@ -151,7 +151,7 @@ The follow-up keeps the working touch hitboxes and key mappings unchanged. It on
 - force the game-frame clear color to black before copying the game texture,
 - draw the D4a overlay after the game texture copy and before `SDL_RenderPresent`,
 - reset SDL logical size, viewport, clip rect, scale, and blend mode before drawing the overlay,
-- draw high-contrast translucent button fills, double outlines, readable labels, and a small `D4A TOUCH` marker,
+- draw high-contrast translucent button fills, double outlines, and readable labels in full-window coordinates,
 - restore the previous SDL renderer state after overlay drawing.
 
 Expected follow-up artifact:
@@ -191,3 +191,36 @@ Game data/assets bundled in IPA: no
 ```
 
 This is the current D4a physical iPhone test build for the visual overlay and viewport fix. It keeps the already-working touch hitboxes/key injection, BGM/SFX, D2 staged-data path, D3S guards, and crash-report files. It only changes renderer state handling and visible overlay drawing.
+
+## D4a Compact D-Pad Follow-Up
+
+Physical testing of the visible-overlay artifact confirmed that the game is playable, BGM/SFX work, and the overlay is visible. The remaining control issue is movement feel: the four independent movement rectangles can leave an old direction held while sliding to a new direction.
+
+The compact D-pad follow-up keeps the working action buttons and key injection path, but replaces the four movement rectangles with one lower-left D-pad control:
+
+- one active D-pad touch owns movement,
+- movement is recomputed from the touch position relative to the D-pad center,
+- previous direction keys are released before new direction keys are pressed,
+- a center deadzone allows neutral,
+- cardinal directions are preferred, with diagonals only when the touch is intentionally in a diagonal zone,
+- D-pad transitions are logged with old/new masks and key up/down events.
+
+Artifact target:
+
+```text
+ios-shell-d4a-dpad-refine-device-arm64
+```
+
+IPA target:
+
+```text
+build-products/SorrIOSShell-d4a-dpad-refine-adhoc.ipa
+```
+
+Manual test focus:
+
+1. Slide Right to Left without lifting: Right should release and Left should press.
+2. Slide Right to Up: Right should release unless the touch is intentionally in an Up+Right diagonal zone.
+3. Hold a D-pad direction and press Attack/Jump.
+4. Confirm Attack, Jump, Special, Police, Start, and Back still work.
+5. Confirm BGM/SFX still work.
