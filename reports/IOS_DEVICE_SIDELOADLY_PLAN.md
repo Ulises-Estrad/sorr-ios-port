@@ -689,10 +689,10 @@ This baseline is no longer just a proof-only shell. Real SoRR runs on iPhone, BG
 Current Sideloadly artifact target:
 
 ```text
-Actions run: 26619778077
-Commit: 424b065
+Actions run: 26620604830
+Commit: 14eacd2
 ios-shell-playtest-controls-device-arm64
-Artifact size: 1956695 bytes
+Artifact size: 1957191 bytes
 Device job result: success
 Simulator job result: success
 Game data/assets bundled in IPA: no

@@ -29,8 +29,8 @@ This guide rebuilds the current iPhone setup from zero.
 4. Download the latest device artifact. Current workflow target:
 
    ```text
-   Actions run: 26619778077
-   Commit: 424b065
+   Actions run: 26620604830
+   Commit: 14eacd2
    Artifact: ios-shell-playtest-controls-device-arm64
    ```
 
