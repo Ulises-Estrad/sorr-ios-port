@@ -273,3 +273,17 @@ Manual test focus:
 3. Hold a D-pad direction and press Attack/Jump.
 4. Tap `CFG`, drag/resize controls, adjust opacity, save with `DONE`, relaunch, and confirm settings persist.
 5. Confirm BGM/SFX, crash reporting, and the D2 staged-data path still work.
+
+GitHub-side D4b custom-touch artifact proof:
+
+```text
+Actions run: 26612339231
+Patch commit: f5beb9a
+Artifact: ios-shell-d4b-custom-touch-device-arm64
+IPA: build-products/SorrIOSShell-d4b-custom-touch-adhoc.ipa
+Artifact size: 798 KB
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
+Physical iPhone result: pending manual D-pad/customization test
+```

@@ -1764,6 +1764,20 @@ Purpose:
 
 Expected CI checks remain unchanged: build iphoneos arm64, ad-hoc sign for Sideloadly, package `Payload/SorrIOSShell.app`, inspect Info.plist/architecture/signature, and verify the IPA contains no `SorR.dat`, `data/`, FPG/WAV/OGG/SMK/PNG assets, logs, or prepared data.
 
+GitHub-side D4b custom-touch artifact proof:
+
+```text
+Actions run: 26612339231
+Commit: f5beb9a
+Device artifact: ios-shell-d4b-custom-touch-device-arm64
+IPA: build-products/SorrIOSShell-d4b-custom-touch-adhoc.ipa
+Artifact size: 798 KB
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
+Physical iPhone result: pending manual D-pad/customization test
+```
+
 GitHub-side D3S demo teardown artifact proof:
 
 ```text

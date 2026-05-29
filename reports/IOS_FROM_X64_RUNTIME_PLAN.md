@@ -902,3 +902,17 @@ Customization behavior:
 - settings persist in `On My iPhone/SorrIOSShell/SORR_DIAGNOSTICS/ios_touch_controls.ini`.
 
 This target does not start D5 gameplay polish, D4b advanced customization, App Store/TestFlight signing, or asset bundling.
+
+GitHub-side D4b custom-touch artifact proof:
+
+```text
+Actions run: 26612339231
+Patch commit: f5beb9a
+Artifact: ios-shell-d4b-custom-touch-device-arm64
+IPA: build-products/SorrIOSShell-d4b-custom-touch-adhoc.ipa
+Artifact size: 798 KB
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
+Physical iPhone result: pending manual D-pad/customization test
+```
