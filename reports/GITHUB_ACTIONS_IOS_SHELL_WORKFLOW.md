@@ -1852,6 +1852,26 @@ Simulator job result: success
 Game data/assets bundled in IPA: no
 ```
 
+## D4b Joystick Release / Pillar CFG Target
+
+Physical testing of the CFG/joystick artifact found a joystick release regression: the stick could remain held after lifting until CFG reset the controls. The workflow now targets a release-handling fix and a smaller pillar-safe CFG button:
+
+```text
+ios-shell-d4b-joystick-release-cfg-device-arm64
+build-products/SorrIOSShell-d4b-joystick-release-cfg-adhoc.ipa
+```
+
+Changes in this target:
+
+- keep suppressing duplicate synthetic mouse down/move events,
+- allow synthetic mouse up to release stuck joystick/action state,
+- release orphaned pressed controls if a mouse-up arrives without a tracked mouse slot,
+- make CFG smaller and opaque by default,
+- place CFG inside the left pillar-safe area for 16:9 content on an iPhone 16 Plus style aspect ratio,
+- keep joystick/action mappings, Start/Back, BGM/SFX, D3S crash reporting, app icon, and asset-free packaging.
+
+Expected CI checks remain unchanged: build iphoneos arm64, ad-hoc sign for Sideloadly, package `Payload/SorrIOSShell.app`, inspect Info.plist/architecture/signature, require the compiled app icon asset, and verify the IPA contains no `SorR.dat`, `data/`, FPG/WAV/OGG/SMK/PNG game assets, logs, or prepared data.
+
 GitHub-side D4b joystick-control icon artifact proof:
 
 ```text

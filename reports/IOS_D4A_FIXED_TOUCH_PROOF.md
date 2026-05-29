@@ -423,3 +423,35 @@ Simulator job result: success
 Game data/assets bundled in IPA: no
 Physical iPhone result: pending manual CFG/DONE/toolbar/text-label test
 ```
+
+## D4b Joystick Release / Pillar CFG Follow-Up
+
+Physical testing of the CFG/joystick artifact showed that the CFG hitbox was improved but still had odd dead zones, and the joystick could stick in the last pressed direction until CFG reset the controls. The likely joystick issue is that iOS can provide a synthetic mouse-up as the practical release signal for a touch; the previous duplicate-mouse filter suppressed that release.
+
+The next artifact keeps joystick/action mappings, BGM/SFX, D3S reporting, app icon, and asset-free packaging, with these fixes:
+
+- duplicate synthetic mouse down/move events remain suppressed,
+- synthetic mouse up can release any stuck joystick/action state,
+- mouse-up with no tracked touch slot releases orphaned pressed controls,
+- the small `CFG` button is moved into the left pillar-safe area for a 16:9 game on iPhone 16 Plus style screens,
+- `CFG` is opaque by default and inset from the curved top-left corner.
+
+Artifact target:
+
+```text
+ios-shell-d4b-joystick-release-cfg-device-arm64
+```
+
+IPA target:
+
+```text
+build-products/SorrIOSShell-d4b-joystick-release-cfg-adhoc.ipa
+```
+
+Manual test focus:
+
+1. Press/release joystick directions and confirm movement never sticks after lifting.
+2. Hold a direction for more than a second, release, and confirm the key releases.
+3. Confirm CFG is small, opaque, in the left pillar area, and not clipped by the curved corner.
+4. Confirm CFG still opens edit mode and DONE exits edit mode.
+5. Confirm Start/Back, action buttons, BGM/SFX, and crash reporting remain intact.

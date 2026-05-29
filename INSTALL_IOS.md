@@ -29,22 +29,22 @@ This guide rebuilds the current iPhone setup from zero.
 4. Download the latest device artifact. Current proven baseline:
 
    ```text
-   Actions run: 26618164911
-   Commit: b587ee3
-   Artifact: ios-shell-d4b-config-joystick-icon-device-arm64
+   Latest proven run before joystick-release retest: 26618164911
+   Latest proven commit before joystick-release retest: b587ee3
+   Current joystick-release/CFG artifact target: ios-shell-d4b-joystick-release-cfg-device-arm64
    ```
 
    Device artifact target:
 
    ```text
-   ios-shell-d4b-config-joystick-icon-device-arm64
+   ios-shell-d4b-joystick-release-cfg-device-arm64
    ```
 
 5. Extract the downloaded artifact on Windows.
 6. Install the IPA with Sideloadly. Current baseline IPA target:
 
    ```text
-   build-products/SorrIOSShell-d4b-config-joystick-icon-adhoc.ipa
+   build-products/SorrIOSShell-d4b-joystick-release-cfg-adhoc.ipa
    ```
 
 7. If iOS asks, enable Developer Mode and trust the developer profile.

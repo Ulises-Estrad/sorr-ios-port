@@ -1031,3 +1031,23 @@ Simulator job result: success
 Game data/assets bundled in IPA: no
 Physical iPhone result: pending manual CFG/DONE/toolbar/text-label test
 ```
+
+## D4b Joystick Release / Pillar CFG Target
+
+The next control target fixes a joystick release regression from the CFG duplicate-event filter and repositions CFG for the iPhone 16 Plus landscape layout. Because the game is 16:9 on a wider iPhone screen, the left pillar area is the safest place for a small utility button. The CFG visual is now small, opaque, and inset from the curved top-left corner.
+
+Target:
+
+```text
+ios-shell-d4b-joystick-release-cfg-device-arm64
+build-products/SorrIOSShell-d4b-joystick-release-cfg-adhoc.ipa
+```
+
+Expected behavior:
+
+- joystick release works even if iOS routes release through the synthetic mouse-up path,
+- joystick movement does not remain stuck after lifting,
+- CFG is smaller, opaque, and placed in the left pillar-safe band,
+- CFG/DONE remain usable,
+- Start/Back and gameplay controls remain unobstructed,
+- BGM/SFX, D3S diagnostics, app icon, and asset-free packaging remain unchanged.

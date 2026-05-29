@@ -643,6 +643,30 @@ Game data/assets bundled in IPA: no
 Physical iPhone result: pending manual CFG/DONE/toolbar/text-label test
 ```
 
+## D4b Joystick Release / Pillar CFG Artifact
+
+Physical testing found that CFG is better but not fully clean, and the joystick can stay stuck in the last direction until CFG resets the control state. The next Sideloadly IPA keeps the same control scheme but fixes release handling and moves CFG into a smaller pillar-safe position.
+
+Artifact target:
+
+```text
+ios-shell-d4b-joystick-release-cfg-device-arm64
+```
+
+IPA target:
+
+```text
+build-products/SorrIOSShell-d4b-joystick-release-cfg-adhoc.ipa
+```
+
+Manual test focus:
+
+1. Press and release each joystick direction; no direction should remain stuck.
+2. Hold a direction for more than a second, release, and confirm movement stops.
+3. Confirm the small opaque CFG button sits in the left pillar area and is not clipped by the rounded screen corner.
+4. Confirm CFG opens and DONE exits.
+5. Confirm Start/Back and action buttons are still usable.
+
 This baseline is no longer just a proof-only shell. Real SoRR runs on iPhone, BGM/SFX work, touch controls work, custom controls persist, and D3S crash reporting remains available. Remaining work is playtesting, control tuning, polish, and major bug fixes found during real play.
 
 For a full recovery path from zero, use the root `INSTALL_IOS.md` guide.

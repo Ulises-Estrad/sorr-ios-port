@@ -24,11 +24,11 @@
 #include "SDL.h"
 
 #ifndef SORR_IOS_BUILD_LABEL
-#define SORR_IOS_BUILD_LABEL "ios-shell-d4b-config-joystick-icon"
+#define SORR_IOS_BUILD_LABEL "ios-shell-d4b-joystick-release-cfg"
 #endif
 
 #ifndef SORR_IOS_ARTIFACT_LABEL
-#define SORR_IOS_ARTIFACT_LABEL "ios-shell-d4b-config-joystick-icon-device-arm64"
+#define SORR_IOS_ARTIFACT_LABEL "ios-shell-d4b-joystick-release-cfg-device-arm64"
 #endif
 
 #ifdef SORR_IOS_D3_FIRST_RENDER
@@ -359,7 +359,7 @@ static void sorr_ios_touch_set_bennu_key(int code, int pressed)
 #define SORR_IOS_D4A_JOYSTICK_DEADZONE 0.22f
 #define SORR_IOS_D4A_JOYSTICK_AXIS_THRESHOLD 0.30f
 #define SORR_IOS_D4A_JOYSTICK_DIAGONAL_RATIO 0.58f
-#define SORR_IOS_D4A_CONFIG_HIT_SLOP 0.025f
+#define SORR_IOS_D4A_CONFIG_HIT_SLOP 0.016f
 #define SORR_IOS_D4A_TOUCH_MOUSE_SUPPRESS_MS 450
 #define SORR_IOS_D4A_CONTROL_CONFIG_VERSION 2
 
@@ -941,6 +941,26 @@ static void sorr_ios_d4a_release_all(const char *reason)
     }
 }
 
+static int sorr_ios_d4a_has_pressed_controls(void)
+{
+    int i;
+
+    if (sorr_ios_d4a_dpad_mask != 0 || sorr_ios_d4a_dpad_active)
+    {
+        return 1;
+    }
+
+    for (i = 0; i < SORR_IOS_D4A_TOUCH_BUTTON_COUNT; i++)
+    {
+        if (sorr_ios_d4a_button_press_count[i] > 0)
+        {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
 typedef enum sorr_ios_d4a_config_button
 {
     SORR_IOS_D4A_CONFIG_NONE = -1,
@@ -955,39 +975,39 @@ typedef enum sorr_ios_d4a_config_button
 
 static sorr_ios_d4a_rectf sorr_ios_d4a_config_button_rect(sorr_ios_d4a_config_button button)
 {
-    sorr_ios_d4a_rectf rect = {0.015f, 0.025f, 0.17f, 0.105f};
+    sorr_ios_d4a_rectf rect = {0.024f, 0.095f, 0.055f, 0.052f};
 
     if (!sorr_ios_d4a_edit_mode)
     {
         return rect;
     }
 
-    rect.x = 0.015f;
-    rect.w = 0.17f;
-    rect.h = 0.075f;
+    rect.x = 0.022f;
+    rect.w = 0.065f;
+    rect.h = 0.070f;
     switch (button)
     {
         case SORR_IOS_D4A_CONFIG_DONE:
-            rect.y = 0.025f;
+            rect.y = 0.095f;
             break;
         case SORR_IOS_D4A_CONFIG_RESET:
-            rect.y = 0.115f;
+            rect.y = 0.180f;
             break;
         case SORR_IOS_D4A_CONFIG_OPACITY:
-            rect.y = 0.205f;
+            rect.y = 0.265f;
             break;
         case SORR_IOS_D4A_CONFIG_LABELS:
-            rect.y = 0.295f;
+            rect.y = 0.350f;
             break;
         case SORR_IOS_D4A_CONFIG_BIGGER:
-            rect.y = 0.385f;
+            rect.y = 0.435f;
             break;
         case SORR_IOS_D4A_CONFIG_SMALLER:
-            rect.y = 0.475f;
+            rect.y = 0.520f;
             break;
         case SORR_IOS_D4A_CONFIG_TOGGLE:
         default:
-            rect.y = 0.025f;
+            rect.y = 0.095f;
             break;
     }
     return rect;
@@ -1172,6 +1192,10 @@ static void sorr_ios_d4a_update_finger(SDL_FingerID finger_id, float x, float y,
     }
     if (finger_slot < 0)
     {
+        if (!is_down && finger_id == (SDL_FingerID)-1 && sorr_ios_d4a_has_pressed_controls())
+        {
+            sorr_ios_d4a_release_all("mouse-up-no-slot");
+        }
         return;
     }
 
@@ -1328,6 +1352,10 @@ void sorr_ios_d4a_process_sdl_event(const SDL_Event *event)
             int height = 1;
             if ((Sint32)(SDL_GetTicks() - sorr_ios_d4a_ignore_mouse_until_ticks) < 0)
             {
+                if (event->type == SDL_MOUSEBUTTONUP && sorr_ios_d4a_has_pressed_controls())
+                {
+                    sorr_ios_d4a_release_all("mouse-up-shadow");
+                }
                 break;
             }
             if (focus)
@@ -1410,7 +1438,7 @@ static void sorr_ios_d4a_draw_labeled_rect(SDL_Renderer *renderer,
     int label_len;
     int text_w;
     int text_h;
-    Uint8 fill_alpha = use_config_alpha ? sorr_ios_d4a_alpha(pressed ? 215 : 150) : (Uint8)(pressed ? 215 : 150);
+    Uint8 fill_alpha = use_config_alpha ? sorr_ios_d4a_alpha(pressed ? 215 : 150) : (Uint8)(pressed ? 255 : 235);
     Uint8 line_alpha = use_config_alpha ? sorr_ios_d4a_alpha(250) : 250;
 
     if (!renderer || !rect)
