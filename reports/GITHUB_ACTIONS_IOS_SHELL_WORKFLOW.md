@@ -1839,6 +1839,19 @@ Changes in this target:
 
 Expected CI checks remain unchanged: build iphoneos arm64, ad-hoc sign for Sideloadly, package `Payload/SorrIOSShell.app`, inspect Info.plist/architecture/signature, require the compiled app icon asset, and verify the IPA contains no `SorR.dat`, `data/`, FPG/WAV/OGG/SMK/PNG game assets, logs, or prepared data.
 
+GitHub-side D4b CFG/joystick config artifact proof:
+
+```text
+Actions run: 26618164911
+Commit: b587ee3
+Device artifact: ios-shell-d4b-config-joystick-icon-device-arm64
+IPA: build-products/SorrIOSShell-d4b-config-joystick-icon-adhoc.ipa
+Artifact size: 1956085 bytes
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
+```
+
 GitHub-side D4b joystick-control icon artifact proof:
 
 ```text

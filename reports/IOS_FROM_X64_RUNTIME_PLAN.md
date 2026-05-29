@@ -1017,3 +1017,17 @@ Expected behavior:
 - Start/Back remain unobstructed,
 - gameplay button text is hidden by default but can be toggled with `TXT+` / `TXT-`,
 - joystick/action controls, BGM/SFX, D3S diagnostics, and asset-free packaging remain unchanged.
+
+GitHub-side D4b CFG/joystick config artifact proof:
+
+```text
+Actions run: 26618164911
+Commit: b587ee3
+Artifact: ios-shell-d4b-config-joystick-icon-device-arm64
+IPA: build-products/SorrIOSShell-d4b-config-joystick-icon-adhoc.ipa
+Artifact size: 1956085 bytes
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
+Physical iPhone result: pending manual CFG/DONE/toolbar/text-label test
+```

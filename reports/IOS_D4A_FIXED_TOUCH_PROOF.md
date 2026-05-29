@@ -409,3 +409,17 @@ Manual test focus:
 3. Confirm the config buttons do not cover Start/Back.
 4. Confirm `TXT+` / `TXT-` toggles gameplay button labels while config labels remain visible.
 5. Confirm joystick movement and action buttons still work.
+
+GitHub-side D4b CFG/joystick config artifact proof:
+
+```text
+Actions run: 26618164911
+Commit: b587ee3
+Artifact: ios-shell-d4b-config-joystick-icon-device-arm64
+IPA: build-products/SorrIOSShell-d4b-config-joystick-icon-adhoc.ipa
+Artifact size: 1956085 bytes
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
+Physical iPhone result: pending manual CFG/DONE/toolbar/text-label test
+```

@@ -629,6 +629,20 @@ Manual test focus:
 4. Confirm `TXT+` / `TXT-` toggles gameplay text labels.
 5. Confirm joystick/action gameplay controls still work.
 
+GitHub-side D4b CFG/joystick config artifact proof:
+
+```text
+Actions run: 26618164911
+Commit: b587ee3
+Artifact: ios-shell-d4b-config-joystick-icon-device-arm64
+IPA: build-products/SorrIOSShell-d4b-config-joystick-icon-adhoc.ipa
+Artifact size: 1956085 bytes
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
+Physical iPhone result: pending manual CFG/DONE/toolbar/text-label test
+```
+
 This baseline is no longer just a proof-only shell. Real SoRR runs on iPhone, BGM/SFX work, touch controls work, custom controls persist, and D3S crash reporting remains available. Remaining work is playtesting, control tuning, polish, and major bug fixes found during real play.
 
 For a full recovery path from zero, use the root `INSTALL_IOS.md` guide.

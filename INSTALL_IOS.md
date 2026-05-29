@@ -29,9 +29,9 @@ This guide rebuilds the current iPhone setup from zero.
 4. Download the latest device artifact. Current proven baseline:
 
    ```text
-   Latest proven run before CFG retest: 26617138664
-   Latest proven commit before CFG retest: 64dee98
-   Current CFG/joystick artifact target: ios-shell-d4b-config-joystick-icon-device-arm64
+   Actions run: 26618164911
+   Commit: b587ee3
+   Artifact: ios-shell-d4b-config-joystick-icon-device-arm64
    ```
 
    Device artifact target:
