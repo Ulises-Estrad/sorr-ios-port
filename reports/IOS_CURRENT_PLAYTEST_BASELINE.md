@@ -1,8 +1,8 @@
 # iOS Current Playtest Baseline
 
-Status: current playable iPhone baseline.
+Status: current playable iPhone baseline, paused/final for now.
 
-This project is now a playable iPhone port baseline, not an early proof-only experiment. Historical milestone reports remain in `reports/` as evidence, but current work should use this playtest baseline framing.
+This project is now a playable iPhone port baseline, not an early proof-only experiment. Historical milestone reports remain in `reports/` as evidence, but current work should use this playtest baseline framing. Active feature work is paused; future changes should be limited to major bug fixes found during normal playtesting.
 
 ## Current State
 
@@ -44,15 +44,22 @@ In edit mode, tapping selects a control, but rearranging requires dragging. This
 
 ## Current Roadmap
 
-Current: normal playtest bug fixing. The latest IPA includes the GET_REAL_POINT pointer-output guard and crash-report version 3.
+Current: final-for-now playable baseline. The latest IPA includes the GET_REAL_POINT pointer-output guard and crash-report version 3.
 
-Next: playtest the game in free time and fix major bugs one by one as they are found during real play.
+Next: playtest the game in free time. Patch only major bugs one by one if they are found during real play.
 
 ## Latest Physical Playtest Result
 
 The `ios-shell-playtest-real-point-guard-device-arm64` artifact fixed the reported gun-shot crash and the Stage 6 startup crash. Guns fire normally, and Stage 6 reaches the beach/water stage without crashing.
 
 The same baseline also cleared the SoR2 route with Axel in physical iPhone playtesting. No clear bugs or random crashes were observed from that run.
+
+## Known Non-Blocking Issues
+
+- Some no-input attract/demo scenes may ignore Start/Back presses even while the game displays a "press start" prompt.
+- The issue appears tied to specific attract/demo paths rather than normal active play.
+- This is not considered important enough to pursue right now because the game can be started, controlled, and played normally.
+- Revisit only if it becomes a practical blocker or produces a clearer bug/crash report.
 
 ## Debug Files
 

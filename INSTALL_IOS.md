@@ -159,4 +159,6 @@ After a crash:
 - Crash reporting exists.
 - Custom touch with virtual joystick movement is the current control baseline.
 - The IPA remains asset-free.
-- Remaining work is playtesting, control tuning, polish, and major bug fixes discovered during real play.
+- The current build is the paused/final-for-now baseline.
+- Future updates should be limited to major bug fixes discovered during real play.
+- Known non-blocking issue: some no-input attract/demo scenes may ignore Start/Back while showing a "press start" prompt. This does not block normal playability.

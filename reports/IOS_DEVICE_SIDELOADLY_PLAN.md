@@ -807,4 +807,6 @@ Simulator job result: success
 Game data/assets bundled in IPA: no
 ```
 
-Physical playtest result: guns fire normally and Stage 6 beach/water startup no longer crashes with this artifact.
+Physical playtest result: guns fire normally and Stage 6 beach/water startup no longer crashes with this artifact. A full SoR2 route clear with Axel completed without clear bugs or random crashes.
+
+This is the current paused/final-for-now Sideloadly baseline. Keep using this IPA unless a major bug appears. Future updates should be bug-fix-only. Known non-blocking issue: some no-input attract/demo scenes may ignore Start/Back while showing a "press start" prompt; this does not block normal playability and is not worth pursuing right now.

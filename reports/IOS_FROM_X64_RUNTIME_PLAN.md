@@ -201,15 +201,17 @@ This is the first milestone that should exercise the game data on iOS.
 
 ## Immediate Next Action
 
-Current immediate action is final playtest-control refinement and normal playtesting. The real game renders and runs on iPhone, BGM/SFX work, touch controls work, custom settings persist, crash reporting remains available, and the app displays as `Streets of Rage`.
+Current immediate action is no active port work. The real game renders and runs on iPhone, BGM/SFX work, touch controls work, custom settings persist, crash reporting remains available, and the app displays as `Streets of Rage`.
 
 ```text
-Artifact target: ios-shell-playtest-controls-device-arm64
-IPA target: build-products/StreetsOfRage-playtest-controls-adhoc.ipa
+Current artifact: ios-shell-playtest-real-point-guard-device-arm64
+Current IPA: build-products/SorrIOSShell-playtest-real-point-guard-adhoc.ipa
 Control scope: virtual joystick, action buttons, left-side CFG, right-side Start/Back, persisted layout settings
 Keep crash reporting and runtime guards
 No game data/assets bundled in IPA
 ```
+
+The project is paused/final for now. Future work should patch only major bugs found during normal playtesting. A known non-blocking issue remains where some no-input attract/demo scenes may ignore Start/Back presses even when the game shows a "press start" prompt; this is not worth pursuing unless it becomes a practical playability blocker.
 
 Historical notes follow.
 

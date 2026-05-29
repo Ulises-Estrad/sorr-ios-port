@@ -2391,4 +2391,6 @@ Simulator job result: success
 Game data/assets bundled in IPA: no
 ```
 
-Physical playtest result: guns now fire without crashing, and Stage 6 beach/water startup no longer crashes on the physical iPhone. Keep this artifact as the current playtest baseline while continuing normal gameplay bug hunting.
+Physical playtest result: guns now fire without crashing, and Stage 6 beach/water startup no longer crashes on the physical iPhone. A full SoR2 route clear with Axel also completed without clear bugs or random crashes.
+
+This artifact is now the paused/final-for-now baseline. There is no active feature roadmap at this point; future GitHub Actions/device work should be limited to major bug fixes found during normal playtesting. Known non-blocking issue: some no-input attract/demo scenes may ignore Start/Back presses even while showing a "press start" prompt. Leave that alone unless it becomes a practical playability blocker or produces a clearer bug report.
