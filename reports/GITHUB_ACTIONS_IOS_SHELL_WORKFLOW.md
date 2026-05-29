@@ -2377,3 +2377,16 @@ Build label: ios-playtest-real-point-guard
 ```
 
 The patch keeps the current playable baseline and asset-free packaging. It changes `mod_grproc` so `GET_REAL_POINT` writes through resolved host-pointer-table pointers instead of truncated Bennu stack cells, and it logs graph/control-point/output-pointer details into the existing effect/water diagnostic field. Crash reports are versioned to `crash_report_version=3` and now include a compact recent native call/return ring.
+
+GitHub-side artifact proof:
+
+```text
+Actions run: 26626858854
+Commit: cd08c9b
+Device artifact: ios-shell-playtest-real-point-guard-device-arm64
+IPA: build-products/SorrIOSShell-playtest-real-point-guard-adhoc.ipa
+Artifact size: 1959448 bytes
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
+```

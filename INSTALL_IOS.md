@@ -29,22 +29,22 @@ This guide rebuilds the current iPhone setup from zero.
 4. Download the latest device artifact. Current workflow target:
 
    ```text
-   Actions run: 26624352356
-   Commit: 4f89f79
-   Artifact: ios-shell-playtest-effects-water-gun-visual-fix-device-arm64
+   Actions run: 26626858854
+   Commit: cd08c9b
+   Artifact: ios-shell-playtest-real-point-guard-device-arm64
    ```
 
    Device artifact target:
 
    ```text
-   ios-shell-playtest-effects-water-gun-visual-fix-device-arm64
+   ios-shell-playtest-real-point-guard-device-arm64
    ```
 
 5. Extract the downloaded artifact on Windows.
 6. Install the IPA with Sideloadly. Current baseline IPA target:
 
    ```text
-   build-products/SorrIOSShell-playtest-effects-water-gun-visual-fix-adhoc.ipa
+   build-products/SorrIOSShell-playtest-real-point-guard-adhoc.ipa
    ```
 
 7. If iOS asks, enable Developer Mode and trust the developer profile.

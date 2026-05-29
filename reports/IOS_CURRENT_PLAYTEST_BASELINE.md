@@ -19,12 +19,12 @@ This project is now a playable iPhone port baseline, not an early proof-only exp
 ## Current Workflow Target
 
 ```text
-Actions run: 26620604830
-Commit: 14eacd2
-Artifact: ios-shell-playtest-controls-device-arm64
-IPA: build-products/StreetsOfRage-playtest-controls-adhoc.ipa
-Build label: ios-playtest-controls
-Artifact size: 1957191 bytes
+Actions run: 26626858854
+Commit: cd08c9b
+Artifact: ios-shell-playtest-real-point-guard-device-arm64
+IPA: build-products/SorrIOSShell-playtest-real-point-guard-adhoc.ipa
+Build label: ios-playtest-real-point-guard
+Artifact size: 1959448 bytes
 Device job result: success
 Simulator job result: success
 Game data/assets bundled in IPA: no
@@ -42,7 +42,7 @@ In edit mode, tapping selects a control, but rearranging requires dragging. This
 
 ## Current Roadmap
 
-Current: final playtest controls and documentation cleanup.
+Current: normal playtest bug fixing. The latest IPA includes the GET_REAL_POINT pointer-output guard and crash-report version 3.
 
 Next: playtest the game in free time and fix major bugs one by one as they are found during real play.
 

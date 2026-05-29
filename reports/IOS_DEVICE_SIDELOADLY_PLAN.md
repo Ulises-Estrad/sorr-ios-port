@@ -793,3 +793,16 @@ On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/ios_latest_crash_report.txt
 ```
 
 The IPA remains asset-free and keeps BGM/SFX, custom controls, icon/name, D2-staged data, and visible diagnostics.
+
+GitHub-side artifact proof:
+
+```text
+Actions run: 26626858854
+Commit: cd08c9b
+Artifact: ios-shell-playtest-real-point-guard-device-arm64
+IPA: build-products/SorrIOSShell-playtest-real-point-guard-adhoc.ipa
+Artifact size: 1959448 bytes
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
+```

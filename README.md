@@ -6,7 +6,7 @@ This repo is now the source of truth for the iOS shell/runtime build. It is no l
 
 ## Current Roadmap
 
-- Current: final playtest controls. The app has the `Streets of Rage` display name, app icon, virtual joystick, pillar-safe CFG button, right-side Start/Back buttons, persistent custom layout settings, and visible crash reports. The current IPA is available from GitHub Actions run `26620604830`.
+- Current: normal playtest bug fixing. The app has the `Streets of Rage` display name, app icon, virtual joystick, pillar-safe CFG button, right-side Start/Back buttons, persistent custom layout settings, and visible crash reports. The current IPA is available from GitHub Actions run `26626858854`.
 - Next: playtest the game in free time and debug major bugs found during real play.
 
 Remaining work is mostly control tuning, polish, and bug fixes discovered during normal gameplay. The old no-input attract/demo crash appears route-specific and is not blocking active playtesting right now.

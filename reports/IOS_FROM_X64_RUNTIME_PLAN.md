@@ -1182,3 +1182,16 @@ Patch contents:
 - Crash reports now include `crash_report_version=3`, graph/control-point/output-pointer diagnostics, and a recent native call/return ring.
 
 The playable baseline remains unchanged: real render, BGM/SFX, custom controls, icon/name, D2-staged data, visible diagnostics, and asset-free IPA packaging.
+
+GitHub-side artifact proof:
+
+```text
+Actions run: 26626858854
+Commit: cd08c9b
+Artifact: ios-shell-playtest-real-point-guard-device-arm64
+IPA: build-products/SorrIOSShell-playtest-real-point-guard-adhoc.ipa
+Artifact size: 1959448 bytes
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
+```
