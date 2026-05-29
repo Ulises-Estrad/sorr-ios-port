@@ -26,7 +26,15 @@ This guide rebuilds the current iPhone setup from zero.
 1. Open the GitHub repo.
 2. Go to `Actions`.
 3. Open the latest successful `iOS Shell` workflow run.
-4. Download the latest device artifact. Current baseline artifact target:
+4. Download the latest device artifact. Current proven baseline:
+
+   ```text
+   Actions run: 26613847549
+   Commit: 444d0a0
+   Artifact: ios-shell-d4b-custom-touch-icon-device-arm64
+   ```
+
+   Device artifact target:
 
    ```text
    ios-shell-d4b-custom-touch-icon-device-arm64

@@ -297,6 +297,19 @@ ios-shell-d4b-custom-touch-icon-device-arm64
 build-products/SorrIOSShell-d4b-custom-touch-icon-adhoc.ipa
 ```
 
+GitHub-side consolidated icon artifact proof:
+
+```text
+Actions run: 26613847549
+Commit: 444d0a0
+Artifact: ios-shell-d4b-custom-touch-icon-device-arm64
+IPA: build-products/SorrIOSShell-d4b-custom-touch-icon-adhoc.ipa
+Artifact size: 1955535 bytes
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
+```
+
 Current project status:
 
 - real SoRR renders and runs on iPhone,

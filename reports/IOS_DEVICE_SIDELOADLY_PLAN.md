@@ -547,6 +547,19 @@ ios-shell-d4b-custom-touch-icon-device-arm64
 build-products/SorrIOSShell-d4b-custom-touch-icon-adhoc.ipa
 ```
 
+GitHub-side consolidated icon artifact proof:
+
+```text
+Actions run: 26613847549
+Commit: 444d0a0
+Artifact: ios-shell-d4b-custom-touch-icon-device-arm64
+IPA: build-products/SorrIOSShell-d4b-custom-touch-icon-adhoc.ipa
+Artifact size: 1955535 bytes
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
+```
+
 This baseline is no longer just a proof-only shell. Real SoRR runs on iPhone, BGM/SFX work, touch controls work, custom controls persist, and D3S crash reporting remains available. Remaining work is playtesting, control tuning, polish, and major bug fixes found during real play.
 
 For a full recovery path from zero, use the root `INSTALL_IOS.md` guide.

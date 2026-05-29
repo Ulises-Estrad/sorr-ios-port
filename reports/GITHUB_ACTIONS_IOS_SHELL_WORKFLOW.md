@@ -1789,7 +1789,20 @@ build-products/SorrIOSShell-d4b-custom-touch-icon-adhoc.ipa
 
 The iOS CMake target includes `Assets.xcassets/AppIcon.appiconset` and sets `ASSETCATALOG_COMPILER_APPICON_NAME=AppIcon`. The source icon is generated from the local `C:\Users\ulise\Downloads\sorr.png` image as opaque app-icon PNGs only. The checkout guard allows only this app icon asset-catalog path while continuing to reject `SorR.dat`, `data/`, FPG/WAV/OGG/SMK game assets, and other PNG game assets.
 
-The IPA inspection now requires `Assets.car` and still rejects raw PNG files inside the IPA. Game data remains local-only and imported through the D2 path.
+The IPA inspection now requires `Assets.car`, strips raw `Assets.xcassets` sources after compiled asset verification, and rejects non-icon raw PNG files inside the IPA. Game data remains local-only and imported through the D2 path.
+
+GitHub-side consolidated icon artifact proof:
+
+```text
+Actions run: 26613847549
+Commit: 444d0a0
+Device artifact: ios-shell-d4b-custom-touch-icon-device-arm64
+IPA: build-products/SorrIOSShell-d4b-custom-touch-icon-adhoc.ipa
+Artifact size: 1955535 bytes
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
+```
 
 GitHub-side D3S demo teardown artifact proof:
 
