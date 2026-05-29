@@ -29,7 +29,7 @@ Artifact: ios-shell-simulator-arm64, 2.43 MB
 
 Add iOS data layout scaffold proof
 Commit: 2d3e5a6
-Run: https://github.com/Ulises-Estrad/sorr-ios-port/actions/runs/26537165603
+Run: https://github.com/Ulises-Estrad/streets-of-rage-remake-ios/actions/runs/26537165603
 Status: Success
 Job: Build iOS shell for simulator arm64
 Artifact: ios-shell-simulator-arm64, 2.34 MB
@@ -382,7 +382,7 @@ Eighth follow-up result:
 Ninth follow-up result:
 
 - The data-layout scaffold workflow completed successfully on commit `2d3e5a6`.
-- The run URL was `https://github.com/Ulises-Estrad/sorr-ios-port/actions/runs/26537165603`.
+- The run URL was `https://github.com/Ulises-Estrad/streets-of-rage-remake-ios/actions/runs/26537165603`.
 - The job status was `Success`.
 - The run produced the `ios-shell-simulator-arm64` artifact.
 - Since the workflow fails if any data-layout marker is missing, the successful run proves:

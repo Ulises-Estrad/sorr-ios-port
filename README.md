@@ -1,4 +1,4 @@
-# SoRR iPhone Port
+# Streets of Rage Remake iOS
 
 Current baseline: the real SoRR runtime runs on a physical iPhone from SoRR data staged on the device. The game renders, BGM works, SFX works, the virtual joystick/action controls work, custom controls persist, and crash reporting/guards remain active.
 

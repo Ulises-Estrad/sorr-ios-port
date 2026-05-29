@@ -18,7 +18,7 @@ Previous D2 file-sharing proof run:
 
 ```text
 Commit: 5d9036f
-Run: https://github.com/Ulises-Estrad/sorr-ios-port/actions/runs/26541978819
+Run: https://github.com/Ulises-Estrad/streets-of-rage-remake-ios/actions/runs/26541978819
 Device job: Build iOS shell unsigned IPA for device arm64
 Device job result: success
 Artifact: ios-shell-d2-data-import-device-arm64
@@ -40,7 +40,7 @@ Updated D2 artifact proof:
 
 ```text
 Commit: 7b395b3
-Run: https://github.com/Ulises-Estrad/sorr-ios-port/actions/runs/26543157389
+Run: https://github.com/Ulises-Estrad/streets-of-rage-remake-ios/actions/runs/26543157389
 Device job: Build iOS shell unsigned IPA for device arm64
 Device job result: success
 Artifact: ios-shell-d2-sorr-import-device-arm64

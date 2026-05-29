@@ -16,7 +16,7 @@ Proof run:
 
 ```text
 Commit: 3909ccc
-Run: https://github.com/Ulises-Estrad/sorr-ios-port/actions/runs/26537919700
+Run: https://github.com/Ulises-Estrad/streets-of-rage-remake-ios/actions/runs/26537919700
 Device job: Build iOS shell unsigned IPA for device arm64
 Device job result: success
 Artifact: ios-shell-device-unsigned-arm64
@@ -51,7 +51,7 @@ Ad-hoc-signed proof run:
 
 ```text
 Commit: 236455a
-Run: https://github.com/Ulises-Estrad/sorr-ios-port/actions/runs/26540409093
+Run: https://github.com/Ulises-Estrad/streets-of-rage-remake-ios/actions/runs/26540409093
 Device job: Build iOS shell unsigned IPA for device arm64
 Device job result: success
 Artifact: ios-shell-device-unsigned-arm64
@@ -203,7 +203,7 @@ Previous D2 GitHub-side artifact proof:
 
 ```text
 Commit: 5d9036f
-Run: https://github.com/Ulises-Estrad/sorr-ios-port/actions/runs/26541978819
+Run: https://github.com/Ulises-Estrad/streets-of-rage-remake-ios/actions/runs/26541978819
 Artifact: ios-shell-d2-data-import-device-arm64
 IPA: build-products/SorrIOSShell-d2-data-import-adhoc.ipa
 Result: success
@@ -220,7 +220,7 @@ Updated D2 GitHub-side artifact proof:
 
 ```text
 Commit: 7b395b3
-Run: https://github.com/Ulises-Estrad/sorr-ios-port/actions/runs/26543157389
+Run: https://github.com/Ulises-Estrad/streets-of-rage-remake-ios/actions/runs/26543157389
 Artifact: ios-shell-d2-sorr-import-device-arm64
 Artifact size: 461067 bytes
 IPA: build-products/SorrIOSShell-d2-sorr-import-adhoc.ipa

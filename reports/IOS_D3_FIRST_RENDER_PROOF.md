@@ -63,7 +63,7 @@ GitHub-side D3 artifact proof:
 
 ```text
 Commit: d79a53a
-Run: https://github.com/Ulises-Estrad/sorr-ios-port/actions/runs/26549967383
+Run: https://github.com/Ulises-Estrad/streets-of-rage-remake-ios/actions/runs/26549967383
 Artifact: ios-shell-d3-first-render-device-arm64
 Artifact size: 674040 bytes
 IPA inside artifact: build-products/SorrIOSShell-d3-first-render-adhoc.ipa

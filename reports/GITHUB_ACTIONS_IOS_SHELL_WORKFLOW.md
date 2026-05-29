@@ -29,7 +29,7 @@ Artifact: ios-shell-simulator-arm64, 2.43 MB
 
 Add iOS data layout scaffold proof
 Commit: 2d3e5a6
-Run: https://github.com/Ulises-Estrad/sorr-ios-port/actions/runs/26537165603
+Run: https://github.com/Ulises-Estrad/streets-of-rage-remake-ios/actions/runs/26537165603
 Status: Success
 Artifact: ios-shell-simulator-arm64, 2.34 MB
 ```
@@ -89,7 +89,7 @@ Latest D1 result:
 
 ```text
 Commit: 236455a
-Run: https://github.com/Ulises-Estrad/sorr-ios-port/actions/runs/26540409093
+Run: https://github.com/Ulises-Estrad/streets-of-rage-remake-ios/actions/runs/26540409093
 Device job: Build iOS shell unsigned IPA for device arm64
 Device job result: success
 Artifact: ios-shell-device-unsigned-arm64
@@ -119,7 +119,7 @@ Previous D2 result:
 
 ```text
 Commit: 5d9036f
-Run: https://github.com/Ulises-Estrad/sorr-ios-port/actions/runs/26541978819
+Run: https://github.com/Ulises-Estrad/streets-of-rage-remake-ios/actions/runs/26541978819
 Device job: Build iOS shell unsigned IPA for device arm64
 Device job result: success
 Artifact: ios-shell-d2-data-import-device-arm64
@@ -590,7 +590,7 @@ Expected next run result:
 Observed log:
 
 ```text
-SDL2_IOS_PREFIX=/Users/runner/work/sorr-ios-port/sorr-ios-port/_deps/sdl2-ios-sim
+SDL2_IOS_PREFIX=/Users/runner/work/streets-of-rage-remake-ios/streets-of-rage-remake-ios/_deps/sdl2-ios-sim
 SDL2 discovery debug:
 .../_deps/sdl2-ios-sim/include/SDL2/SDL.h
 .../_deps/sdl2-ios-sim/lib/libSDL2.a
@@ -921,7 +921,7 @@ Expected next run result:
 Follow-up result:
 
 - The workflow completed successfully on commit `2d3e5a6`.
-- The run URL was `https://github.com/Ulises-Estrad/sorr-ios-port/actions/runs/26537165603`.
+- The run URL was `https://github.com/Ulises-Estrad/streets-of-rage-remake-ios/actions/runs/26537165603`.
 - The `ios-shell-simulator-arm64` artifact uploaded successfully.
 - The marker checks prove the writable Application Support scaffold and write/read proof passed.
 - No game data was bundled or loaded.
@@ -1014,7 +1014,7 @@ Follow-up result:
 
 ```text
 Commit: 236455a
-Run: https://github.com/Ulises-Estrad/sorr-ios-port/actions/runs/26540409093
+Run: https://github.com/Ulises-Estrad/streets-of-rage-remake-ios/actions/runs/26540409093
 Result: Success
 Artifact: ios-shell-device-unsigned-arm64
 Artifact size: 456283 bytes
@@ -1076,7 +1076,7 @@ Updated D2 `SORR_IMPORT` artifact proof:
 
 ```text
 Commit: 7b395b3
-Run: https://github.com/Ulises-Estrad/sorr-ios-port/actions/runs/26543157389
+Run: https://github.com/Ulises-Estrad/streets-of-rage-remake-ios/actions/runs/26543157389
 Artifact: ios-shell-d2-sorr-import-device-arm64
 Artifact size: 461067 bytes
 IPA: build-products/SorrIOSShell-d2-sorr-import-adhoc.ipa
@@ -1124,7 +1124,7 @@ Current D3 artifact proof:
 
 ```text
 Commit: d79a53a
-Run: https://github.com/Ulises-Estrad/sorr-ios-port/actions/runs/26549967383
+Run: https://github.com/Ulises-Estrad/streets-of-rage-remake-ios/actions/runs/26549967383
 Workflow result: success
 Device artifact: ios-shell-d3-first-render-device-arm64
 Artifact size: 674040 bytes

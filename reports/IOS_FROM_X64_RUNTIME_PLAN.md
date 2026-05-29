@@ -104,7 +104,7 @@ Proof run:
 
 ```text
 Commit: 2d3e5a6
-Run: https://github.com/Ulises-Estrad/sorr-ios-port/actions/runs/26537165603
+Run: https://github.com/Ulises-Estrad/streets-of-rage-remake-ios/actions/runs/26537165603
 Status: Success
 ```
 
@@ -221,7 +221,7 @@ D1 status: physical iPhone Sideloadly install proof complete.
 
 ```text
 Commit: 3909ccc
-Run: https://github.com/Ulises-Estrad/sorr-ios-port/actions/runs/26537919700
+Run: https://github.com/Ulises-Estrad/streets-of-rage-remake-ios/actions/runs/26537919700
 Artifact: ios-shell-device-unsigned-arm64
 Result: success
 ```
@@ -244,7 +244,7 @@ Ad-hoc-signed follow-up result:
 
 ```text
 Commit: 236455a
-Run: https://github.com/Ulises-Estrad/sorr-ios-port/actions/runs/26540409093
+Run: https://github.com/Ulises-Estrad/streets-of-rage-remake-ios/actions/runs/26540409093
 Artifact: ios-shell-device-unsigned-arm64
 IPA inside artifact: build-products/SorrIOSShell-device-adhoc.ipa
 Result: success
@@ -267,7 +267,7 @@ Previous D2 artifact proof:
 
 ```text
 Commit: 5d9036f
-Run: https://github.com/Ulises-Estrad/sorr-ios-port/actions/runs/26541978819
+Run: https://github.com/Ulises-Estrad/streets-of-rage-remake-ios/actions/runs/26541978819
 Artifact: ios-shell-d2-data-import-device-arm64
 IPA inside artifact: build-products/SorrIOSShell-d2-data-import-adhoc.ipa
 Result: success
@@ -284,7 +284,7 @@ Updated D2 artifact proof:
 
 ```text
 Commit: 7b395b3
-Run: https://github.com/Ulises-Estrad/sorr-ios-port/actions/runs/26543157389
+Run: https://github.com/Ulises-Estrad/streets-of-rage-remake-ios/actions/runs/26543157389
 Artifact: ios-shell-d2-sorr-import-device-arm64
 Artifact size: 461067 bytes
 IPA inside artifact: build-products/SorrIOSShell-d2-sorr-import-adhoc.ipa
@@ -344,7 +344,7 @@ D3 GitHub-side artifact proof:
 
 ```text
 Commit: d79a53a
-Run: https://github.com/Ulises-Estrad/sorr-ios-port/actions/runs/26549967383
+Run: https://github.com/Ulises-Estrad/streets-of-rage-remake-ios/actions/runs/26549967383
 Workflow result: success
 Artifact: ios-shell-d3-first-render-device-arm64
 Artifact size: 674040 bytes
