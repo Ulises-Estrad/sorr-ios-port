@@ -34,7 +34,7 @@ Game data/assets bundled in IPA: no
 
 - `CFG`: small opaque button in the left pillar-safe area.
 - `START`: small utility button in the right pillar-safe area.
-- `BACK`: small utility button directly below `START`.
+- `BACK`: small utility button below `START`, lowered enough that the visible rectangles do not overlap after renderer minimum sizing. Start/Back use the same `52x36` minimum visual size as the CFG utility button. On a 430-point-tall iPhone landscape drawable, `START` begins near `41px` and draws to `77px`; `BACK` now begins near `95px`, leaving about `18px` of visible space.
 - Virtual joystick: lower-left movement area, mapped to the same Bennu arrow keys.
 - Action buttons: right-side gameplay buttons mapped to the existing Bennu key defaults.
 

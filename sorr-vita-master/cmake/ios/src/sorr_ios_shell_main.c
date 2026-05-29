@@ -361,7 +361,7 @@ static void sorr_ios_touch_set_bennu_key(int code, int pressed)
 #define SORR_IOS_D4A_JOYSTICK_DIAGONAL_RATIO 0.58f
 #define SORR_IOS_D4A_CONFIG_HIT_SLOP 0.016f
 #define SORR_IOS_D4A_TOUCH_MOUSE_SUPPRESS_MS 450
-#define SORR_IOS_D4A_CONTROL_CONFIG_VERSION 3
+#define SORR_IOS_D4A_CONTROL_CONFIG_VERSION 4
 #define SORR_IOS_D4A_UTILITY_BUTTON_HIT_SLOP 0.012f
 #define SORR_IOS_D4A_EDIT_DRAG_THRESHOLD 0.018f
 
@@ -439,7 +439,7 @@ static const sorr_ios_d4a_touch_button sorr_ios_d4a_touch_buttons[SORR_IOS_D4A_T
     {"Special", "SPC", 45, -1, 0.74f, 0.80f, 0.11f, 0.13f},
     {"Police", "POL", 48, -1, 0.87f, 0.80f, 0.11f, 0.13f},
     {"Start", "START", 28, -1, 0.921f, 0.095f, 0.055f, 0.052f},
-    {"Back", "BACK", 1, 14, 0.921f, 0.165f, 0.055f, 0.052f}
+    {"Back", "BACK", 1, 14, 0.921f, 0.220f, 0.055f, 0.052f}
 };
 
 static int sorr_ios_d4a_button_press_count[SORR_IOS_D4A_TOUCH_BUTTON_COUNT];
@@ -683,7 +683,7 @@ static void sorr_ios_d4a_load_control_config(void)
     if (sorr_ios_d4a_controls.config_version < SORR_IOS_D4A_CONTROL_CONFIG_VERSION)
     {
         sorr_ios_d4a_controls.labels_visible = 0;
-        if (sorr_ios_d4a_controls.config_version < 3)
+        if (sorr_ios_d4a_controls.config_version < 4)
         {
             sorr_ios_d4a_apply_utility_button_defaults();
         }
@@ -1732,6 +1732,7 @@ void sorr_ios_d4a_draw_touch_overlay(SDL_Renderer *renderer)
             const sorr_ios_d4a_touch_button *button = &sorr_ios_d4a_touch_buttons[i];
             int pressed = sorr_ios_d4a_button_press_count[i] > 0;
             int selected = sorr_ios_d4a_edit_mode && sorr_ios_d4a_selected_target == i;
+            int is_utility = i == SORR_IOS_D4A_BUTTON_START || i == SORR_IOS_D4A_BUTTON_BACK;
             SDL_Rect rect;
 
             rect.x = (int)(sorr_ios_d4a_controls.buttons[i].x * (float)width);
@@ -1739,8 +1740,8 @@ void sorr_ios_d4a_draw_touch_overlay(SDL_Renderer *renderer)
             rect.w = (int)(sorr_ios_d4a_controls.buttons[i].w * (float)width);
             rect.h = (int)(sorr_ios_d4a_controls.buttons[i].h * (float)height);
 
-            if (rect.w < 58) rect.w = 58;
-            if (rect.h < 46) rect.h = 46;
+            if (rect.w < (is_utility ? 52 : 58)) rect.w = is_utility ? 52 : 58;
+            if (rect.h < (is_utility ? 36 : 46)) rect.h = is_utility ? 36 : 46;
             if (rect.x < margin) rect.x = margin;
             if (rect.y < margin) rect.y = margin;
             if (rect.x + rect.w > width - margin) rect.x = width - margin - rect.w;
