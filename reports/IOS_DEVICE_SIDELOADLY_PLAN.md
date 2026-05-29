@@ -760,6 +760,12 @@ The visual-fix artifact restored Stage 6/HUD visuals but the gun/effect crash st
 ios-shell-playtest-water-pointer-crash-report-device-arm64
 build-products/SorrIOSShell-playtest-water-pointer-crash-report-adhoc.ipa
 Build label: ios-playtest-water-pointer-crash-report
+Actions run: 26625762818
+Commit: 93c786e
+Artifact size: 1955520 bytes
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
 ```
 
 Install with the same Windows + Sideloadly route. Test gun shooting and Stage 6 beach/water startup. If it crashes, reopen once and retrieve:

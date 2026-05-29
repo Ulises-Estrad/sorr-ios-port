@@ -153,6 +153,19 @@ build-products/SorrIOSShell-playtest-water-pointer-crash-report-adhoc.ipa
 Build label: ios-playtest-water-pointer-crash-report
 ```
 
+GitHub-side artifact proof:
+
+```text
+Actions run: 26625762818
+Commit: 93c786e
+Artifact: ios-shell-playtest-water-pointer-crash-report-device-arm64
+IPA: build-products/SorrIOSShell-playtest-water-pointer-crash-report-adhoc.ipa
+Artifact size: 1955520 bytes
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
+```
+
 Manual test focus remains:
 
 1. Pick up a gun and shoot repeatedly.

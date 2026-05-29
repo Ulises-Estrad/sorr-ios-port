@@ -2344,6 +2344,12 @@ Physical testing of the visual-fix artifact restored the Stage 6 visuals but sti
 Device artifact: ios-shell-playtest-water-pointer-crash-report-device-arm64
 IPA: build-products/SorrIOSShell-playtest-water-pointer-crash-report-adhoc.ipa
 Build label: ios-playtest-water-pointer-crash-report
+Actions run: 26625762818
+Commit: 93c786e
+Artifact size: 1955520 bytes
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
 ```
 
 The patch keeps the current playable baseline and asset-free packaging. It focuses on native Chipmunk water/effect helpers by resolving Bennu pointer parameters through the host pointer table, guarding missing ids/bodies, and reading `WaterS` as Bennu script cells on iOS/arm64.
