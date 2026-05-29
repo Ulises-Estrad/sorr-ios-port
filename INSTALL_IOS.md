@@ -8,7 +8,7 @@ This guide rebuilds the current iPhone setup from zero.
 - The IPA contains the iOS shell/runtime, D3S crash reporting, BGM/SFX support, D4b custom touch controls, virtual joystick movement, and the app icon.
 - The repo keeps the prepared SoRR data under Git LFS so a fresh clone can recreate the import package.
 - The IPA does not bundle SoRR game data or assets.
-- Game data is imported through the user's iPhone Files inbox.
+- Game data is imported through the user's iPhone Files inbox. Fresh installs may show the folder as `Streets of Rage`; older installs may still show `SorrIOSShell`.
 - The install path is Windows + Sideloadly + a physical iPhone.
 
 ## Requirements
@@ -48,7 +48,7 @@ This guide rebuilds the current iPhone setup from zero.
    ```
 
 7. If iOS asks, enable Developer Mode and trust the developer profile.
-8. Launch `SorrIOSShell` once to create the Files folders.
+8. Launch `Streets of Rage` once to create the Files folders.
 
 ## Prepare And Import Game Data Locally
 
@@ -75,7 +75,7 @@ Transfer and extract it on the iPhone so Files contains:
 
 ```text
 On My iPhone/
-  SorrIOSShell/
+  Streets of Rage/   (or SorrIOSShell on older installs)
     SORR_IMPORT/
       SorR.dat
       mod/
@@ -107,8 +107,10 @@ Controls are configurable in-app through `CFG`.
 Settings persist here:
 
 ```text
-On My iPhone/SorrIOSShell/SORR_DIAGNOSTICS/ios_touch_controls.ini
+On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/ios_touch_controls.ini
 ```
+
+Older installs may still show the Files folder as `SorrIOSShell`.
 
 To reset manually, either use `CFG` -> `RST` -> `DONE`, or delete `ios_touch_controls.ini` and relaunch.
 
@@ -120,7 +122,7 @@ After a crash:
 2. In Files, send:
 
    ```text
-   On My iPhone/SorrIOSShell/SORR_DIAGNOSTICS/ios_latest_crash_report.txt
+   On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/ios_latest_crash_report.txt
    ```
 
 3. If more context is needed, also send:
@@ -141,7 +143,7 @@ After a crash:
 
 1. Install the latest IPA from GitHub Actions with Sideloadly.
 2. Recreate `out/local-only/SORR_IMPORT.zip` using `tools/create_d2_import_package.ps1`.
-3. Copy/extract the `SORR_IMPORT` folder under `On My iPhone/SorrIOSShell`.
+3. Copy/extract the `SORR_IMPORT` folder under `On My iPhone/Streets of Rage` (or `SorrIOSShell` on older installs).
 4. Launch the app and wait for staging.
 5. Reconfigure controls, or restore a saved `ios_touch_controls.ini`.
 6. If a crash happens, reopen once and retrieve `ios_latest_crash_report.txt`.
