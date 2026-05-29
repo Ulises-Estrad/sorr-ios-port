@@ -224,3 +224,17 @@ Manual test focus:
 3. Hold a D-pad direction and press Attack/Jump.
 4. Confirm Attack, Jump, Special, Police, Start, and Back still work.
 5. Confirm BGM/SFX still work.
+
+GitHub-side artifact proof:
+
+```text
+Actions run: 26611068603
+Patch commit: 95ae6d2
+Artifact: ios-shell-d4a-dpad-refine-device-arm64
+IPA: build-products/SorrIOSShell-d4a-dpad-refine-adhoc.ipa
+Artifact size: 813146 bytes
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
+Physical iPhone result: pending manual D-pad slide test
+```

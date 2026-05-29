@@ -855,3 +855,17 @@ build-products/SorrIOSShell-d4a-dpad-refine-adhoc.ipa
 ```
 
 The D-pad computes a direction mask from a center point with a deadzone and releases old direction keys before pressing new ones. This should fix slide changes such as Right to Left or Up to Down without changing the action-button path or starting D4b customization.
+
+GitHub-side artifact proof:
+
+```text
+Actions run: 26611068603
+Patch commit: 95ae6d2
+Artifact: ios-shell-d4a-dpad-refine-device-arm64
+IPA: build-products/SorrIOSShell-d4a-dpad-refine-adhoc.ipa
+Artifact size: 813146 bytes
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
+Physical iPhone result: pending manual D-pad slide test
+```

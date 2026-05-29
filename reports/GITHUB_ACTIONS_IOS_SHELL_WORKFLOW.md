@@ -1924,6 +1924,19 @@ build-products/SorrIOSShell-d4a-dpad-refine-adhoc.ipa
 
 This target keeps Attack/Jump/Special/Police/Start/Back on the existing button path. Movement is now one compact lower-left D-pad touch owner that recomputes a direction mask from its center point, releases old direction keys before pressing new ones, supports sliding without lifting, and logs old/new direction masks plus key transitions.
 
+D4a compact D-pad GitHub-side artifact proof:
+
+```text
+Actions run: 26611068603
+Patch commit: 95ae6d2
+Device artifact: ios-shell-d4a-dpad-refine-device-arm64
+Artifact size: 813146 bytes
+IPA: build-products/SorrIOSShell-d4a-dpad-refine-adhoc.ipa
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
+```
+
 ## D3S Enemy/HUD Guard Artifact
 
 The workflow now produces a D3S patch artifact aimed at the confirmed `SIGSEGV` after enemy/HUD child-process teardown:
