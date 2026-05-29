@@ -1839,6 +1839,19 @@ Changes in this target:
 
 Expected CI checks remain unchanged: build iphoneos arm64, ad-hoc sign for Sideloadly, package `Payload/SorrIOSShell.app`, inspect Info.plist/architecture/signature, require the compiled app icon asset, and verify the IPA contains no `SorR.dat`, `data/`, FPG/WAV/OGG/SMK/PNG game assets, logs, or prepared data.
 
+GitHub-side D4b joystick-control icon artifact proof:
+
+```text
+Actions run: 26617138664
+Commit: 64dee98
+Device artifact: ios-shell-d4b-joystick-controls-icon-device-arm64
+IPA: build-products/SorrIOSShell-d4b-joystick-controls-icon-adhoc.ipa
+Artifact size: 1956172 bytes
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
+```
+
 ## D4b Custom Touch Target
 
 Physical testing of the compact D-pad build showed that movement was still too stiff: a held direction could feel locked to the first touch-down direction. The next workflow device artifact combines a D4a movement-feel fix with D4b-lite customization while keeping D3S crash reporting and guards active.

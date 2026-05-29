@@ -585,6 +585,20 @@ Manual test focus:
 5. Confirm joystick plus Attack/Jump/Special/Police works.
 6. Confirm BGM/SFX and crash-report files remain available.
 
+GitHub-side D4b joystick-control icon artifact proof:
+
+```text
+Actions run: 26617138664
+Commit: 64dee98
+Artifact: ios-shell-d4b-joystick-controls-icon-device-arm64
+IPA: build-products/SorrIOSShell-d4b-joystick-controls-icon-adhoc.ipa
+Artifact size: 1956172 bytes
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
+Physical iPhone result: pending manual joystick/CFG test
+```
+
 This baseline is no longer just a proof-only shell. Real SoRR runs on iPhone, BGM/SFX work, touch controls work, custom controls persist, and D3S crash reporting remains available. Remaining work is playtesting, control tuning, polish, and major bug fixes found during real play.
 
 For a full recovery path from zero, use the root `INSTALL_IOS.md` guide.

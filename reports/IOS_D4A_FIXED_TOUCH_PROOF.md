@@ -362,3 +362,17 @@ Manual test focus:
 5. Hold joystick movement plus Attack/Jump/Special/Police.
 6. Confirm layout resize/reposition/opacity/visibility still persist after relaunch.
 7. Confirm BGM/SFX, D3S crash reporting, and the D2 staged-data path still work.
+
+GitHub-side D4b joystick-control icon artifact proof:
+
+```text
+Actions run: 26617138664
+Commit: 64dee98
+Artifact: ios-shell-d4b-joystick-controls-icon-device-arm64
+IPA: build-products/SorrIOSShell-d4b-joystick-controls-icon-adhoc.ipa
+Artifact size: 1956172 bytes
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
+Physical iPhone result: pending manual joystick/CFG test
+```

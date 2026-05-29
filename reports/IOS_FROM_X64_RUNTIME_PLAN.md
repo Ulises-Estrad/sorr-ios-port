@@ -983,3 +983,17 @@ Joystick behavior:
 - `CFG` uses a larger touch target for more reliable edit-mode entry.
 
 This is still a control-scheme finalization pass, not D5 gameplay work or the broader playtest/debugging phase.
+
+GitHub-side joystick-control icon artifact proof:
+
+```text
+Actions run: 26617138664
+Commit: 64dee98
+Artifact: ios-shell-d4b-joystick-controls-icon-device-arm64
+IPA: build-products/SorrIOSShell-d4b-joystick-controls-icon-adhoc.ipa
+Artifact size: 1956172 bytes
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
+Physical iPhone result: pending manual joystick/CFG test
+```
