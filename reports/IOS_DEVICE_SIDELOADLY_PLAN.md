@@ -740,8 +740,14 @@ Install it over the current app with Sideloadly, keep the existing staged data, 
 Follow-up visual regression target:
 
 ```text
+Actions run: 26624352356
+Commit: 4f89f79
 ios-shell-playtest-effects-water-gun-visual-fix-device-arm64
 build-products/SorrIOSShell-playtest-effects-water-gun-visual-fix-adhoc.ipa
+Artifact size: 1955098 bytes
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
 ```
 
 Use this follow-up if the first guard artifact shows Stage 6 as black or the HUD portrait/lives counter is misplaced/missing.

@@ -1122,9 +1122,15 @@ Manual test focus:
 Follow-up visual regression target:
 
 ```text
+Actions run: 26624352356
+Commit: 4f89f79
 Artifact: ios-shell-playtest-effects-water-gun-visual-fix-device-arm64
 IPA: build-products/SorrIOSShell-playtest-effects-water-gun-visual-fix-adhoc.ipa
 Build label: ios-playtest-effects-water-gun-visual-fix
+Artifact size: 1955098 bytes
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
 ```
 
 Reason: the first guard artifact fired `ptr-adjust-miss` repeatedly on ordinary small script values and zeroed them, causing Stage 6 black rendering and HUD placement/missing-counter problems. The follow-up keeps tombstones and diagnostics, but restores the normal untracked pointer fallback behavior.

@@ -2322,3 +2322,16 @@ Build label: ios-playtest-effects-water-gun-visual-fix
 ```
 
 This keeps the pointer-table tombstone fix and focused process diagnostics, but removes the over-broad untracked pointer miss zeroing that caused the visual regression.
+
+GitHub-side follow-up artifact proof:
+
+```text
+Actions run: 26624352356
+Commit: 4f89f79
+Device artifact: ios-shell-playtest-effects-water-gun-visual-fix-device-arm64
+IPA: build-products/SorrIOSShell-playtest-effects-water-gun-visual-fix-adhoc.ipa
+Artifact size: 1955098 bytes
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
+```
