@@ -221,4 +221,5 @@ Physical playtest result:
 - The GET_REAL_POINT guard fixed the observed gun-shot crash.
 - Guns now fire normally on physical iPhone.
 - Stage 6 beach/water startup no longer crashes.
+- A full SoR2 route clear with Axel completed afterward with no clear bugs or random crashes observed.
 - This bug class is considered fixed for the current playtest baseline unless a new crash report shows a related path.

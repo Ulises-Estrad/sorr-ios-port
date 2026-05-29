@@ -16,6 +16,7 @@ This project is now a playable iPhone port baseline, not an early proof-only exp
 - The app icon and `Streets of Rage` display name are wired into the iPhone build.
 - The IPA remains asset-free; game data is imported locally through the iPhone Files route.
 - Latest physical playtest fix: gun firing works and Stage 6 beach/water startup no longer crashes after the GET_REAL_POINT guard.
+- Latest route playtest: the SoR2 path was cleared with Axel with no clear bugs or random crashes observed afterward.
 
 ## Current Workflow Target
 
@@ -50,6 +51,8 @@ Next: playtest the game in free time and fix major bugs one by one as they are f
 ## Latest Physical Playtest Result
 
 The `ios-shell-playtest-real-point-guard-device-arm64` artifact fixed the reported gun-shot crash and the Stage 6 startup crash. Guns fire normally, and Stage 6 reaches the beach/water stage without crashing.
+
+The same baseline also cleared the SoR2 route with Axel in physical iPhone playtesting. No clear bugs or random crashes were observed from that run.
 
 ## Debug Files
 
