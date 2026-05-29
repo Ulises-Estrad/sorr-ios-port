@@ -52,6 +52,7 @@ extern PALETTE * modmap_x64_palette_from_handle( int handle, const char * op );
 #endif
 
 #ifdef SORR_IOS_D3_FIRST_RENDER
+void * portable_x64_sysproc_pointer_param( int * cell );
 void sorr_ios_d3_note_render_instance_event( const char * action,
                                              const INSTANCE * r,
                                              int object_id,
@@ -79,7 +80,14 @@ GRAPH * instance_graph( INSTANCE * i )
 {
     int * xgraph, c, a ;
 
-    if (( xgraph = ( int * ) LOCDWORD( librender, i, XGRAPH ) ) ) // Get offset of XGRAPH table
+#ifdef SORR_IOS_D3_FIRST_RENDER
+void * portable_x64_sysproc_pointer_param( int * cell );
+    xgraph = LOCDWORD( librender, i, XGRAPH ) ? ( int * )portable_x64_sysproc_pointer_param( &LOCDWORD( librender, i, XGRAPH ) ) : NULL;
+#else
+    xgraph = ( int * ) LOCDWORD( librender, i, XGRAPH );
+#endif
+
+    if ( xgraph ) // Get offset of XGRAPH table
     {
         c = *xgraph++;  // Get number of graphs ids in XGRAPH table
         if ( c )
@@ -228,6 +236,7 @@ void draw_instance( void * what, REGION * clip )
     /* Difference with draw_instance_at to here */
 
 #ifdef SORR_IOS_D3_FIRST_RENDER
+void * portable_x64_sysproc_pointer_param( int * cell );
     if ( !i || !instance_exists( i ) )
     {
         sorr_ios_d3_note_render_instance_event( "render_draw_dead", i, 0, 0, 0, 0, 0, 0 );
@@ -320,6 +329,7 @@ int draw_instance_info( void * what, REGION * region, int * z, int * drawme )
     * drawme = 0;
 
 #ifdef SORR_IOS_D3_FIRST_RENDER
+void * portable_x64_sysproc_pointer_param( int * cell );
     if ( !i || !instance_exists( i ) )
     {
         sorr_ios_d3_note_render_instance_event( "render_info_dead", i, 0, 0, 0, 0, 0, 0 );
@@ -442,6 +452,7 @@ void __bgdexport( librender, instance_create_hook )( INSTANCE * r )
     /* COORZ is 0 when a new instance is created */
     LOCDWORD( librender, r, OBJECTID ) = gr_new_object( /* LOCINT32( librender, r, COORDZ ) */ 0, draw_instance_info, draw_instance, r );
 #ifdef SORR_IOS_D3_FIRST_RENDER
+void * portable_x64_sysproc_pointer_param( int * cell );
     sorr_ios_d3_note_render_instance_event( "render_object_create",
                                             r,
                                             LOCDWORD( librender, r, OBJECTID ),
@@ -466,6 +477,7 @@ void __bgdexport( librender, instance_create_hook )( INSTANCE * r )
 void __bgdexport( librender, instance_destroy_hook )( INSTANCE * r )
 {
 #ifdef SORR_IOS_D3_FIRST_RENDER
+void * portable_x64_sysproc_pointer_param( int * cell );
     sorr_ios_d3_note_render_instance_event( "render_object_destroy",
                                             r,
                                             LOCDWORD( librender, r, OBJECTID ),

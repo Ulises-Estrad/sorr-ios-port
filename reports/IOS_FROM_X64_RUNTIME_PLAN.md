@@ -1093,4 +1093,22 @@ Current control target:
 - persisted custom layout settings,
 - drag-required layout movement in edit mode.
 
-Next work after this baseline is normal playtesting and fixing major bugs one by one as they appear during real play.
+## Current Playtest Bug Target: Effects / Water / Gun Guard
+
+The next active work is a normal-playtest crash fix, not a new proof milestone. The gun crash happens when firing, and the Stage 6 crash happens as the beach/water stage starts. The shared suspect is effect/projectile/water process churn around `KEKOS`, `LANZADOR`, `SALPICA_AGUA`, `SANGRE`, `EFECTO_POLVO`, and `SOMBRA`.
+
+Current artifact target:
+
+```text
+Artifact: ios-shell-playtest-effects-water-gun-guard-device-arm64
+IPA: build-products/SorrIOSShell-playtest-effects-water-gun-guard-adhoc.ipa
+Build label: ios-playtest-effects-water-gun-guard
+```
+
+The patch preserves the playable baseline: real render, BGM/SFX, custom controls, icon/name, visible crash reporting, D2-staged private data, and asset-free IPA packaging. The runtime change fixes the iOS/64-bit script pointer table so stale pointer removal does not break later linear-probe lookups during heavy effect churn.
+
+Manual test focus:
+
+1. Pick up a gun and shoot repeatedly.
+2. Start Stage 6 and verify the beach/water opening.
+3. If it still crashes, retrieve `ios_latest_crash_report.txt` from `SORR_DIAGNOSTICS`.

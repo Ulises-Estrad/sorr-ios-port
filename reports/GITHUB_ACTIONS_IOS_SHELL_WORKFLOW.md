@@ -2276,4 +2276,22 @@ Expected contents:
 - app icon and `Streets of Rage` display name,
 - no bundled game data, prepared import data, logs, generated zips, or generated IPAs.
 
-The next project phase is playtesting and fixing major bugs found during normal play.
+## Playtest Effects / Water / Gun Guard Target
+
+The first normal-playtest crash class affects gun shooting and Stage 6 beach/water startup. Both reports point at effect/projectile/water process churn rather than controls or audio.
+
+The workflow now targets:
+
+```text
+Device artifact: ios-shell-playtest-effects-water-gun-guard-device-arm64
+IPA: build-products/SorrIOSShell-playtest-effects-water-gun-guard-adhoc.ipa
+Build label: ios-playtest-effects-water-gun-guard
+```
+
+This build keeps the playable baseline unchanged: app icon/name, BGM/SFX, virtual joystick/custom controls, visible crash reports, and asset-free packaging all remain active. The runtime patch fixes 64-bit script pointer-table deletion semantics with tombstones and adds focused diagnostics/guards for `KEKOS`, `LANZADOR`, `SALPICA_AGUA`, `SANGRE`, `EFECTO_POLVO`, `SOMBRA`, `FILTRO_RAPIDO`, `LINEAS_FASE`, and water/stage names.
+
+Manual test focus:
+
+1. Pick up a gun and shoot repeatedly.
+2. Start Stage 6 and verify the beach/water opening.
+3. If either crashes, reopen once and send `SORR_DIAGNOSTICS/ios_latest_crash_report.txt`.

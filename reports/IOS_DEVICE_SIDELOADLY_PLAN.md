@@ -715,3 +715,18 @@ Manual test focus:
 7. Confirm BGM/SFX and crash-report files remain available.
 
 For a full recovery path from zero, use the root `INSTALL_IOS.md` guide.
+
+## Current Playtest Bugfix Target
+
+The next Sideloadly artifact keeps the current controls and runtime features, but targets the gun-shot / Stage 6 water crash class:
+
+```text
+ios-shell-playtest-effects-water-gun-guard-device-arm64
+build-products/SorrIOSShell-playtest-effects-water-gun-guard-adhoc.ipa
+```
+
+Install it over the current app with Sideloadly, keep the existing staged data, then test:
+
+1. Pick up a gun and shoot repeatedly.
+2. Start Stage 6 and verify the beach/water opening.
+3. If the app crashes, reopen once and retrieve `SORR_DIAGNOSTICS/ios_latest_crash_report.txt`.

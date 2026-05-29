@@ -500,4 +500,15 @@ Current behavior:
 - BGM/SFX and crash reporting remain active,
 - the IPA remains asset-free.
 
-Next work is normal playtesting and fixing major bugs found during play.
+## Playtest Effects / Water / Gun Guard
+
+Controls are considered finalized for normal playtesting. The next artifact keeps the current control baseline unchanged and focuses on a crash class found while playing:
+
+```text
+ios-shell-playtest-effects-water-gun-guard-device-arm64
+build-products/SorrIOSShell-playtest-effects-water-gun-guard-adhoc.ipa
+```
+
+The reported crashes are gun firing and Stage 6 beach/water startup. Both may pass through the same effect/projectile/water process family, so the runtime watchlist now includes `KEKOS`, `LANZADOR`, `SALPICA_AGUA`, `SANGRE`, `FILTRO_RAPIDO`, `LINEAS_FASE`, `AGUA`, `PLAYA`, and `FASE6` in addition to the existing effect/HUD names.
+
+This patch does not change the control scheme, BGM/SFX, icon/name, custom control persistence, or asset-free IPA packaging.

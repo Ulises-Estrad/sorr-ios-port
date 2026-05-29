@@ -70,6 +70,8 @@ typedef struct portable_x64_stack_ptr_entry
 } portable_x64_stack_ptr_entry;
 
 static portable_x64_stack_ptr_entry portable_x64_stack_ptr_table[PORTABLE_X64_STACK_PTR_TABLE_SIZE];
+static int portable_x64_stack_ptr_tombstone_cell;
+#define PORTABLE_X64_STACK_PTR_TOMBSTONE (( int * )&portable_x64_stack_ptr_tombstone_cell)
 
 #ifdef SORR_IOS_D3_FIRST_RENDER
 static uintptr_t portable_x64_stale_ptr_sink[64];
@@ -91,6 +93,19 @@ static unsigned int portable_x64_stack_ptr_hash( const int * cell )
     value ^= value >> 32;
     return ( unsigned int )value & ( PORTABLE_X64_STACK_PTR_TABLE_SIZE - 1u );
 }
+static void portable_x64_stack_ptr_mark_tombstone( portable_x64_stack_ptr_entry * entry )
+{
+    if ( !entry ) return;
+
+    entry->cell = PORTABLE_X64_STACK_PTR_TOMBSTONE;
+    entry->low_value = 0;
+    entry->full_ptr = 0;
+#ifdef SORR_IOS_D3_FIRST_RENDER
+    entry->owner = NULL;
+    entry->owner_id = 0;
+    entry->owner_kind = NULL;
+#endif
+}
 
 static void portable_x64_stack_set_ptr_ex( int * cell, const void * ptr
 #ifdef SORR_IOS_D3_FIRST_RENDER
@@ -102,37 +117,53 @@ static void portable_x64_stack_set_ptr_ex( int * cell, const void * ptr
     uint32_t low_value = ( uint32_t )full_ptr;
     unsigned int slot = portable_x64_stack_ptr_hash( cell );
     unsigned int i;
+    portable_x64_stack_ptr_entry * reusable_entry = NULL;
 
     *cell = ( int )low_value;
 
     for ( i = 0; i < PORTABLE_X64_STACK_PTR_TABLE_SIZE; i++ )
     {
         portable_x64_stack_ptr_entry * entry = &portable_x64_stack_ptr_table[( slot + i ) & ( PORTABLE_X64_STACK_PTR_TABLE_SIZE - 1u )];
-        if ( entry->cell == NULL || entry->cell == cell )
+        if ( entry->cell == PORTABLE_X64_STACK_PTR_TOMBSTONE )
         {
-            entry->cell = cell;
-            entry->low_value = low_value;
-            entry->full_ptr = full_ptr;
+            if ( !reusable_entry ) reusable_entry = entry;
+            continue;
+        }
+        if ( entry->cell == cell )
+        {
+            reusable_entry = entry;
+            break;
+        }
+        if ( entry->cell == NULL )
+        {
+            if ( !reusable_entry ) reusable_entry = entry;
+            break;
+        }
+    }
+
+    if ( reusable_entry )
+    {
+        reusable_entry->cell = cell;
+        reusable_entry->low_value = low_value;
+        reusable_entry->full_ptr = full_ptr;
 #ifdef SORR_IOS_D3_FIRST_RENDER
-            entry->owner = owner;
-            entry->owner_id = owner ? LOCDWORD( owner, PROCESS_ID ) : 0;
-            entry->owner_kind = owner_kind;
+        reusable_entry->owner = owner;
+        reusable_entry->owner_id = owner ? LOCDWORD( owner, PROCESS_ID ) : 0;
+        reusable_entry->owner_kind = owner_kind;
 #endif
 #ifdef PORTABLE_RUNTIME_DIAG
-            if ( PORTABLE_DIAG_ENV_ON( "SORR_PORTABLE_DIAG_PTRS" ) )
-            {
-                PORTABLE_DIAG_LOG( "SCRIPT", "x64 ptr-set cell=%p low=0x%08x full=%p", ( void * )cell, ( unsigned int )low_value, ( void * )full_ptr );
-            }
-#endif
-            return;
+        if ( PORTABLE_DIAG_ENV_ON( "SORR_PORTABLE_DIAG_PTRS" ) )
+        {
+            PORTABLE_DIAG_LOG( "SCRIPT", "x64 ptr-set cell=%p low=0x%08x full=%p", ( void * )cell, ( unsigned int )low_value, ( void * )full_ptr );
         }
+#endif
+        return;
     }
 
 #ifdef PORTABLE_RUNTIME_DIAG
     PORTABLE_DIAG_LOG( "SCRIPT", "x64 ptr-set table full cell=%p full=%p", ( void * )cell, ( void * )full_ptr );
 #endif
 }
-
 static void portable_x64_stack_set_ptr( int * cell, const void * ptr )
 {
     portable_x64_stack_set_ptr_ex( cell, ptr
@@ -159,6 +190,7 @@ static void * portable_x64_stack_get_ptr( int * cell )
     {
         portable_x64_stack_ptr_entry * entry = &portable_x64_stack_ptr_table[( slot + i ) & ( PORTABLE_X64_STACK_PTR_TABLE_SIZE - 1u )];
         if ( entry->cell == NULL ) break;
+        if ( entry->cell == PORTABLE_X64_STACK_PTR_TOMBSTONE ) continue;
         if ( entry->cell == cell )
         {
             if ( entry->low_value == low_value )
@@ -180,12 +212,7 @@ static void * portable_x64_stack_get_ptr( int * cell )
                             entry->owner_id,
                             entry->owner_kind
                         );
-                        entry->cell = NULL;
-                        entry->low_value = 0;
-                        entry->full_ptr = 0;
-                        entry->owner = NULL;
-                        entry->owner_id = 0;
-                        entry->owner_kind = NULL;
+                        portable_x64_stack_ptr_mark_tombstone( entry );
                         *cell = 0;
                         return ( void * )portable_x64_stale_ptr_sink;
                     }
@@ -200,14 +227,7 @@ static void * portable_x64_stack_get_ptr( int * cell )
                 return ( void * )entry->full_ptr;
             }
 
-            entry->cell = NULL;
-            entry->low_value = 0;
-            entry->full_ptr = 0;
-#ifdef SORR_IOS_D3_FIRST_RENDER
-            entry->owner = NULL;
-            entry->owner_id = 0;
-            entry->owner_kind = NULL;
-#endif
+            portable_x64_stack_ptr_mark_tombstone( entry );
             break;
         }
     }
@@ -218,9 +238,22 @@ static void * portable_x64_stack_get_ptr( int * cell )
         PORTABLE_DIAG_LOG( "SCRIPT", "x64 ptr-get miss cell=%p low=0x%08x fallback=%p", ( void * )cell, ( unsigned int )low_value, ( void * )( uintptr_t )low_value );
     }
 #endif
+#ifdef SORR_IOS_D3_FIRST_RENDER
+    sorr_ios_d3_note_stale_pointer_guard(
+        portable_x64_current_instance_for_guard,
+        "ptr-get-miss",
+        cell,
+        ( void * )( uintptr_t )low_value,
+        NULL,
+        0,
+        "untracked_stack_ptr"
+    );
+    *cell = 0;
+    return ( void * )portable_x64_stale_ptr_sink;
+#else
     return ( void * )( uintptr_t )low_value;
+#endif
 }
-
 static int portable_x64_stack_peek_ptr( int * cell, uintptr_t * full_ptr )
 {
     uint32_t low_value = ( uint32_t )*cell;
@@ -231,6 +264,7 @@ static int portable_x64_stack_peek_ptr( int * cell, uintptr_t * full_ptr )
     {
         portable_x64_stack_ptr_entry * entry = &portable_x64_stack_ptr_table[( slot + i ) & ( PORTABLE_X64_STACK_PTR_TABLE_SIZE - 1u )];
         if ( entry->cell == NULL ) break;
+        if ( entry->cell == PORTABLE_X64_STACK_PTR_TOMBSTONE ) continue;
         if ( entry->cell == cell )
         {
             if ( entry->low_value == low_value )
@@ -256,6 +290,7 @@ static void portable_x64_stack_copy_cell( int * dst, int * src )
     {
         portable_x64_stack_ptr_entry * entry = &portable_x64_stack_ptr_table[( slot + i ) & ( PORTABLE_X64_STACK_PTR_TABLE_SIZE - 1u )];
         if ( entry->cell == NULL ) break;
+        if ( entry->cell == PORTABLE_X64_STACK_PTR_TOMBSTONE ) continue;
         if ( entry->cell == src && entry->low_value == low_value )
         {
             portable_x64_stack_set_ptr_ex( dst, ( void * )entry->full_ptr, entry->owner, entry->owner_kind );
@@ -286,6 +321,7 @@ static void portable_x64_stack_adjust_ptr( int * cell, intptr_t offset )
     {
         portable_x64_stack_ptr_entry * entry = &portable_x64_stack_ptr_table[( slot + i ) & ( PORTABLE_X64_STACK_PTR_TABLE_SIZE - 1u )];
         if ( entry->cell == NULL ) break;
+        if ( entry->cell == PORTABLE_X64_STACK_PTR_TOMBSTONE ) continue;
         if ( entry->cell == cell && entry->low_value == low_value )
         {
             portable_x64_stack_set_ptr_ex( cell, ( void * )( entry->full_ptr + offset ), entry->owner, entry->owner_kind );
@@ -300,7 +336,20 @@ static void portable_x64_stack_adjust_ptr( int * cell, intptr_t offset )
     }
     else
     {
+#ifdef SORR_IOS_D3_FIRST_RENDER
+        sorr_ios_d3_note_stale_pointer_guard(
+            portable_x64_current_instance_for_guard,
+            "ptr-adjust-miss",
+            cell,
+            ( void * )( uintptr_t )( uint32_t )*cell,
+            NULL,
+            0,
+            "untracked_stack_ptr"
+        );
+        *cell = 0;
+#else
         *cell += ( int )offset;
+#endif
     }
 }
 
@@ -554,7 +603,16 @@ static const char * const sorr_ios_d3_watch_proc_names[] = {
     "PERSONAJES",
     "CUADRO",
     "OSCURECE_PANTALLA",
-    "RESOLUCIONX"
+    "RESOLUCIONX",
+    "KEKOS",
+    "LANZADOR",
+    "SALPICA_AGUA",
+    "SANGRE",
+    "FILTRO_RAPIDO",
+    "LINEAS_FASE",
+    "AGUA",
+    "PLAYA",
+    "FASE6"
 };
 #define SORR_IOS_D3_WATCH_PROC_COUNT ( sizeof( sorr_ios_d3_watch_proc_names ) / sizeof( sorr_ios_d3_watch_proc_names[0] ) )
 #define SORR_IOS_D3_EVENT_SLOT_COUNT 12
@@ -636,7 +694,16 @@ static int sorr_ios_d3_enemy_related_name( const char * name )
         "MINI_CUADRO1",
         "RECUADRO1",
         "SOMBRA",
-        "ESTIRAMIENTO"
+        "ESTIRAMIENTO",
+        "KEKOS",
+        "LANZADOR",
+        "SALPICA_AGUA",
+        "SANGRE",
+        "FILTRO_RAPIDO",
+        "LINEAS_FASE",
+        "AGUA",
+        "PLAYA",
+        "FASE6"
     };
     unsigned int n;
 
@@ -2876,7 +2943,14 @@ int instance_go( INSTANCE * r )
             case MN_LETNP:
             case MN_LETNP | MN_UNSIGNED:
 #if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
+#ifdef SORR_IOS_D3_FIRST_RENDER
+                {
+                    int32_t * target = PORTABLE_STACK_PTR( &r->stack_ptr[-2], int32_t );
+                    portable_x64_stack_copy_cell( target, &r->stack_ptr[-1] );
+                }
+#else
                 ( *PORTABLE_STACK_PTR( &r->stack_ptr[-2], int32_t ) ) = r->stack_ptr[-1] ;
+#endif
 #else
                 (*PORTABLE_STACK_PTR( &r->stack_ptr[-2], int32_t )) = r->stack_ptr[-1] ;
 #endif
@@ -2887,7 +2961,14 @@ int instance_go( INSTANCE * r )
             case MN_LET:
             case MN_LET | MN_UNSIGNED:
 #if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
+#ifdef SORR_IOS_D3_FIRST_RENDER
+                {
+                    int32_t * target = PORTABLE_STACK_PTR( &r->stack_ptr[-2], int32_t );
+                    portable_x64_stack_copy_cell( target, &r->stack_ptr[-1] );
+                }
+#else
                 ( *PORTABLE_STACK_PTR( &r->stack_ptr[-2], int32_t ) ) = r->stack_ptr[-1] ;
+#endif
 #else
                 (*PORTABLE_STACK_PTR( &r->stack_ptr[-2], int32_t )) = r->stack_ptr[-1] ;
 #endif
