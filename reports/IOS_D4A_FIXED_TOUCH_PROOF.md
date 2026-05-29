@@ -478,8 +478,14 @@ The active control work is now the playable iPhone baseline. Historical sections
 Current target:
 
 ```text
+Actions run: 26619778077
+Commit: 424b065
 ios-shell-playtest-controls-device-arm64
 build-products/StreetsOfRage-playtest-controls-adhoc.ipa
+Artifact size: 1956695 bytes
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
 ```
 
 Current behavior:

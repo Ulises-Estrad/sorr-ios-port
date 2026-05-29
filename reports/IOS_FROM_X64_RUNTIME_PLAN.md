@@ -1073,9 +1073,15 @@ The current roadmap no longer uses proof-stage labels for active work. The iPhon
 Current workflow target:
 
 ```text
+Actions run: 26619778077
+Commit: 424b065
 Artifact: ios-shell-playtest-controls-device-arm64
 IPA: build-products/StreetsOfRage-playtest-controls-adhoc.ipa
 Build label: ios-playtest-controls
+Artifact size: 1956695 bytes
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
 ```
 
 Current control target:

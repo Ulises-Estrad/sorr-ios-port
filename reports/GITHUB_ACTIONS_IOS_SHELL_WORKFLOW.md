@@ -2253,9 +2253,15 @@ The simulator shell job also passed in the same run. The device artifact passed 
 The active workflow target is now the playable iPhone baseline rather than a proof-stage milestone. GitHub Actions should produce:
 
 ```text
+Actions run: 26619778077
+Commit: 424b065
 Device artifact: ios-shell-playtest-controls-device-arm64
 IPA: build-products/StreetsOfRage-playtest-controls-adhoc.ipa
 Build label: ios-playtest-controls
+Artifact size: 1956695 bytes
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
 ```
 
 Expected contents:

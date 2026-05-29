@@ -19,9 +19,15 @@ This project is now a playable iPhone port baseline, not an early proof-only exp
 ## Current Workflow Target
 
 ```text
+Actions run: 26619778077
+Commit: 424b065
 Artifact: ios-shell-playtest-controls-device-arm64
 IPA: build-products/StreetsOfRage-playtest-controls-adhoc.ipa
 Build label: ios-playtest-controls
+Artifact size: 1956695 bytes
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
 ```
 
 ## Control Layout
