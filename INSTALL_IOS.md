@@ -29,6 +29,8 @@ This guide rebuilds the current iPhone setup from zero.
 4. Download the latest successful device artifact. Current clear-diagnostics playtest target:
 
    ```text
+   Actions run: 26677510668
+   Commit: fd61bd1
    Artifact: ios-shell-playtest-clear-diagnostics-device-arm64
    ```
 

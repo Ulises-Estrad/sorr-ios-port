@@ -2545,9 +2545,14 @@ Manual test focus for that older artifact: install the IPA, replay the scene-tra
 The next workflow target keeps the playable baseline and remote-process guard, but refreshes and renames the Files-visible diagnostics so each app session is easy to identify.
 
 ```text
+Actions run: 26677510668
+Commit: fd61bd1
 Device artifact: ios-shell-playtest-clear-diagnostics-device-arm64
 IPA: build-products/SorrIOSShell-playtest-clear-diagnostics-adhoc.ipa
 Build label: ios-playtest-clear-diagnostics
+Artifact size: 1965861 bytes
+Device job result: success
+Simulator job result: success
 Game data/assets bundled in IPA: no
 ```
 

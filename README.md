@@ -13,7 +13,7 @@ Remaining work is no longer planned as an active roadmap. Future changes should 
 
 Latest physical playtest result: the `ios-shell-playtest-real-point-guard-device-arm64` IPA fixed the reported gun-shot crash and the Stage 6 beach/water startup crash. A full SoR2 route clear with Axel completed without clear bugs or random crashes.
 
-Current follow-up target: `ios-shell-playtest-clear-diagnostics-device-arm64` keeps the same playable baseline and makes the Files diagnostics easier to use. Each app launch refreshes the current-session files, rotates the previous session to clear names, and uses `LATEST_CRASH_OR_ABRUPT_EXIT_REPORT.txt` as the one file to send after a crash or abrupt exit.
+Current follow-up target: `ios-shell-playtest-clear-diagnostics-device-arm64` from Actions run `26677510668` keeps the same playable baseline and makes the Files diagnostics easier to use. Each app launch refreshes the current-session files, rotates the previous session to clear names, and uses `LATEST_CRASH_OR_ABRUPT_EXIT_REPORT.txt` as the one file to send after a crash or abrupt exit.
 
 Known non-blocking issue: some no-input attract/demo scenes may ignore Start/Back presses even while showing a "press start" prompt. This does not block normal playability because the current build can be started, controlled, and played through; leave this alone unless it becomes a practical blocker or a clear crash/repro case appears.
 

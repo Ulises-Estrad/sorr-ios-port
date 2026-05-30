@@ -114,9 +114,14 @@ The next artifact keeps the same playable baseline and remote process guard, but
 Current artifact target:
 
 ```text
+Actions run: 26677510668
+Commit: fd61bd1
 Artifact: ios-shell-playtest-clear-diagnostics-device-arm64
 IPA: build-products/SorrIOSShell-playtest-clear-diagnostics-adhoc.ipa
 Build label: ios-playtest-clear-diagnostics
+Artifact size: 1965861 bytes
+Device job result: success
+Simulator job result: success
 Game data/assets bundled in IPA: no
 ```
 

@@ -66,9 +66,14 @@ That older crash-report follow-up prevented stale old-build reports or very shor
 Current follow-up target:
 
 ```text
+Actions run: 26677510668
+Commit: fd61bd1
 Artifact: ios-shell-playtest-clear-diagnostics-device-arm64
 IPA: build-products/SorrIOSShell-playtest-clear-diagnostics-adhoc.ipa
 Build label: ios-playtest-clear-diagnostics
+Artifact size: 1965861 bytes
+Device job result: success
+Simulator job result: success
 Game data/assets bundled in IPA: no
 ```
 
