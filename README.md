@@ -13,7 +13,7 @@ Remaining work is no longer planned as an active roadmap. Future changes should 
 
 Latest physical playtest result: the `ios-shell-playtest-real-point-guard-device-arm64` IPA fixed the reported gun-shot crash and the Stage 6 beach/water startup crash. A full SoR2 route clear with Axel completed without clear bugs or random crashes.
 
-Current follow-up target: `ios-shell-playtest-stage-transition-diagnostics-device-arm64` keeps the same playable baseline and adds tighter transition diagnostics for the current no-signal scene-transition exit. The latest runtime-exit-guard report showed `signal=none`, no SDL terminating event, `runtime_exit_guards=0`, and the last marker around `NO_CARGUES`, so this target focuses on stage startup/load breadcrumbs rather than deliberate script exits.
+Current follow-up target: `ios-shell-playtest-stage-transition-diagnostics-device-arm64` from Actions run `26691684119` keeps the same playable baseline and adds tighter transition diagnostics for the current no-signal scene-transition exit. The latest runtime-exit-guard report showed `signal=none`, no SDL terminating event, `runtime_exit_guards=0`, and the last marker around `NO_CARGUES`, so this target focuses on stage startup/load breadcrumbs rather than deliberate script exits.
 
 Known non-blocking issue: some no-input attract/demo scenes may ignore Start/Back presses even while showing a "press start" prompt. This does not block normal playability because the current build can be started, controlled, and played through; leave this alone unless it becomes a practical blocker or a clear crash/repro case appears.
 

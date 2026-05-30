@@ -186,9 +186,14 @@ previous_last_marker=runtime_family_unlink NO_CARGUES#70043...
 That rules out the deliberate Bennu `EXIT()` and interpreter hard-exit paths that the previous target guarded. The next artifact keeps the playable baseline and all existing guards, but pivots the diagnostics to stage startup/load:
 
 ```text
+Actions run: 26691684119
+Commit: 2774d57
 Artifact: ios-shell-playtest-stage-transition-diagnostics-device-arm64
 IPA: build-products/SorrIOSShell-playtest-stage-transition-diagnostics-adhoc.ipa
 Build label: ios-playtest-stage-transition-diagnostics
+Artifact size: 1968875 bytes
+Device job result: success
+Simulator job result: success
 Game data/assets bundled in IPA: no
 ```
 

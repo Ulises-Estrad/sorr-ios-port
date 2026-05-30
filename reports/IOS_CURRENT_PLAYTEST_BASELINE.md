@@ -22,9 +22,14 @@ This project is now a playable iPhone port baseline, not an early proof-only exp
 ## Current Workflow Target
 
 ```text
+Actions run: 26691684119
+Commit: 2774d57
 Artifact: ios-shell-playtest-stage-transition-diagnostics-device-arm64
 IPA: build-products/SorrIOSShell-playtest-stage-transition-diagnostics-adhoc.ipa
 Build label: ios-playtest-stage-transition-diagnostics
+Artifact size: 1968875 bytes
+Device job result: success
+Simulator job result: success
 Game data/assets bundled in IPA: no
 ```
 

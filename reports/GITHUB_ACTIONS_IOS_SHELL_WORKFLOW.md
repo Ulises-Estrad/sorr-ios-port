@@ -2591,3 +2591,20 @@ Game data/assets bundled in IPA: no
 ```
 
 The artifact keeps the current playable baseline, clear diagnostics filenames, custom controls, BGM/SFX, icon/name, and asset-free IPA packaging. It adds `runtime_exit_request` breadcrumbs for Bennu `EXIT()`, `bgdrtm_exit`, `must_exit`, and interpreter hard-exit paths so future abrupt exits identify whether the app quit by script/runtime request or reached a fatal VM path.
+
+## Playtest Stage-Transition Diagnostics Artifact
+
+Actions run `26691684119` passed after the runtime-exit-guard follow-up still produced a same-build no-signal fallback. The key new evidence was `runtime_exit_guards=0`, no SDL terminating event, and the last prior marker around `NO_CARGUES`, so this target moves the focus from deliberate exit paths to stage startup/load breadcrumbs.
+
+```text
+Commit: 2774d57
+Device artifact: ios-shell-playtest-stage-transition-diagnostics-device-arm64
+IPA: build-products/SorrIOSShell-playtest-stage-transition-diagnostics-adhoc.ipa
+Build label: ios-playtest-stage-transition-diagnostics
+Artifact size: 1968875 bytes
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
+```
+
+The artifact keeps custom controls, BGM/SFX, app icon/name, clear Files-visible diagnostics, stale process guards, and runtime-exit guards. It adds stage startup/load process names such as `NO_CARGUES`, `DISTRIBUCION`, `RESET_HQ`, `TELON`, `LAYER`, and `LAYOUT_CONTROL` to the iOS watchlist, and starts one-second transition heartbeats when those markers appear. Crash reports now include `stage_transition_dense` context.

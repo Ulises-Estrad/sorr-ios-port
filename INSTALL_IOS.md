@@ -29,6 +29,8 @@ This guide rebuilds the current iPhone setup from zero.
 4. Download the latest successful device artifact. Current stage-transition diagnostic playtest target:
 
    ```text
+   Actions run: 26691684119
+   Commit: 2774d57
    Artifact: ios-shell-playtest-stage-transition-diagnostics-device-arm64
    ```
 
