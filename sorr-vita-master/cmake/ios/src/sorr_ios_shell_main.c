@@ -24,11 +24,11 @@
 #include "SDL.h"
 
 #ifndef SORR_IOS_BUILD_LABEL
-#define SORR_IOS_BUILD_LABEL "ios-playtest-clear-diagnostics"
+#define SORR_IOS_BUILD_LABEL "ios-playtest-runtime-exit-guard"
 #endif
 
 #ifndef SORR_IOS_ARTIFACT_LABEL
-#define SORR_IOS_ARTIFACT_LABEL "ios-shell-playtest-clear-diagnostics-device-arm64"
+#define SORR_IOS_ARTIFACT_LABEL "ios-shell-playtest-runtime-exit-guard-device-arm64"
 #endif
 
 #ifdef SORR_IOS_D3_FIRST_RENDER
@@ -2353,6 +2353,8 @@ extern char sorr_ios_d3_last_native_call_event[];
 extern char sorr_ios_d3_last_native_return_event[];
 extern char sorr_ios_d3_native_call_events[];
 extern char sorr_ios_d3_last_effect_water_event[];
+extern volatile unsigned int sorr_ios_d3_runtime_exit_guard_count;
+extern char sorr_ios_d3_last_exit_event[];
 extern char sorr_ios_d3_runtime_snapshot[];
 extern char sorr_ios_d3_lifecycle_events[];
 extern char sorr_ios_d3_destroyed_ring_snapshot[];
@@ -2541,8 +2543,8 @@ static void sorr_ios_d4a_write_crash_report_fd(int fd, int sig)
                                  "SORR IOS LATEST CRASH OR ABRUPT EXIT REPORT\n"
                                  "build=%s\n"
                                  "artifact=%s\n"
-                                 "crash_report_version=5\n"
-                                 "debug_focus=playtest GET_REAL_POINT/effects crash; keep this whole file when reporting\n"
+                                 "crash_report_version=6\n"
+                                 "debug_focus=playtest runtime exit guard / abrupt transition exit / effect-water fallback\n"
                                  "run_id=%s\n"
                                  "run_number=%u\n"
                                  "signal=%d\n"
@@ -2580,6 +2582,8 @@ static void sorr_ios_d4a_write_crash_report_fd(int fd, int sig)
                                  sorr_ios_d3_last_lookup_result_id,
                                  sorr_ios_d3_lookup_guard_count);
     sorr_ios_signal_write_format(fd, "last_lookup=%s\n", sorr_ios_d3_last_lookup_event);
+    sorr_ios_signal_write_format(fd, "runtime_exit_guards=%u\n", sorr_ios_d3_runtime_exit_guard_count);
+    sorr_ios_signal_write_format(fd, "last_runtime_exit=%s\n", sorr_ios_d3_last_exit_event);
     sorr_ios_signal_write_format(fd, "last_native_call=%s\n", sorr_ios_d3_last_native_call_event);
     sorr_ios_signal_write_format(fd, "last_native_return=%s\n", sorr_ios_d3_last_native_return_event);
     sorr_ios_signal_write_format(fd, "recent_native_call_ring=%s\n", sorr_ios_d3_native_call_events);
@@ -3243,7 +3247,7 @@ static void sorr_ios_write_latest_placeholder_report(const sorr_ios_data_layout 
         fprintf(fp, "SORR IOS LATEST CRASH OR ABRUPT EXIT REPORT\n");
         fprintf(fp, "build=%s\n", SORR_IOS_BUILD_LABEL);
         fprintf(fp, "artifact=%s\n", SORR_IOS_ARTIFACT_LABEL);
-        fprintf(fp, "crash_report_version=5\n");
+        fprintf(fp, "crash_report_version=6\n");
         fprintf(fp, "crash_report_type=current-session-placeholder\n");
         fprintf(fp, "run_id=%s\n", sorr_ios_d4a_run_id);
         fprintf(fp, "run_number=%u\n", sorr_ios_d4a_run_number);
@@ -3285,7 +3289,7 @@ static void sorr_ios_write_previous_run_fallback_report(const sorr_ios_data_layo
     fprintf(fp, "SORR IOS LATEST CRASH OR ABRUPT EXIT REPORT\n");
     fprintf(fp, "build=%s\n", SORR_IOS_BUILD_LABEL);
     fprintf(fp, "artifact=%s\n", SORR_IOS_ARTIFACT_LABEL);
-    fprintf(fp, "crash_report_version=5\n");
+    fprintf(fp, "crash_report_version=6\n");
     fprintf(fp, "crash_report_type=previous-run-nosignal-fallback\n");
     fprintf(fp, "reason=%s\n", reason ? reason : "previous run ended without clean shutdown marker");
     fprintf(fp, "run_id=%s\n", sorr_ios_d4a_run_id);
@@ -3506,7 +3510,7 @@ static Uint32 sorr_ios_d3_heartbeat_timer(Uint32 interval, void *param)
     }
 
     sorr_ios_d3_stability_log(layout,
-                              "heartbeat=%u ticks=%u runtime_ms=%u interval_next_ms=%u stage=%s rss_bytes=%llu frame_count=%u last_frame_ticks=%d frame_ms=%.3f fps_count=%d fps_init=%d max_jump=%d jump=%d instances=%d render_objects=%d render_object_creates=%u render_object_destroys=%u render_invalid_callbacks=%u opened_files=%d x_files=%d max_x_files=%d runtime_loops=%u runtime_frames=%u runtime_runs=%u runtime_created=%u runtime_destroyed=%u runtime_snapshots=%u runtime_last_proc=%s#%u:s%d:f%d:o%d runtime_lookup_guards=%u runtime_last_lookup_id=%u runtime_last_lookup_result=%u runtime_last_lookup=%s audio_stub_zero=%u audio_stub_minus_one=%u audio_init_attempts=%u audio_init_ok=%u audio_init_fail=%u audio_wav_load_ok=%u audio_wav_load_fail=%u audio_wav_play=%u audio_inert_handles=%u audio_queue_clears=%u audio_music_load_attempts=%u audio_music_open_ok=%u audio_music_open_fail=%u audio_music_mem_ok=%u audio_music_mem_fail=%u audio_music_play_attempts=%u audio_music_play_ok=%u audio_music_play_fail=%u audio_music_controls=%u audio_music_queries=%u audio_music_free=%u audio_music_halt=%u audio_music_playing=%u audio_music_last_handle=%llu audio_music_last_ptr=0x%llx audio_music_last_bytes=%llu audio_music_total_bytes=%llu audio_live_handles=%u audio_live_wav=%u audio_live_inert_wav=%u audio_live_music=%u audio_max_live_handles=%u audio_zero_music_play=%u audio_zero_music_control=%u audio_zero_music_query=%u audio_zero_wav_control=%u audio_zero_wav_query=%u audio_zero_wav_volume=%u audio_zero_channel_effect=%u audio_zero_play_wav_guard=%u audio_music_last_status=%s audio_music_last_path=%s runtime_snapshot=%s runtime_lifecycle=%s",
+                              "heartbeat=%u ticks=%u runtime_ms=%u interval_next_ms=%u stage=%s rss_bytes=%llu frame_count=%u last_frame_ticks=%d frame_ms=%.3f fps_count=%d fps_init=%d max_jump=%d jump=%d instances=%d render_objects=%d render_object_creates=%u render_object_destroys=%u render_invalid_callbacks=%u opened_files=%d x_files=%d max_x_files=%d runtime_loops=%u runtime_frames=%u runtime_runs=%u runtime_created=%u runtime_destroyed=%u runtime_snapshots=%u runtime_last_proc=%s#%u:s%d:f%d:o%d runtime_lookup_guards=%u runtime_last_lookup_id=%u runtime_last_lookup_result=%u runtime_last_lookup=%s runtime_exit_guards=%u runtime_last_exit=%s audio_stub_zero=%u audio_stub_minus_one=%u audio_init_attempts=%u audio_init_ok=%u audio_init_fail=%u audio_wav_load_ok=%u audio_wav_load_fail=%u audio_wav_play=%u audio_inert_handles=%u audio_queue_clears=%u audio_music_load_attempts=%u audio_music_open_ok=%u audio_music_open_fail=%u audio_music_mem_ok=%u audio_music_mem_fail=%u audio_music_play_attempts=%u audio_music_play_ok=%u audio_music_play_fail=%u audio_music_controls=%u audio_music_queries=%u audio_music_free=%u audio_music_halt=%u audio_music_playing=%u audio_music_last_handle=%llu audio_music_last_ptr=0x%llx audio_music_last_bytes=%llu audio_music_total_bytes=%llu audio_live_handles=%u audio_live_wav=%u audio_live_inert_wav=%u audio_live_music=%u audio_max_live_handles=%u audio_zero_music_play=%u audio_zero_music_control=%u audio_zero_music_query=%u audio_zero_wav_control=%u audio_zero_wav_query=%u audio_zero_wav_volume=%u audio_zero_channel_effect=%u audio_zero_play_wav_guard=%u audio_music_last_status=%s audio_music_last_path=%s runtime_snapshot=%s runtime_lifecycle=%s",
                               heartbeat,
                               ticks,
                               runtime_ms,
@@ -3543,6 +3547,8 @@ static Uint32 sorr_ios_d3_heartbeat_timer(Uint32 interval, void *param)
                               sorr_ios_d3_last_lookup_id,
                               sorr_ios_d3_last_lookup_result_id,
                               sorr_ios_d3_last_lookup_event,
+                              sorr_ios_d3_runtime_exit_guard_count,
+                              sorr_ios_d3_last_exit_event,
                               sorr_ios_sound_stub_zero_count,
                               sorr_ios_sound_stub_minus_one_count,
                               sorr_ios_audio_init_attempt_count,
@@ -3961,7 +3967,7 @@ static int sorr_ios_run_d3_first_render(sorr_ios_data_layout *layout,
         SDL_RemoveTimer(heartbeat_timer);
     }
     SDL_DelEventWatch(sorr_ios_d3_event_watch, layout);
-    bgdrtm_exit(ret);
+    sorr_ios_d3_log(layout, "runtime returned on iOS; preserving app process for diagnostics instead of bgdrtm_exit ret=%d", ret);
     return ret;
 }
 #endif

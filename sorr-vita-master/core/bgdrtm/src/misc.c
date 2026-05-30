@@ -43,6 +43,10 @@
 
 #include "fmath.h"
 
+#ifdef SORR_IOS_D3_FIRST_RENDER
+extern void sorr_ios_d3_note_runtime_exit_request( const char * source, const void * process_ptr, int requested_exit_value, const char * detail );
+#endif
+
 #if defined(TARGET_GP2X_WIZ) || defined(TARGET_CAANOO)
     #include <sys/types.h>
     #include <sys/stat.h>
@@ -313,6 +317,10 @@ void bgdrtm_entry( int argc, char * argv[] )
 void bgdrtm_exit( int exit_value )
 {
     int n;
+#ifdef SORR_IOS_D3_FIRST_RENDER
+    sorr_ios_d3_note_runtime_exit_request( "bgdrtm_exit", NULL, exit_value, "bgdrtm_exit final app exit" );
+    fflush( NULL );
+#endif
     /* Finalize all modules */
     if ( module_finalize_count )
         for ( n = 0; n < module_finalize_count; n++ )

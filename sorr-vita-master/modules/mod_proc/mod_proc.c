@@ -37,6 +37,10 @@
 
 #include "xstrings.h"
 
+#ifdef SORR_IOS_D3_FIRST_RENDER
+extern void sorr_ios_d3_note_runtime_exit_request( const char * source, const void * process_ptr, int requested_exit_value, const char * detail );
+#endif
+
 /* ----------------------------------------------------------------- */
 
 #define ALL_PROCESS         0
@@ -181,16 +185,32 @@ static void _modproc_kill_all()
 
 static int modproc_exit_0( INSTANCE * my, int * params )
 {
+#ifdef SORR_IOS_D3_FIRST_RENDER
+    ( void )params;
+    sorr_ios_d3_note_runtime_exit_request( "modproc_exit_0", my, 0, "script EXIT() ignored on iOS" );
+    return 1 ;
+#else
     exit_value = 0;
     must_exit = 1 ;
 
     return 1 ;
+#endif
 }
 
 /* ----------------------------------------------------------------- */
 
 static int modproc_exit_1( INSTANCE * my, int * params )
 {
+#ifdef SORR_IOS_D3_FIRST_RENDER
+    char detail[256];
+    const char * message = string_get( params[0] );
+    snprintf( detail, sizeof( detail ), "script EXIT(message) ignored on iOS message=%s", message ? message : "" );
+    printf( "%s\n", message ? message : "" );
+    fflush( stdout );
+    string_discard( params[0] );
+    sorr_ios_d3_note_runtime_exit_request( "modproc_exit_1", my, 0, detail );
+    return 1 ;
+#else
     printf( "%s\n", string_get( params[0] ) );
     fflush( stdout );
     string_discard( params[0] );
@@ -199,12 +219,24 @@ static int modproc_exit_1( INSTANCE * my, int * params )
     must_exit = 1 ;
 
     return 1 ;
+#endif
 }
 
 /* --------------------------------------------------------------------------- */
 
 static int modproc_exit( INSTANCE * my, int * params )
 {
+#ifdef SORR_IOS_D3_FIRST_RENDER
+    char detail[256];
+    const char * message = string_get( params[0] );
+    int requested_exit_value = params[1];
+    snprintf( detail, sizeof( detail ), "script EXIT(message,value) ignored on iOS value=%d message=%s", requested_exit_value, message ? message : "" );
+    printf( "%s\n", message ? message : "" );
+    fflush( stdout );
+    string_discard( params[0] );
+    sorr_ios_d3_note_runtime_exit_request( "modproc_exit", my, requested_exit_value, detail );
+    return 1 ;
+#else
     _modproc_kill_all();
 
     printf( "%s\n", string_get( params[0] ) );
@@ -215,6 +247,7 @@ static int modproc_exit( INSTANCE * my, int * params )
     must_exit = 1 ;
 
     return 1 ;
+#endif
 }
 
 /* ----------------------------------------------------------------- */

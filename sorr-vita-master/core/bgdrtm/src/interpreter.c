@@ -545,6 +545,8 @@ char sorr_ios_d3_last_native_call_event[2048] = "native_call=none";
 char sorr_ios_d3_last_native_return_event[1024] = "native_return=none";
 char sorr_ios_d3_native_call_events[3072] = "native_events=none";
 char sorr_ios_d3_last_effect_water_event[1024] = "effect_water=none";
+volatile unsigned int sorr_ios_d3_runtime_exit_guard_count = 0;
+char sorr_ios_d3_last_exit_event[1024] = "exit=none";
 char sorr_ios_d3_runtime_snapshot[2048] = "snapshot=uninitialized";
 char sorr_ios_d3_lifecycle_events[1536] = "events=none";
 char sorr_ios_d3_destroyed_ring_snapshot[2048] = "destroyed=none";
@@ -828,6 +830,68 @@ static void sorr_ios_d3_append_visible_event_line( const char * line )
     fputc( '\n', fp );
     fclose( fp );
 }
+
+void sorr_ios_d3_note_runtime_exit_request( const char * source, const void * process_ptr, int requested_exit_value, const char * detail )
+{
+    const INSTANCE * r = ( const INSTANCE * )process_ptr;
+    int exists = r ? instance_exists( ( INSTANCE * )r ) : 0;
+    const char * name;
+    uint32_t pid;
+    int status;
+    int frame;
+    int code_offset;
+    char line[1024];
+
+    if ( !exists && sorr_ios_d3_current_proc_ptr )
+    {
+        r = ( const INSTANCE * )( uintptr_t )sorr_ios_d3_current_proc_ptr;
+        exists = r ? instance_exists( ( INSTANCE * )r ) : 0;
+    }
+
+    name = ( exists && r->proc && r->proc->name ) ? r->proc->name : sorr_ios_d3_last_proc_name;
+    pid = exists ? LOCDWORD( r, PROCESS_ID ) : sorr_ios_d3_last_proc_id;
+    status = exists ? LOCDWORD( r, STATUS ) : sorr_ios_d3_last_proc_status;
+    frame = exists ? LOCINT32( r, FRAME_PERCENT ) : sorr_ios_d3_last_proc_frame_percent;
+    code_offset = ( exists && r->code && r->codeptr ) ? ( int )( r->codeptr - r->code ) : sorr_ios_d3_last_proc_code_offset;
+
+    sorr_ios_d3_runtime_exit_guard_count++;
+    snprintf(
+        line,
+        sizeof( line ),
+        "runtime_exit_request guard=%u source=%s value=%d detail=%s proc=%s#%u:s%d:f%d:o%d proc_ptr=%p exists=%d must_exit=%d exit_value=%d last_lookup=%s last_lifecycle=%s last_family=%s last_render=%s",
+        sorr_ios_d3_runtime_exit_guard_count,
+        source ? source : "unknown",
+        requested_exit_value,
+        detail ? detail : "none",
+        name ? name : "none",
+        pid,
+        status,
+        frame,
+        code_offset,
+        process_ptr,
+        exists,
+        must_exit,
+        exit_value,
+        sorr_ios_d3_last_lookup_event,
+        sorr_ios_d3_last_lifecycle_event,
+        sorr_ios_d3_last_family_unlink,
+        sorr_ios_d3_last_render_event
+    );
+    snprintf( sorr_ios_d3_last_exit_event, sizeof( sorr_ios_d3_last_exit_event ), "%s", line );
+    sorr_ios_d3_append_visible_event_line( line );
+}
+
+static void sorr_ios_d3_trap_interpreter_exit( int requested_exit_value, const char * file, int line_no )
+{
+    char detail[192];
+
+    snprintf( detail, sizeof( detail ), "interpreter_exit file=%s:%d", file ? file : "(unknown)", line_no );
+    sorr_ios_d3_note_runtime_exit_request( "interpreter_exit", ( const void * )( uintptr_t )sorr_ios_d3_current_proc_ptr, requested_exit_value, detail );
+    fflush( NULL );
+    abort();
+}
+
+#define exit(code) sorr_ios_d3_trap_interpreter_exit( ( code ), __FILE__, __LINE__ )
 
 static void sorr_ios_d3_note_lifecycle_event( const char * action, const INSTANCE * r )
 {
@@ -1714,6 +1778,13 @@ int instance_go_all()
         }
     }
 
+#ifdef SORR_IOS_D3_FIRST_RENDER
+    if ( must_exit )
+    {
+        const void * proc_ptr = i ? ( const void * )i : ( const void * )( uintptr_t )sorr_ios_d3_current_proc_ptr;
+        sorr_ios_d3_note_runtime_exit_request( "instance_go_all_must_exit", proc_ptr, exit_value, "must_exit loop break" );
+    }
+#endif
     PORTABLE_DIAG_LOG( "LOOP", "instance_go_all leave exit_value=%d must_exit=%d loops=%d", exit_value, must_exit, loop_count );
     return exit_value;
 
