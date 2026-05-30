@@ -1291,3 +1291,25 @@ Patch contents:
 - keeps BGM/SFX, custom controls, icon/name, D2-staged data, visible crash reporting, and asset-free IPA packaging.
 
 Test focus: move through at least two scenes, double-tap forward/back to run, and if the dash sound becomes an enemy SFX, send `ios_audio_sfx_diagnostics.txt` so the exact handle/path mismatch can be traced.
+
+## Current Playtest Bug Follow-Up: Fallback Crash Report
+
+Physical testing of the audio SFX diagnostic artifact suggests the wrong run SFX is no longer reproducing, but a new scene-transition exit did not refresh `ios_latest_crash_report.txt`. That means the exit likely did not reach the signal handler path.
+
+Current artifact target:
+
+```text
+Artifact: ios-shell-playtest-fallback-crash-report-device-arm64
+IPA: build-products/SorrIOSShell-playtest-fallback-crash-report-adhoc.ipa
+Build label: ios-playtest-fallback-crash-report
+```
+
+Patch contents:
+
+- appends `clean_shutdown=1` to current-run logs on normal shutdown,
+- checks the rotated `ios_previous_run_stability_log.txt` on the next launch,
+- if the previous run has no `clean_shutdown=1` and no `signal=`, writes `ios_latest_crash_report.txt` with `crash_report_type=previous-run-nosignal-fallback`,
+- includes the previous run tail in the fallback report,
+- preserves the iOS SFX diagnostic file, BGM/SFX, custom controls, icon/name, staged-data path, visible diagnostics, and asset-free packaging.
+
+Test focus: if the app exits during a scene transition, reopen once and send `ios_latest_crash_report.txt`, `ios_previous_run_stability_log.txt`, and `ios_current_run_stability_log.txt`.

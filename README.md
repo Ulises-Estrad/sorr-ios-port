@@ -13,7 +13,7 @@ Remaining work is no longer planned as an active roadmap. Future changes should 
 
 Latest physical playtest result: the `ios-shell-playtest-real-point-guard-device-arm64` IPA fixed the reported gun-shot crash and the Stage 6 beach/water startup crash. A full SoR2 route clear with Axel completed without clear bugs or random crashes.
 
-Current follow-up target: `ios-shell-playtest-audio-sfx-diagnostics-device-arm64` keeps the same playable baseline and instruments the actual iOS SDL_mixer audio backend. It writes `ios_audio_sfx_diagnostics.txt` in the Files-visible diagnostics folder so the wrong dash/run sound after multiple scene transitions can be diagnosed by handle id, sample path, and current process.
+Current follow-up target: `ios-shell-playtest-fallback-crash-report-device-arm64` keeps the same playable baseline and adds a fallback crash report path for abrupt exits that do not reach the signal handler. It still writes `ios_audio_sfx_diagnostics.txt` for wrong dash/run sound diagnostics.
 
 Known non-blocking issue: some no-input attract/demo scenes may ignore Start/Back presses even while showing a "press start" prompt. This does not block normal playability because the current build can be started, controlled, and played through; leave this alone unless it becomes a practical blocker or a clear crash/repro case appears.
 

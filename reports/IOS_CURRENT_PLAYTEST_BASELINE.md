@@ -17,7 +17,7 @@ This project is now a playable iPhone port baseline, not an early proof-only exp
 - The IPA remains asset-free; game data is imported locally through the iPhone Files route.
 - Latest physical playtest fix: gun firing works and Stage 6 beach/water startup no longer crashes after the GET_REAL_POINT guard.
 - Latest route playtest: the SoR2 path was cleared with Axel with no clear bugs or random crashes observed afterward.
-- Current follow-up target: diagnose and harden the reported wrong run sound after moving through multiple scenes. The new build keeps the custom controls from the previous follow-up and adds a Files-visible `ios_audio_sfx_diagnostics.txt` log from the actual iOS audio backend.
+- Current follow-up target: preserve the audio SFX diagnostics and add a fallback latest-crash report for abrupt scene-transition exits that do not reach the signal handler.
 
 ## Current Workflow Target
 
@@ -52,12 +52,9 @@ Current follow-up target:
 ```text
 Actions run: 26674517695
 Commit: adc95b5
-Artifact: ios-shell-playtest-audio-sfx-diagnostics-device-arm64
-IPA: build-products/SorrIOSShell-playtest-audio-sfx-diagnostics-adhoc.ipa
-Build label: ios-playtest-audio-sfx-diagnostics
-Artifact size: 1962580 bytes
-Device job result: success
-Simulator job result: success
+Artifact: ios-shell-playtest-fallback-crash-report-device-arm64
+IPA: build-products/SorrIOSShell-playtest-fallback-crash-report-adhoc.ipa
+Build label: ios-playtest-fallback-crash-report
 Game data/assets bundled in IPA: no
 ```
 
@@ -98,6 +95,8 @@ If the app crashes, reopen once and retrieve:
 ```text
 On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/ios_latest_crash_report.txt
 ```
+
+If the crash/exit does not reach the signal handler, the next launch should synthesize that file with `crash_report_type=previous-run-nosignal-fallback` and include the previous run tail.
 
 If more context is needed, also retrieve:
 

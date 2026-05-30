@@ -818,6 +818,27 @@ On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/ios_audio_sfx_diagnostics.txt
 
 That file logs iOS WAV load/reuse/unload/play events with handle ids, sample paths, current process names, channel results, and whether an unloaded handle was later played or reused. The IPA remains asset-free and keeps BGM/SFX, custom controls, icon/name, D2-staged data, and visible diagnostics.
 
+## Playtest Fallback Crash Report Artifact
+
+The audio diagnostic artifact appears to have fixed the wrong run SFX, but a new abrupt scene-transition exit did not refresh `ios_latest_crash_report.txt`. The next Sideloadly artifact keeps audio diagnostics and adds fallback report generation on the next launch:
+
+```text
+ios-shell-playtest-fallback-crash-report-device-arm64
+build-products/SorrIOSShell-playtest-fallback-crash-report-adhoc.ipa
+Build label: ios-playtest-fallback-crash-report
+Game data/assets bundled in IPA: no
+```
+
+Install with the same Windows + Sideloadly route. If the app exits during a scene transition, reopen once and retrieve:
+
+```text
+On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/ios_latest_crash_report.txt
+On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/ios_previous_run_stability_log.txt
+On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/ios_current_run_stability_log.txt
+```
+
+If the report says `crash_report_type=previous-run-nosignal-fallback`, it means the prior exit did not reach the signal handler and the report was synthesized from the previous run log.
+
 GitHub-side artifact proof:
 
 ```text

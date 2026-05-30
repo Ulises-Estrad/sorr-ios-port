@@ -27,14 +27,9 @@ This target also updates the fixed touch interface:
 ## Artifact Target
 
 ```text
-Actions run: 26674517695
-Commit: adc95b5
-Artifact: ios-shell-playtest-audio-sfx-diagnostics-device-arm64
-IPA: build-products/SorrIOSShell-playtest-audio-sfx-diagnostics-adhoc.ipa
-Build label: ios-playtest-audio-sfx-diagnostics
-Artifact size: 1962580 bytes
-Device job result: success
-Simulator job result: success
+Artifact: ios-shell-playtest-fallback-crash-report-device-arm64
+IPA: build-products/SorrIOSShell-playtest-fallback-crash-report-adhoc.ipa
+Build label: ios-playtest-fallback-crash-report
 Game data/assets bundled in IPA: no
 ```
 
@@ -63,3 +58,5 @@ If the app also crashes, reopen once and retrieve:
 On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/ios_latest_crash_report.txt
 On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/ios_current_run_stability_log.txt
 ```
+
+If the scene-transition exit does not generate a signal report, the next launch should still replace `ios_latest_crash_report.txt` with a fallback report built from `ios_previous_run_stability_log.txt`.

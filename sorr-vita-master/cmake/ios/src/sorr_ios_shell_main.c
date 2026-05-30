@@ -24,11 +24,11 @@
 #include "SDL.h"
 
 #ifndef SORR_IOS_BUILD_LABEL
-#define SORR_IOS_BUILD_LABEL "ios-playtest-audio-sfx-diagnostics"
+#define SORR_IOS_BUILD_LABEL "ios-playtest-fallback-crash-report"
 #endif
 
 #ifndef SORR_IOS_ARTIFACT_LABEL
-#define SORR_IOS_ARTIFACT_LABEL "ios-shell-playtest-audio-sfx-diagnostics-device-arm64"
+#define SORR_IOS_ARTIFACT_LABEL "ios-shell-playtest-fallback-crash-report-device-arm64"
 #endif
 
 #ifdef SORR_IOS_D3_FIRST_RENDER
@@ -2326,6 +2326,8 @@ extern char sorr_ios_audio_last_music_status[];
 #define SORR_IOS_D3_DENSE_START_MS 240000u
 #define SORR_IOS_D3_DENSE_END_MS 330000u
 
+static void sorr_ios_maybe_write_previous_run_fallback_report(const sorr_ios_data_layout *layout);
+
 static const char *sorr_ios_d3_stage_name(int stage)
 {
     switch (stage)
@@ -2776,6 +2778,7 @@ static void sorr_ios_d4a_prepare_run_logs(const sorr_ios_data_layout *layout)
     sorr_ios_d3_append_log_file(layout->d3_stability_path, delimiter);
     remove(layout->audio_sfx_diagnostics_path);
     sorr_ios_d3_append_log_file(layout->audio_sfx_diagnostics_path, delimiter);
+    sorr_ios_maybe_write_previous_run_fallback_report(layout);
 }
 
 static void sorr_ios_d3_log(const sorr_ios_data_layout *layout, const char *format, ...)
@@ -2878,6 +2881,174 @@ static int sorr_ios_read_last_nonempty_line(const char *path, char *out, size_t 
 
     fclose(fp);
     return found;
+}
+
+static int sorr_ios_file_contains_line_prefix(const char *path, const char *prefix)
+{
+    FILE *fp;
+    char line[4096];
+    size_t prefix_len;
+
+    if (!path || !path[0] || !prefix || !prefix[0])
+    {
+        return 0;
+    }
+
+    prefix_len = strlen(prefix);
+    fp = fopen(path, "rb");
+    if (!fp)
+    {
+        return 0;
+    }
+
+    while (fgets(line, sizeof(line), fp))
+    {
+        if (strncmp(line, prefix, prefix_len) == 0)
+        {
+            fclose(fp);
+            return 1;
+        }
+    }
+
+    fclose(fp);
+    return 0;
+}
+
+static void sorr_ios_write_file_tail(FILE *out, const char *path, int max_lines)
+{
+    FILE *fp;
+    char (*ring)[1024];
+    char line[1024];
+    int count = 0;
+    int pos = 0;
+    int i;
+
+    if (!out || !path || !path[0] || max_lines <= 0)
+    {
+        return;
+    }
+
+    fp = fopen(path, "rb");
+    if (!fp)
+    {
+        fprintf(out, "tail_unavailable path=%s\n", path);
+        return;
+    }
+
+    ring = (char (*)[1024])calloc((size_t)max_lines, sizeof(*ring));
+    if (!ring)
+    {
+        fclose(fp);
+        fprintf(out, "tail_unavailable reason=alloc-failed path=%s\n", path);
+        return;
+    }
+
+    while (fgets(line, sizeof(line), fp))
+    {
+        snprintf(ring[pos], 1024, "%s", line);
+        pos = (pos + 1) % max_lines;
+        if (count < max_lines)
+        {
+            count++;
+        }
+    }
+
+    for (i = 0; i < count; i++)
+    {
+        int slot = (pos + max_lines - count + i) % max_lines;
+        fputs(ring[slot], out);
+        if (ring[slot][0])
+        {
+            size_t len = strlen(ring[slot]);
+            if (len > 0 && ring[slot][len - 1] != '\n')
+            {
+                fputc('\n', out);
+            }
+        }
+    }
+
+    free(ring);
+    fclose(fp);
+}
+
+static void sorr_ios_write_previous_run_fallback_report(const sorr_ios_data_layout *layout,
+                                                        const char *path,
+                                                        const char *previous_last_marker,
+                                                        const char *reason)
+{
+    FILE *fp;
+
+    if (!layout || !path || !path[0])
+    {
+        return;
+    }
+
+    fp = fopen(path, "wb");
+    if (!fp)
+    {
+        return;
+    }
+
+    fprintf(fp, "SORR IOS LATEST CRASH REPORT\n");
+    fprintf(fp, "build=%s\n", SORR_IOS_BUILD_LABEL);
+    fprintf(fp, "artifact=%s\n", SORR_IOS_ARTIFACT_LABEL);
+    fprintf(fp, "crash_report_version=4\n");
+    fprintf(fp, "crash_report_type=previous-run-nosignal-fallback\n");
+    fprintf(fp, "reason=%s\n", reason ? reason : "previous run ended without clean shutdown marker");
+    fprintf(fp, "run_id=%s\n", sorr_ios_d4a_run_id);
+    fprintf(fp, "run_number=%u\n", sorr_ios_d4a_run_number);
+    fprintf(fp, "signal=none\n");
+    fprintf(fp, "stage=next-launch-fallback\n");
+    fprintf(fp, "previous_run_log=%s\n", layout->d3_previous_run_path);
+    fprintf(fp, "previous_private_run_log=%s\n", layout->d3_private_previous_run_path);
+    fprintf(fp, "previous_last_marker=%s\n", previous_last_marker && previous_last_marker[0] ? previous_last_marker : "(none)");
+    fprintf(fp, "note=This report was synthesized on the next launch because the prior run did not reach the signal handler.\n");
+    fprintf(fp, "note=Use the previous_run_tail below plus ios_previous_run_stability_log.txt to debug abrupt exits or iOS kills.\n");
+    fprintf(fp, "previous_run_tail:\n");
+    sorr_ios_write_file_tail(fp, layout->d3_previous_run_path, 180);
+    fclose(fp);
+}
+
+static void sorr_ios_maybe_write_previous_run_fallback_report(const sorr_ios_data_layout *layout)
+{
+    char previous_last_marker[1024] = "";
+    int has_previous;
+    int has_clean_shutdown;
+    int has_signal;
+
+    if (!layout)
+    {
+        return;
+    }
+
+    has_previous = sorr_ios_read_last_nonempty_line(layout->d3_previous_run_path,
+                                                    previous_last_marker,
+                                                    sizeof(previous_last_marker));
+    if (!has_previous)
+    {
+        return;
+    }
+
+    has_clean_shutdown = sorr_ios_file_contains_line_prefix(layout->d3_previous_run_path, "clean_shutdown=1");
+    has_signal = sorr_ios_file_contains_line_prefix(layout->d3_previous_run_path, "signal=");
+
+    if (has_clean_shutdown || has_signal)
+    {
+        return;
+    }
+
+    sorr_ios_write_previous_run_fallback_report(layout,
+                                                layout->d3_latest_crash_report_path,
+                                                previous_last_marker,
+                                                "previous current-run log rotated without clean_shutdown=1 or signal=");
+    sorr_ios_write_previous_run_fallback_report(layout,
+                                                layout->d3_private_latest_crash_report_path,
+                                                previous_last_marker,
+                                                "previous current-run log rotated without clean_shutdown=1 or signal=");
+    sorr_ios_d3_append_log_file(layout->d3_current_run_path,
+                                "previous_run_fallback_crash_report=ios_latest_crash_report.txt reason=no-clean-shutdown-no-signal");
+    sorr_ios_d3_append_log_file(layout->d3_private_current_run_path,
+                                "previous_run_fallback_crash_report=ios_latest_crash_report.txt reason=no-clean-shutdown-no-signal");
 }
 
 static unsigned long long sorr_ios_d3_resident_memory_bytes(void)
@@ -4199,6 +4370,16 @@ int main(int argc, char *argv[])
         SDL_Delay(16);
     }
 
+#ifdef SORR_IOS_D3_FIRST_RENDER
+    sorr_ios_d3_log(&data_layout,
+                    "clean_shutdown=1 ticks=%u stage=%s",
+                    SDL_GetTicks(),
+                    sorr_ios_d3_stage_name(sorr_ios_d3_stage));
+#else
+    sorr_ios_d3_log(&data_layout,
+                    "clean_shutdown=1 ticks=%u stage=shell-loop",
+                    SDL_GetTicks());
+#endif
     SDL_Log("SORR iOS shell: clean shutdown");
     if (renderer)
     {

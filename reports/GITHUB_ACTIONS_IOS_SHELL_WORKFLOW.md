@@ -2486,3 +2486,24 @@ Manual test focus: install the new IPA, move through at least two scene transiti
 ```text
 On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/ios_audio_sfx_diagnostics.txt
 ```
+
+## Playtest Fallback Crash Report Follow-Up
+
+Physical testing showed the audio issue no longer reproduced, but a new abrupt scene-transition exit did not refresh `ios_latest_crash_report.txt`. The next workflow target keeps the audio diagnostics and adds next-launch fallback crash-report synthesis:
+
+```text
+Device artifact: ios-shell-playtest-fallback-crash-report-device-arm64
+IPA: build-products/SorrIOSShell-playtest-fallback-crash-report-adhoc.ipa
+Build label: ios-playtest-fallback-crash-report
+Game data/assets bundled in IPA: no
+```
+
+Patch contents:
+
+- appends `clean_shutdown=1` to current-run logs on normal shutdown,
+- on the next launch, checks the rotated `ios_previous_run_stability_log.txt`,
+- if the previous run has no `clean_shutdown=1` and no `signal=`, writes `ios_latest_crash_report.txt` with `crash_report_type=previous-run-nosignal-fallback`,
+- includes the previous run tail in that fallback report,
+- preserves the iOS SFX diagnostic file, BGM/SFX, controls, icon/name, staged-data path, and asset-free IPA packaging.
+
+Manual test focus: if the app exits during a scene transition, reopen once and retrieve `ios_latest_crash_report.txt`, `ios_previous_run_stability_log.txt`, and `ios_current_run_stability_log.txt`.
