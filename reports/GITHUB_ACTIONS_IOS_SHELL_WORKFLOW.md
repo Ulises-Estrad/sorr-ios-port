@@ -2513,3 +2513,29 @@ Patch contents:
 - preserves the iOS SFX diagnostic file, BGM/SFX, controls, icon/name, staged-data path, and asset-free IPA packaging.
 
 Manual test focus: if the app exits during a scene transition, reopen once and retrieve `ios_latest_crash_report.txt`, `ios_previous_run_stability_log.txt`, `ios_current_run_stability_log.txt`, and any matching `ios_previous_run_fallback_<run>.txt`.
+
+## Playtest Remote Process Reference Guard Follow-Up
+
+The next physical diagnostics bundle showed the crash-report archive logic working: the report was a same-build `previous-run-nosignal-fallback`, with no `signal=`, no SDL terminating event, and no short lifecycle/background marker. The previous-run tail showed the game alive during a scene transition with BGM/SFX healthy, followed by an abrupt process exit. Stale process reference guards were active around that area, so the targeted patch guards the Bennu interpreter's remote process dereference path on iOS.
+
+```text
+Actions run: 26676881894
+Commit: 06a2745
+Device artifact: ios-shell-playtest-remote-ref-guard-device-arm64
+IPA: build-products/SorrIOSShell-playtest-remote-ref-guard-adhoc.ipa
+Build label: ios-playtest-remote-ref-guard
+Artifact size: 1964199 bytes
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
+```
+
+Patch contents:
+
+- keeps the proven playable baseline: render, BGM/SFX, custom controls, app icon/name, D2-staged data, SFX diagnostics, and crash-report archives,
+- leaves desktop/x64 behavior unchanged,
+- on iOS only, guards stale `MN_REMOTE*` and `MN_GET_REMOTE*` process lookups,
+- logs missing remote lookups as `runtime_enemigo_lookup_guard reason=remote-* ...`,
+- returns a safe zero/no-op cell for destroyed process IDs instead of letting `Process not active` call `exit(0)`.
+
+Manual test focus: install the new IPA, replay the scene-transition path that abruptly exited, and if it still exits or crashes, reopen once and retrieve `ios_latest_crash_report.txt` plus any matching `ios_previous_run_fallback_<run>.txt`.

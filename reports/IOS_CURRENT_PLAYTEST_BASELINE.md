@@ -17,7 +17,7 @@ This project is now a playable iPhone port baseline, not an early proof-only exp
 - The IPA remains asset-free; game data is imported locally through the iPhone Files route.
 - Latest physical playtest fix: gun firing works and Stage 6 beach/water startup no longer crashes after the GET_REAL_POINT guard.
 - Latest route playtest: the SoR2 path was cleared with Axel with no clear bugs or random crashes observed afterward.
-- Current follow-up target: preserve the audio SFX diagnostics and add a fallback latest-crash report for abrupt scene-transition exits that do not reach the signal handler.
+- Current follow-up target: guard stale remote process references that can make the Bennu VM terminate during scene transitions without reaching the signal handler.
 
 ## Current Workflow Target
 
@@ -47,7 +47,7 @@ Simulator job result: success
 Game data/assets bundled in IPA: no
 ```
 
-Current follow-up target:
+Previous follow-up target:
 
 ```text
 Actions run: 26676209972
@@ -63,6 +63,22 @@ Game data/assets bundled in IPA: no
 
 The newest crash-report follow-up prevents stale old-build reports or very short lifecycle/background exits from overwriting `ios_latest_crash_report.txt`. Every no-signal previous run is still archived as `ios_previous_run_fallback_<run>.txt` in `SORR_DIAGNOSTICS`.
 
+Current follow-up target:
+
+```text
+Actions run: 26676881894
+Commit: 06a2745
+Artifact: ios-shell-playtest-remote-ref-guard-device-arm64
+IPA: build-products/SorrIOSShell-playtest-remote-ref-guard-adhoc.ipa
+Build label: ios-playtest-remote-ref-guard
+Artifact size: 1964199 bytes
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
+```
+
+The latest Downloads crash bundle showed a same-build `previous-run-nosignal-fallback` report, no `signal=`, no SDL terminating event, healthy BGM/SFX, and an abrupt exit during a scene transition with many stale effect/HUD/process references. The iOS interpreter now guards stale remote process dereferences by logging `reason=remote-*` lookup diagnostics and returning a safe zero/no-op value instead of letting the VM call `exit(0)` for `Process not active`.
+
 ## Control Layout
 
 - `CFG`: small opaque button in the left pillar-safe area.
@@ -76,7 +92,7 @@ In edit mode, tapping selects a control, tapping the same selected control again
 
 ## Current Roadmap
 
-Current: final-for-now playable baseline plus crash-report archive diagnostics. The latest proven baseline includes the GET_REAL_POINT pointer-output guard, SFX diagnostics, and per-run no-signal fallback archives.
+Current: final-for-now playable baseline plus stale remote-process reference guards. The latest proven baseline includes the GET_REAL_POINT pointer-output guard, SFX diagnostics, per-run no-signal fallback archives, and iOS-only remote process dereference guards.
 
 Next: continue free-time playtesting and patch only major bugs one by one if they are found during real play.
 

@@ -1320,3 +1320,23 @@ Patch contents:
 - preserves the iOS SFX diagnostic file, BGM/SFX, custom controls, icon/name, staged-data path, visible diagnostics, and asset-free packaging.
 
 Test focus: if the app exits during a scene transition, reopen once and send `ios_latest_crash_report.txt`, `ios_previous_run_stability_log.txt`, `ios_current_run_stability_log.txt`, and any matching `ios_previous_run_fallback_<run>.txt`.
+
+## Playtest Remote Process Reference Guard
+
+The latest no-signal fallback report came from the current crash-report archive build and was not a stale old-build artifact. It showed no signal handler, no SDL terminating lifecycle event, healthy BGM/SFX, and an abrupt scene-transition exit after many stale effect/HUD/process references. That points at the Bennu interpreter's fatal `Process not active` path for stale remote process IDs rather than a normal iOS signal crash.
+
+The current iOS-only patch keeps desktop/x64 behavior unchanged but guards stale `MN_REMOTE*` and `MN_GET_REMOTE*` dereferences on iOS. Missing/destroyed process IDs now log `runtime_enemigo_lookup_guard reason=remote-* ...` and return a safe zero/no-op value instead of terminating the app with `exit(0)`.
+
+```text
+Actions run: 26676881894
+Commit: 06a2745
+Artifact: ios-shell-playtest-remote-ref-guard-device-arm64
+IPA: build-products/SorrIOSShell-playtest-remote-ref-guard-adhoc.ipa
+Build label: ios-playtest-remote-ref-guard
+Artifact size: 1964199 bytes
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
+```
+
+Next manual step: install this artifact and replay the scene transition that previously exited abruptly. If it still exits, reopen once and send `ios_latest_crash_report.txt` plus the matching `ios_previous_run_fallback_<run>.txt`.
