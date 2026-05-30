@@ -799,9 +799,15 @@ The IPA remains asset-free and keeps BGM/SFX, custom controls, icon/name, D2-sta
 The stable-SFX/edit-controls artifact did not fully fix the wrong dash/run sound after multiple scene transitions. The next Sideloadly artifact instruments the actual iOS audio backend and writes a focused Files-visible diagnostic file:
 
 ```text
+Actions run: 26674517695
+Commit: adc95b5
 ios-shell-playtest-audio-sfx-diagnostics-device-arm64
 build-products/SorrIOSShell-playtest-audio-sfx-diagnostics-adhoc.ipa
 Build label: ios-playtest-audio-sfx-diagnostics
+Artifact size: 1962580 bytes
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
 ```
 
 Install with the same Windows + Sideloadly route. Move through at least two scene transitions, then double-tap forward/back to run. If the dash sound becomes an enemy SFX, retrieve:

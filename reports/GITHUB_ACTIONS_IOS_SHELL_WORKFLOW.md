@@ -2462,9 +2462,14 @@ Manual test focus: install the new IPA, visit multiple screens, double-tap forwa
 Physical testing of the stable-SFX/edit-controls artifact still reproduced the wrong dash/run sound after moving to a new scene twice. A source inspection found that the physical iPhone build uses the iOS-specific SDL_mixer backend in `sorr_ios_mod_sound_stub.c`, not the generic desktop `mod_sound.c` path. The next workflow target therefore instruments and hardens the active iOS backend directly:
 
 ```text
+Actions run: 26674517695
+Commit: adc95b5
 Device artifact: ios-shell-playtest-audio-sfx-diagnostics-device-arm64
 IPA: build-products/SorrIOSShell-playtest-audio-sfx-diagnostics-adhoc.ipa
 Build label: ios-playtest-audio-sfx-diagnostics
+Artifact size: 1962580 bytes
+Device job result: success
+Simulator job result: success
 Game data/assets bundled in IPA: no
 ```
 

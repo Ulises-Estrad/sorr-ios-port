@@ -29,6 +29,8 @@ This guide rebuilds the current iPhone setup from zero.
 4. Download the latest successful device artifact. Current run-sound diagnostic target:
 
    ```text
+   Actions run: 26674517695
+   Commit: adc95b5
    Artifact: ios-shell-playtest-audio-sfx-diagnostics-device-arm64
    ```
 

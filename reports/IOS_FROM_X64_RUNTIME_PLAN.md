@@ -1271,9 +1271,15 @@ Physical testing of the stable-SFX/edit-controls artifact still reproduced the w
 Current artifact target:
 
 ```text
+Actions run: 26674517695
+Commit: adc95b5
 Artifact: ios-shell-playtest-audio-sfx-diagnostics-device-arm64
 IPA: build-products/SorrIOSShell-playtest-audio-sfx-diagnostics-adhoc.ipa
 Build label: ios-playtest-audio-sfx-diagnostics
+Artifact size: 1962580 bytes
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
 ```
 
 Patch contents:
