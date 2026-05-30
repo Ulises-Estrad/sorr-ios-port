@@ -29,6 +29,8 @@ This guide rebuilds the current iPhone setup from zero.
 4. Download the latest successful device artifact. Current follow-up build:
 
    ```text
+   Actions run: 26673765318
+   Commit: 8e926e3
    Artifact: ios-shell-playtest-stable-sfx-edit-controls-device-arm64
    ```
 

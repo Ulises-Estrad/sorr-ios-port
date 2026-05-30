@@ -843,9 +843,15 @@ The IPA remains asset-free and keeps BGM/SFX, custom controls, icon/name, D2-sta
 The first run-SFX/back-attack artifact still reproduced the wrong run sound after some screen transitions, so the next Sideloadly artifact keeps WAV sample handles stable by filename on iOS instead of letting old game-side handles become ambiguous after unload/reload cycles:
 
 ```text
+Actions run: 26673765318
+Commit: 8e926e3
 ios-shell-playtest-stable-sfx-edit-controls-device-arm64
 build-products/SorrIOSShell-playtest-stable-sfx-edit-controls-adhoc.ipa
 Build label: ios-playtest-stable-sfx-edit-controls
+Artifact size: 1961595 bytes
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
 ```
 
 Install with the same Windows + Sideloadly route. Test multiple screen transitions and double-tap forward/back to run. Also verify that Back Attack maps to `D`, the right-side action columns are closer together, and tapping a selected edit-mode control again deselects it before using `DONE`, `BIG`, or `SML`.

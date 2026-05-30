@@ -27,9 +27,14 @@ This target also updates the fixed touch interface:
 ## Artifact Target
 
 ```text
+Actions run: 26673765318
+Commit: 8e926e3
 Artifact: ios-shell-playtest-stable-sfx-edit-controls-device-arm64
 IPA: build-products/SorrIOSShell-playtest-stable-sfx-edit-controls-adhoc.ipa
 Build label: ios-playtest-stable-sfx-edit-controls
+Artifact size: 1961595 bytes
+Device job result: success
+Simulator job result: success
 Game data/assets bundled in IPA: no
 ```
 

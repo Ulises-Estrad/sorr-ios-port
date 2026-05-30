@@ -6,7 +6,7 @@ This repo is now the source of truth for the iOS shell/runtime build. It is no l
 
 ## Current Roadmap
 
-- Current: paused/final-for-now playable baseline with a new run-sound/edit-controls follow-up target in GitHub Actions. The app has the `Streets of Rage` display name, app icon, virtual joystick, pillar-safe CFG button, right-side Start/Back buttons, persistent custom layout settings, and visible crash reports.
+- Current: paused/final-for-now playable baseline with a new run-sound/edit-controls follow-up available from GitHub Actions run `26673765318`. The app has the `Streets of Rage` display name, app icon, virtual joystick, pillar-safe CFG button, right-side Start/Back buttons, persistent custom layout settings, and visible crash reports.
 - Next: no active feature work. Patch only major bugs if they show up during real playtesting.
 
 Remaining work is no longer planned as an active roadmap. Future changes should be limited to major bug fixes found during normal gameplay. Minor polish/control tuning can wait unless it blocks play.
