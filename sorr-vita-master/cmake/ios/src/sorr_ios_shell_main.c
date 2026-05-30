@@ -24,11 +24,11 @@
 #include "SDL.h"
 
 #ifndef SORR_IOS_BUILD_LABEL
-#define SORR_IOS_BUILD_LABEL "ios-playtest-remote-ref-guard"
+#define SORR_IOS_BUILD_LABEL "ios-playtest-clear-diagnostics"
 #endif
 
 #ifndef SORR_IOS_ARTIFACT_LABEL
-#define SORR_IOS_ARTIFACT_LABEL "ios-shell-playtest-remote-ref-guard-device-arm64"
+#define SORR_IOS_ARTIFACT_LABEL "ios-shell-playtest-clear-diagnostics-device-arm64"
 #endif
 
 #ifdef SORR_IOS_D3_FIRST_RENDER
@@ -113,9 +113,11 @@ typedef struct sorr_ios_data_layout
     char d3_current_run_path[1024];
     char d3_previous_run_path[1024];
     char d3_latest_crash_report_path[1024];
+    char d3_previous_exit_report_path[1024];
     char d3_private_current_run_path[1024];
     char d3_private_previous_run_path[1024];
     char d3_private_latest_crash_report_path[1024];
+    char d3_private_previous_exit_report_path[1024];
     char d4_touch_config_path[1024];
     char audio_sfx_diagnostics_path[1024];
     bool d2_data_ready;
@@ -2003,6 +2005,85 @@ static int sorr_ios_join_path(char *out, size_t out_size, const char *base, cons
     return written > 0 && (size_t)written < out_size;
 }
 
+static void sorr_ios_remove_joined_file(const char *base, const char *leaf)
+{
+    char path[1024];
+
+    if (sorr_ios_join_path(path, sizeof(path), base, leaf))
+    {
+        remove(path);
+    }
+}
+
+static int sorr_ios_has_prefix(const char *text, const char *prefix)
+{
+    size_t prefix_len;
+
+    if (!text || !prefix)
+    {
+        return 0;
+    }
+
+    prefix_len = strlen(prefix);
+    return strncmp(text, prefix, prefix_len) == 0;
+}
+
+static void sorr_ios_remove_diagnostics_by_prefix(const char *dir_path, const char *prefix)
+{
+#ifndef _WIN32
+    DIR *dir;
+    struct dirent *entry;
+
+    if (!dir_path || !prefix)
+    {
+        return;
+    }
+
+    dir = opendir(dir_path);
+    if (!dir)
+    {
+        return;
+    }
+
+    while ((entry = readdir(dir)) != NULL)
+    {
+        char path[1024];
+
+        if (!sorr_ios_has_prefix(entry->d_name, prefix))
+        {
+            continue;
+        }
+
+        if (sorr_ios_join_path(path, sizeof(path), dir_path, entry->d_name))
+        {
+            remove(path);
+        }
+    }
+
+    closedir(dir);
+#else
+    (void)dir_path;
+    (void)prefix;
+#endif
+}
+
+static void sorr_ios_remove_legacy_visible_diagnostics(const sorr_ios_data_layout *layout)
+{
+    if (!layout)
+    {
+        return;
+    }
+
+    sorr_ios_remove_joined_file(layout->documents_diagnostics_dir, "ios_d3_runtime_stability_probe.txt");
+    sorr_ios_remove_joined_file(layout->documents_diagnostics_dir, "ios_current_run_stability_log.txt");
+    sorr_ios_remove_joined_file(layout->documents_diagnostics_dir, "ios_previous_run_stability_log.txt");
+    sorr_ios_remove_joined_file(layout->documents_diagnostics_dir, "ios_latest_crash_report.txt");
+    sorr_ios_remove_joined_file(layout->documents_diagnostics_dir, "ios_audio_sfx_diagnostics.txt");
+    sorr_ios_remove_joined_file(layout->documents_diagnostics_dir, "ios_run_counter.txt");
+    sorr_ios_remove_joined_file(layout->documents_diagnostics_dir, "README_D3S_DIAGNOSTICS.txt");
+    sorr_ios_remove_diagnostics_by_prefix(layout->documents_diagnostics_dir, "ios_previous_run_fallback_");
+}
+
 static int sorr_ios_mkdir_if_needed(const char *path)
 {
     struct stat st;
@@ -2326,7 +2407,8 @@ extern char sorr_ios_audio_last_music_status[];
 #define SORR_IOS_D3_DENSE_START_MS 240000u
 #define SORR_IOS_D3_DENSE_END_MS 330000u
 
-static void sorr_ios_maybe_write_previous_run_fallback_report(const sorr_ios_data_layout *layout);
+static void sorr_ios_write_latest_placeholder_report(const sorr_ios_data_layout *layout);
+static int sorr_ios_maybe_write_previous_run_fallback_report(const sorr_ios_data_layout *layout);
 
 static const char *sorr_ios_d3_stage_name(int stage)
 {
@@ -2456,10 +2538,10 @@ static void sorr_ios_d4a_write_crash_report_fd(int fd, int sig)
     }
 
     sorr_ios_signal_write_format(fd,
-                                 "SORR IOS LATEST CRASH REPORT\n"
+                                 "SORR IOS LATEST CRASH OR ABRUPT EXIT REPORT\n"
                                  "build=%s\n"
                                  "artifact=%s\n"
-                                 "crash_report_version=3\n"
+                                 "crash_report_version=5\n"
                                  "debug_focus=playtest GET_REAL_POINT/effects crash; keep this whole file when reporting\n"
                                  "run_id=%s\n"
                                  "run_number=%u\n"
@@ -2601,7 +2683,7 @@ static void sorr_ios_d4a_append_signal_marker(const char *path, int sig)
         return;
     }
     sorr_ios_signal_write_format(fd,
-                                 "signal=%d ticks=%u runtime_ms=%u stage=%s run_id=%s current=%s#%u ptr=0x%llx lookup_guards=%u last_lookup_id=%u last_lookup_result=%u latest_crash_report=ios_latest_crash_report.txt\n",
+                                 "signal=%d ticks=%u runtime_ms=%u stage=%s run_id=%s current=%s#%u ptr=0x%llx lookup_guards=%u last_lookup_id=%u last_lookup_result=%u latest_crash_report=LATEST_CRASH_OR_ABRUPT_EXIT_REPORT.txt\n",
                                  sig,
                                  ticks,
                                  runtime_ms,
@@ -2707,7 +2789,7 @@ static unsigned int sorr_ios_d4a_next_run_number(const sorr_ios_data_layout *lay
     if (!layout || !sorr_ios_join_path(counter_path,
                                        sizeof(counter_path),
                                        layout->documents_diagnostics_dir,
-                                       "ios_run_counter.txt"))
+                                       "RUN_COUNTER.txt"))
     {
         return 0;
     }
@@ -2738,6 +2820,7 @@ static void sorr_ios_d4a_prepare_run_logs(const sorr_ios_data_layout *layout)
     char delimiter[512];
     time_t now;
     unsigned int ticks;
+    int latest_report_refreshed;
 
     if (!layout)
     {
@@ -2758,11 +2841,15 @@ static void sorr_ios_d4a_prepare_run_logs(const sorr_ios_data_layout *layout)
     sorr_ios_d4a_recent_log_reset();
 #endif
     sorr_ios_d4a_configure_crash_paths(layout);
+    sorr_ios_remove_legacy_visible_diagnostics(layout);
 
     remove(layout->d3_previous_run_path);
     rename(layout->d3_current_run_path, layout->d3_previous_run_path);
     remove(layout->d3_private_previous_run_path);
     rename(layout->d3_private_current_run_path, layout->d3_private_previous_run_path);
+    remove(layout->d3_previous_exit_report_path);
+    remove(layout->d3_private_previous_exit_report_path);
+    remove(layout->d3_visible_stability_path);
 
     snprintf(delimiter,
              sizeof(delimiter),
@@ -2778,7 +2865,11 @@ static void sorr_ios_d4a_prepare_run_logs(const sorr_ios_data_layout *layout)
     sorr_ios_d3_append_log_file(layout->d3_stability_path, delimiter);
     remove(layout->audio_sfx_diagnostics_path);
     sorr_ios_d3_append_log_file(layout->audio_sfx_diagnostics_path, delimiter);
-    sorr_ios_maybe_write_previous_run_fallback_report(layout);
+    latest_report_refreshed = sorr_ios_maybe_write_previous_run_fallback_report(layout);
+    if (!latest_report_refreshed)
+    {
+        sorr_ios_write_latest_placeholder_report(layout);
+    }
 }
 
 static void sorr_ios_d3_log(const sorr_ios_data_layout *layout, const char *format, ...)
@@ -3121,6 +3212,51 @@ static void sorr_ios_write_file_tail(FILE *out, const char *path, int max_lines)
     fclose(fp);
 }
 
+static void sorr_ios_write_latest_placeholder_report(const sorr_ios_data_layout *layout)
+{
+    const char *paths[2];
+    size_t i;
+
+    if (!layout)
+    {
+        return;
+    }
+
+    paths[0] = layout->d3_latest_crash_report_path;
+    paths[1] = layout->d3_private_latest_crash_report_path;
+
+    for (i = 0; i < 2; ++i)
+    {
+        FILE *fp;
+
+        if (!paths[i] || !paths[i][0])
+        {
+            continue;
+        }
+
+        fp = fopen(paths[i], "wb");
+        if (!fp)
+        {
+            continue;
+        }
+
+        fprintf(fp, "SORR IOS LATEST CRASH OR ABRUPT EXIT REPORT\n");
+        fprintf(fp, "build=%s\n", SORR_IOS_BUILD_LABEL);
+        fprintf(fp, "artifact=%s\n", SORR_IOS_ARTIFACT_LABEL);
+        fprintf(fp, "crash_report_version=5\n");
+        fprintf(fp, "crash_report_type=current-session-placeholder\n");
+        fprintf(fp, "run_id=%s\n", sorr_ios_d4a_run_id);
+        fprintf(fp, "run_number=%u\n", sorr_ios_d4a_run_number);
+        fprintf(fp, "signal=none\n");
+        fprintf(fp, "stage=current-session-started\n");
+        fprintf(fp, "note=No crash or abrupt-exit report has been generated for this app session yet.\n");
+        fprintf(fp, "note=If the app exits unexpectedly, reopen Streets of Rage once and send this file after it is refreshed.\n");
+        fprintf(fp, "current_session_log=%s\n", layout->d3_current_run_path);
+        fprintf(fp, "previous_session_log=%s\n", layout->d3_previous_run_path);
+        fclose(fp);
+    }
+}
+
 static void sorr_ios_write_previous_run_fallback_report(const sorr_ios_data_layout *layout,
                                                         const char *path,
                                                         const char *previous_last_marker,
@@ -3146,10 +3282,10 @@ static void sorr_ios_write_previous_run_fallback_report(const sorr_ios_data_layo
         return;
     }
 
-    fprintf(fp, "SORR IOS LATEST CRASH REPORT\n");
+    fprintf(fp, "SORR IOS LATEST CRASH OR ABRUPT EXIT REPORT\n");
     fprintf(fp, "build=%s\n", SORR_IOS_BUILD_LABEL);
     fprintf(fp, "artifact=%s\n", SORR_IOS_ARTIFACT_LABEL);
-    fprintf(fp, "crash_report_version=4\n");
+    fprintf(fp, "crash_report_version=5\n");
     fprintf(fp, "crash_report_type=previous-run-nosignal-fallback\n");
     fprintf(fp, "reason=%s\n", reason ? reason : "previous run ended without clean shutdown marker");
     fprintf(fp, "run_id=%s\n", sorr_ios_d4a_run_id);
@@ -3170,15 +3306,15 @@ static void sorr_ios_write_previous_run_fallback_report(const sorr_ios_data_layo
     fprintf(fp, "note=This report was synthesized on the next launch because the prior run did not reach the signal handler.\n");
     if (!overwrote_latest)
     {
-        fprintf(fp, "note=This no-signal run was archived but did not replace ios_latest_crash_report.txt because it looked stale or lifecycle-only.\n");
+        fprintf(fp, "note=This no-signal run was saved as PREVIOUS_SESSION_ABRUPT_EXIT_REPORT.txt but did not replace LATEST_CRASH_OR_ABRUPT_EXIT_REPORT.txt because it looked stale or lifecycle-only.\n");
     }
-    fprintf(fp, "note=Use the previous_run_tail below plus ios_previous_run_stability_log.txt to debug abrupt exits or iOS kills.\n");
+    fprintf(fp, "note=Use the previous_run_tail below plus PREVIOUS_SESSION_RUNTIME_LOG.txt to debug abrupt exits or iOS kills.\n");
     fprintf(fp, "previous_run_tail:\n");
     sorr_ios_write_file_tail(fp, layout->d3_previous_run_path, 180);
     fclose(fp);
 }
 
-static void sorr_ios_maybe_write_previous_run_fallback_report(const sorr_ios_data_layout *layout)
+static int sorr_ios_maybe_write_previous_run_fallback_report(const sorr_ios_data_layout *layout)
 {
     char previous_last_marker[1024] = "";
     char previous_run_id[128] = "";
@@ -3198,7 +3334,7 @@ static void sorr_ios_maybe_write_previous_run_fallback_report(const sorr_ios_dat
 
     if (!layout)
     {
-        return;
+        return 0;
     }
 
     has_previous = sorr_ios_read_last_nonempty_line(layout->d3_previous_run_path,
@@ -3206,7 +3342,7 @@ static void sorr_ios_maybe_write_previous_run_fallback_report(const sorr_ios_dat
                                                     sizeof(previous_last_marker));
     if (!has_previous)
     {
-        return;
+        return 0;
     }
 
     has_clean_shutdown = sorr_ios_file_contains_line_prefix(layout->d3_previous_run_path, "clean_shutdown=1");
@@ -3214,7 +3350,7 @@ static void sorr_ios_maybe_write_previous_run_fallback_report(const sorr_ios_dat
 
     if (has_clean_shutdown || has_signal)
     {
-        return;
+        return 0;
     }
 
     sorr_ios_read_previous_run_metadata(layout->d3_previous_run_path,
@@ -3233,18 +3369,9 @@ static void sorr_ios_maybe_write_previous_run_fallback_report(const sorr_ios_dat
         snprintf(previous_run_id, sizeof(previous_run_id), "unknown-%u", sorr_ios_d4a_run_number);
     }
 
-    snprintf(archive_name,
-             sizeof(archive_name),
-             "ios_previous_run_fallback_%s.txt",
-             previous_run_id);
-    if (!sorr_ios_join_path(archive_path, sizeof(archive_path), layout->documents_diagnostics_dir, archive_name))
-    {
-        archive_path[0] = '\0';
-    }
-    if (!sorr_ios_join_path(private_archive_path, sizeof(private_archive_path), layout->logs_dir, archive_name))
-    {
-        private_archive_path[0] = '\0';
-    }
+    snprintf(archive_name, sizeof(archive_name), "PREVIOUS_SESSION_ABRUPT_EXIT_REPORT.txt");
+    snprintf(archive_path, sizeof(archive_path), "%s", layout->d3_previous_exit_report_path);
+    snprintf(private_archive_path, sizeof(private_archive_path), "%s", layout->d3_private_previous_exit_report_path);
 
     if (archive_path[0])
     {
@@ -3304,7 +3431,7 @@ static void sorr_ios_maybe_write_previous_run_fallback_report(const sorr_ios_dat
     snprintf(status_line,
              sizeof(status_line),
              "previous_run_fallback_crash_report=%s archive=%s previous_build=%s current_build=%s previous_last_ticks=%u has_terminating=%d short_lifecycle=%d build_matches_current=%d reason=no-clean-shutdown-no-signal",
-             should_overwrite_latest ? "ios_latest_crash_report.txt" : "archived-only",
+             should_overwrite_latest ? "LATEST_CRASH_OR_ABRUPT_EXIT_REPORT.txt" : "PREVIOUS_SESSION_ABRUPT_EXIT_REPORT.txt",
              archive_name,
              previous_build[0] ? previous_build : "(unknown)",
              SORR_IOS_BUILD_LABEL,
@@ -3314,6 +3441,7 @@ static void sorr_ios_maybe_write_previous_run_fallback_report(const sorr_ios_dat
              previous_build_matches_current ? 1 : 0);
     sorr_ios_d3_append_log_file(layout->d3_current_run_path, status_line);
     sorr_ios_d3_append_log_file(layout->d3_private_current_run_path, status_line);
+    return should_overwrite_latest;
 }
 
 static unsigned long long sorr_ios_d3_resident_memory_bytes(void)
@@ -3616,7 +3744,6 @@ static int sorr_ios_run_d3_first_render(sorr_ios_data_layout *layout,
     }
 
     sorr_ios_d4a_set_active_layout(layout);
-    sorr_ios_copy_file_contents(layout->d3_stability_path, layout->d3_visible_stability_path);
     if (!sorr_ios_read_last_nonempty_line(layout->d3_previous_run_path,
                                           previous_stability_line,
                                           sizeof(previous_stability_line)))
@@ -4033,15 +4160,17 @@ static int sorr_ios_prepare_data_layout(sorr_ios_data_layout *layout)
         !sorr_ios_join_path(layout->d2_probe_path, sizeof(layout->d2_probe_path), layout->logs_dir, "ios_d2_data_import_probe.txt") ||
         !sorr_ios_join_path(layout->d3_probe_path, sizeof(layout->d3_probe_path), layout->logs_dir, "ios_d3_first_render_probe.txt") ||
         !sorr_ios_join_path(layout->d3_stability_path, sizeof(layout->d3_stability_path), layout->logs_dir, "ios_d3_runtime_stability_probe.txt") ||
-        !sorr_ios_join_path(layout->d3_visible_stability_path, sizeof(layout->d3_visible_stability_path), layout->documents_diagnostics_dir, "ios_d3_runtime_stability_probe.txt") ||
-        !sorr_ios_join_path(layout->d3_current_run_path, sizeof(layout->d3_current_run_path), layout->documents_diagnostics_dir, "ios_current_run_stability_log.txt") ||
-        !sorr_ios_join_path(layout->d3_previous_run_path, sizeof(layout->d3_previous_run_path), layout->documents_diagnostics_dir, "ios_previous_run_stability_log.txt") ||
-        !sorr_ios_join_path(layout->d3_latest_crash_report_path, sizeof(layout->d3_latest_crash_report_path), layout->documents_diagnostics_dir, "ios_latest_crash_report.txt") ||
-        !sorr_ios_join_path(layout->d3_private_current_run_path, sizeof(layout->d3_private_current_run_path), layout->logs_dir, "ios_current_run_stability_log.txt") ||
-        !sorr_ios_join_path(layout->d3_private_previous_run_path, sizeof(layout->d3_private_previous_run_path), layout->logs_dir, "ios_previous_run_stability_log.txt") ||
-        !sorr_ios_join_path(layout->d3_private_latest_crash_report_path, sizeof(layout->d3_private_latest_crash_report_path), layout->logs_dir, "ios_latest_crash_report.txt") ||
+        !sorr_ios_join_path(layout->d3_visible_stability_path, sizeof(layout->d3_visible_stability_path), layout->documents_diagnostics_dir, "CURRENT_SESSION_VERBOSE_RUNTIME_LOG.txt") ||
+        !sorr_ios_join_path(layout->d3_current_run_path, sizeof(layout->d3_current_run_path), layout->documents_diagnostics_dir, "CURRENT_SESSION_RUNTIME_LOG.txt") ||
+        !sorr_ios_join_path(layout->d3_previous_run_path, sizeof(layout->d3_previous_run_path), layout->documents_diagnostics_dir, "PREVIOUS_SESSION_RUNTIME_LOG.txt") ||
+        !sorr_ios_join_path(layout->d3_latest_crash_report_path, sizeof(layout->d3_latest_crash_report_path), layout->documents_diagnostics_dir, "LATEST_CRASH_OR_ABRUPT_EXIT_REPORT.txt") ||
+        !sorr_ios_join_path(layout->d3_previous_exit_report_path, sizeof(layout->d3_previous_exit_report_path), layout->documents_diagnostics_dir, "PREVIOUS_SESSION_ABRUPT_EXIT_REPORT.txt") ||
+        !sorr_ios_join_path(layout->d3_private_current_run_path, sizeof(layout->d3_private_current_run_path), layout->logs_dir, "CURRENT_SESSION_RUNTIME_LOG.txt") ||
+        !sorr_ios_join_path(layout->d3_private_previous_run_path, sizeof(layout->d3_private_previous_run_path), layout->logs_dir, "PREVIOUS_SESSION_RUNTIME_LOG.txt") ||
+        !sorr_ios_join_path(layout->d3_private_latest_crash_report_path, sizeof(layout->d3_private_latest_crash_report_path), layout->logs_dir, "LATEST_CRASH_OR_ABRUPT_EXIT_REPORT.txt") ||
+        !sorr_ios_join_path(layout->d3_private_previous_exit_report_path, sizeof(layout->d3_private_previous_exit_report_path), layout->logs_dir, "PREVIOUS_SESSION_ABRUPT_EXIT_REPORT.txt") ||
         !sorr_ios_join_path(layout->d4_touch_config_path, sizeof(layout->d4_touch_config_path), layout->documents_diagnostics_dir, "ios_touch_controls.ini") ||
-        !sorr_ios_join_path(layout->audio_sfx_diagnostics_path, sizeof(layout->audio_sfx_diagnostics_path), layout->documents_diagnostics_dir, "ios_audio_sfx_diagnostics.txt"))
+        !sorr_ios_join_path(layout->audio_sfx_diagnostics_path, sizeof(layout->audio_sfx_diagnostics_path), layout->documents_diagnostics_dir, "CURRENT_SESSION_AUDIO_SFX_LOG.txt"))
     {
         SDL_Log("SORR iOS shell: data layout path construction failed");
         return 0;
@@ -4069,15 +4198,17 @@ static int sorr_ios_prepare_data_layout(sorr_ios_data_layout *layout)
     if (sorr_ios_join_path(diagnostics_readme_path,
                            sizeof(diagnostics_readme_path),
                            layout->documents_diagnostics_dir,
-                           "README_D3S_DIAGNOSTICS.txt"))
+                           "README_DIAGNOSTICS.txt"))
     {
         sorr_ios_write_text_file(diagnostics_readme_path,
-                                 "D3S diagnostics are mirrored here for Files access.\n"
-                                 "For crashes, reopen Streets of Rage once and send ios_latest_crash_report.txt.\n"
-                                 "If more context is needed, also send ios_current_run_stability_log.txt.\n"
-                                 "For wrong SFX/run sound bugs, send ios_audio_sfx_diagnostics.txt after reproducing.\n"
-                                 "ios_previous_run_stability_log.txt contains the prior launch, and ios_d3_runtime_stability_probe.txt remains the full rolling log.\n"
-                                 "D4b-lite touch settings are saved in ios_touch_controls.ini.\n");
+                                 "Streets of Rage iOS diagnostics are mirrored here for Files access.\n"
+                                 "These files are refreshed on each app launch so the newest session is easy to find.\n"
+                                 "For crashes or abrupt exits, reopen Streets of Rage once and send LATEST_CRASH_OR_ABRUPT_EXIT_REPORT.txt.\n"
+                                 "If more context is needed, also send CURRENT_SESSION_RUNTIME_LOG.txt and PREVIOUS_SESSION_RUNTIME_LOG.txt.\n"
+                                 "CURRENT_SESSION_VERBOSE_RUNTIME_LOG.txt is refreshed every launch and contains extra low-level runtime lines.\n"
+                                 "For wrong SFX/run sound bugs, send CURRENT_SESSION_AUDIO_SFX_LOG.txt after reproducing.\n"
+                                 "PREVIOUS_SESSION_ABRUPT_EXIT_REPORT.txt is overwritten each launch and contains only the prior session's no-signal fallback when one exists.\n"
+                                 "Touch control settings are saved in ios_touch_controls.ini.\n");
     }
 
     if (!sorr_ios_create_dir_marker("savegame", layout->savegame_dir) ||

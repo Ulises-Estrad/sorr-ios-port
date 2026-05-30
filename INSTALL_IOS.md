@@ -26,25 +26,23 @@ This guide rebuilds the current iPhone setup from zero.
 1. Open the GitHub repo.
 2. Go to `Actions`.
 3. Open the latest successful `iOS Shell` workflow run.
-4. Download the latest successful device artifact. Current crash-report archive diagnostic target:
+4. Download the latest successful device artifact. Current clear-diagnostics playtest target:
 
    ```text
-   Actions run: 26676209972
-   Commit: 70f6c04
-   Artifact: ios-shell-playtest-crash-report-archive-device-arm64
+   Artifact: ios-shell-playtest-clear-diagnostics-device-arm64
    ```
 
    Previous proven baseline:
 
    ```text
-   ios-shell-playtest-audio-sfx-diagnostics-device-arm64
+   ios-shell-playtest-remote-ref-guard-device-arm64
    ```
 
 5. Extract the downloaded artifact on Windows.
-6. Install the IPA with Sideloadly. Current crash-report archive diagnostic IPA target:
+6. Install the IPA with Sideloadly. Current clear-diagnostics IPA target:
 
    ```text
-   build-products/SorrIOSShell-playtest-crash-report-archive-adhoc.ipa
+   build-products/SorrIOSShell-playtest-clear-diagnostics-adhoc.ipa
    ```
 
 7. If iOS asks, enable Developer Mode and trust the developer profile.
@@ -124,24 +122,25 @@ After a crash:
 2. In Files, send:
 
    ```text
-   On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/ios_latest_crash_report.txt
+   On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/LATEST_CRASH_OR_ABRUPT_EXIT_REPORT.txt
    ```
 
 3. If more context is needed, also send:
 
    ```text
-   On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/ios_current_run_stability_log.txt
+   On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/CURRENT_SESSION_RUNTIME_LOG.txt
+   On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/PREVIOUS_SESSION_RUNTIME_LOG.txt
    ```
 
 For wrong dash/run SFX after scene transitions, also send:
 
 ```text
-On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/ios_audio_sfx_diagnostics.txt
+On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/CURRENT_SESSION_AUDIO_SFX_LOG.txt
 ```
 
 That file is reset on each launch and logs the actual iOS audio backend's WAV load/reuse/unload/play events, including the handle id, sample path, current process, and whether an unloaded handle was later reused.
 
-If the app exits abruptly without a normal signal crash report, the next launch synthesizes a fallback report from `ios_previous_run_stability_log.txt`. Same-build, non-trivial runs can replace `ios_latest_crash_report.txt`; stale old-build runs and very short lifecycle/background exits are archived as `ios_previous_run_fallback_<run>.txt` so they do not bury the real latest report.
+The diagnostics folder is refreshed on every app launch. `CURRENT_SESSION_RUNTIME_LOG.txt` starts fresh, the prior launch is rotated to `PREVIOUS_SESSION_RUNTIME_LOG.txt`, and old legacy `ios_*` diagnostic files are removed. If the app exits abruptly without a normal signal crash report, the next launch synthesizes `PREVIOUS_SESSION_ABRUPT_EXIT_REPORT.txt`; same-build, non-trivial exits also replace `LATEST_CRASH_OR_ABRUPT_EXIT_REPORT.txt`.
 
 ## Updating Later
 
@@ -158,7 +157,7 @@ If the app exits abruptly without a normal signal crash report, the next launch 
 3. Copy/extract the `SORR_IMPORT` folder under `On My iPhone/Streets of Rage` (or `SorrIOSShell` on older installs).
 4. Launch the app and wait for staging.
 5. Reconfigure controls, or restore a saved `ios_touch_controls.ini`.
-6. If a crash happens, reopen once and retrieve `ios_latest_crash_report.txt`.
+6. If a crash happens, reopen once and retrieve `LATEST_CRASH_OR_ABRUPT_EXIT_REPORT.txt`.
 
 ## Current Known Status
 

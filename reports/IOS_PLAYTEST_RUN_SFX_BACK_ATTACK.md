@@ -54,19 +54,19 @@ Game data/assets bundled in IPA: no
 If the sound bug still occurs, retrieve:
 
 ```text
-On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/ios_audio_sfx_diagnostics.txt
+On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/CURRENT_SESSION_AUDIO_SFX_LOG.txt
 ```
 
 If the app also crashes, reopen once and retrieve:
 
 ```text
-On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/ios_latest_crash_report.txt
-On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/ios_previous_run_stability_log.txt
-On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/ios_current_run_stability_log.txt
-On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/ios_previous_run_fallback_<run>.txt
+On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/LATEST_CRASH_OR_ABRUPT_EXIT_REPORT.txt
+On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/CURRENT_SESSION_RUNTIME_LOG.txt
+On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/PREVIOUS_SESSION_RUNTIME_LOG.txt
+On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/PREVIOUS_SESSION_ABRUPT_EXIT_REPORT.txt
 ```
 
-If the scene-transition exit does not generate a signal report, the next launch archives a fallback report built from `ios_previous_run_stability_log.txt`. It only replaces `ios_latest_crash_report.txt` when the prior run is from the same build and is not just a short lifecycle/background termination.
+If the scene-transition exit does not generate a signal report, the next launch builds a fallback report from `PREVIOUS_SESSION_RUNTIME_LOG.txt`. It only replaces `LATEST_CRASH_OR_ABRUPT_EXIT_REPORT.txt` when the prior run is from the same build and is not just a short lifecycle/background termination.
 
 ## Current Playtest Bug Follow-Up: Remote Process Reference Guard
 
@@ -105,4 +105,25 @@ Patch contents:
 - logs `runtime_enemigo_lookup_guard reason=remote-* ...` breadcrumbs,
 - returns a safe zero/no-op value instead of letting stale destroyed process IDs terminate the app through the interpreter's fatal `Process not active` path.
 
-Test focus: install this IPA, play through the scene transition that abruptly exited before, and if it still exits or crashes, reopen once and send `ios_latest_crash_report.txt` plus any matching `ios_previous_run_fallback_<run>.txt`.
+Test focus: install this IPA, play through the scene transition that abruptly exited before, and if it still exits or crashes, reopen once and send `LATEST_CRASH_OR_ABRUPT_EXIT_REPORT.txt`.
+
+## Current Playtest Follow-Up: Clear Diagnostics Filenames
+
+The next artifact keeps the same playable baseline and remote process guard, but makes the Files-visible diagnostic folder less confusing. On each app launch it removes legacy `ios_*` diagnostic files, rotates the previous launch to one clear file, and starts a fresh current-session log.
+
+Current artifact target:
+
+```text
+Artifact: ios-shell-playtest-clear-diagnostics-device-arm64
+IPA: build-products/SorrIOSShell-playtest-clear-diagnostics-adhoc.ipa
+Build label: ios-playtest-clear-diagnostics
+Game data/assets bundled in IPA: no
+```
+
+Files to send after a crash or abrupt exit:
+
+```text
+On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/LATEST_CRASH_OR_ABRUPT_EXIT_REPORT.txt
+On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/CURRENT_SESSION_RUNTIME_LOG.txt
+On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/PREVIOUS_SESSION_RUNTIME_LOG.txt
+```

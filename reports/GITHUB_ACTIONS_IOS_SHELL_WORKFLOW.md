@@ -2538,4 +2538,34 @@ Patch contents:
 - logs missing remote lookups as `runtime_enemigo_lookup_guard reason=remote-* ...`,
 - returns a safe zero/no-op cell for destroyed process IDs instead of letting `Process not active` call `exit(0)`.
 
-Manual test focus: install the new IPA, replay the scene-transition path that abruptly exited, and if it still exits or crashes, reopen once and retrieve `ios_latest_crash_report.txt` plus any matching `ios_previous_run_fallback_<run>.txt`.
+Manual test focus for that older artifact: install the IPA, replay the scene-transition path that abruptly exited, and if it still exits or crashes, reopen once and retrieve the then-current `ios_latest_crash_report.txt` plus any matching `ios_previous_run_fallback_<run>.txt`. Newer artifacts supersede those filenames with the clearer names below.
+
+## Playtest Clear Diagnostics Filenames Follow-Up
+
+The next workflow target keeps the playable baseline and remote-process guard, but refreshes and renames the Files-visible diagnostics so each app session is easy to identify.
+
+```text
+Device artifact: ios-shell-playtest-clear-diagnostics-device-arm64
+IPA: build-products/SorrIOSShell-playtest-clear-diagnostics-adhoc.ipa
+Build label: ios-playtest-clear-diagnostics
+Game data/assets bundled in IPA: no
+```
+
+Diagnostics behavior:
+
+- removes old visible `ios_*` diagnostic logs and old per-run fallback files on launch,
+- rotates the prior launch to `PREVIOUS_SESSION_RUNTIME_LOG.txt`,
+- starts a fresh `CURRENT_SESSION_RUNTIME_LOG.txt`,
+- starts a fresh `CURRENT_SESSION_VERBOSE_RUNTIME_LOG.txt`,
+- starts a fresh `CURRENT_SESSION_AUDIO_SFX_LOG.txt`,
+- writes catchable crashes and meaningful no-signal fallbacks to `LATEST_CRASH_OR_ABRUPT_EXIT_REPORT.txt`,
+- writes non-overwriting no-signal fallback details to `PREVIOUS_SESSION_ABRUPT_EXIT_REPORT.txt`,
+- keeps private mirrored copies under `Library/Application Support/SORR/logs`.
+
+Manual test focus: if the app exits or crashes, reopen once and send:
+
+```text
+On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/LATEST_CRASH_OR_ABRUPT_EXIT_REPORT.txt
+On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/CURRENT_SESSION_RUNTIME_LOG.txt
+On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/PREVIOUS_SESSION_RUNTIME_LOG.txt
+```

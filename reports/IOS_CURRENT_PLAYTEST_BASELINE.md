@@ -1,6 +1,6 @@
 # iOS Current Playtest Baseline
 
-Status: current playable iPhone baseline, paused/final for now, with one run-sound diagnostic follow-up target ready for GitHub Actions.
+Status: current playable iPhone baseline, paused/final for now, with a clear-diagnostics follow-up target ready for GitHub Actions.
 
 This project is now a playable iPhone port baseline, not an early proof-only experiment. Historical milestone reports remain in `reports/` as evidence, but current work should use this playtest baseline framing. Active feature work is paused; future changes should be limited to major bug fixes found during normal playtesting.
 
@@ -17,7 +17,7 @@ This project is now a playable iPhone port baseline, not an early proof-only exp
 - The IPA remains asset-free; game data is imported locally through the iPhone Files route.
 - Latest physical playtest fix: gun firing works and Stage 6 beach/water startup no longer crashes after the GET_REAL_POINT guard.
 - Latest route playtest: the SoR2 path was cleared with Axel with no clear bugs or random crashes observed afterward.
-- Current follow-up target: guard stale remote process references that can make the Bennu VM terminate during scene transitions without reaching the signal handler.
+- Current follow-up target: keep the stale remote process guard and make the Files-visible diagnostics refresh into clear current/previous/latest filenames each app session.
 
 ## Current Workflow Target
 
@@ -61,9 +61,20 @@ Simulator job result: success
 Game data/assets bundled in IPA: no
 ```
 
-The newest crash-report follow-up prevents stale old-build reports or very short lifecycle/background exits from overwriting `ios_latest_crash_report.txt`. Every no-signal previous run is still archived as `ios_previous_run_fallback_<run>.txt` in `SORR_DIAGNOSTICS`.
+That older crash-report follow-up prevented stale old-build reports or very short lifecycle/background exits from overwriting the latest report, but its per-run fallback filenames are superseded by the clearer current/previous/latest names in the current target.
 
 Current follow-up target:
+
+```text
+Artifact: ios-shell-playtest-clear-diagnostics-device-arm64
+IPA: build-products/SorrIOSShell-playtest-clear-diagnostics-adhoc.ipa
+Build label: ios-playtest-clear-diagnostics
+Game data/assets bundled in IPA: no
+```
+
+This follow-up removes old visible `ios_*` diagnostic files on launch, rotates the prior app session to `PREVIOUS_SESSION_RUNTIME_LOG.txt`, starts a fresh `CURRENT_SESSION_RUNTIME_LOG.txt`, and uses `LATEST_CRASH_OR_ABRUPT_EXIT_REPORT.txt` as the single report to send after a crash or abrupt exit.
+
+Previous follow-up target:
 
 ```text
 Actions run: 26676881894
@@ -114,19 +125,22 @@ The same baseline also cleared the SoR2 route with Axel in physical iPhone playt
 If the app crashes, reopen once and retrieve:
 
 ```text
-On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/ios_latest_crash_report.txt
+On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/LATEST_CRASH_OR_ABRUPT_EXIT_REPORT.txt
 ```
 
-If the crash/exit does not reach the signal handler, the next launch should synthesize that file with `crash_report_type=previous-run-nosignal-fallback` and include the previous run tail.
+If the crash/exit does not reach the signal handler, the next launch should synthesize that file with `crash_report_type=previous-run-nosignal-fallback` and include the previous run tail. The previous no-signal report is also saved as `PREVIOUS_SESSION_ABRUPT_EXIT_REPORT.txt`.
 
 If more context is needed, also retrieve:
 
 ```text
-On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/ios_current_run_stability_log.txt
+On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/CURRENT_SESSION_RUNTIME_LOG.txt
+On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/PREVIOUS_SESSION_RUNTIME_LOG.txt
 ```
 
 For wrong dash/run SFX after scene transitions, retrieve:
 
 ```text
-On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/ios_audio_sfx_diagnostics.txt
+On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/CURRENT_SESSION_AUDIO_SFX_LOG.txt
 ```
+
+The Files-visible diagnostics are refreshed on each app launch. Old legacy `ios_*` logs and per-run fallback archives are removed from `SORR_DIAGNOSTICS`, the current session starts fresh, and the previous session is rotated to a single clear previous-session file.
