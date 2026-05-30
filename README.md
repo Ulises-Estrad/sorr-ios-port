@@ -6,14 +6,14 @@ This repo is now the source of truth for the iOS shell/runtime build. It is no l
 
 ## Current Roadmap
 
-- Current: paused/final-for-now playable baseline with a new run-sound/edit-controls follow-up available from GitHub Actions run `26673765318`. The app has the `Streets of Rage` display name, app icon, virtual joystick, pillar-safe CFG button, right-side Start/Back buttons, persistent custom layout settings, and visible crash reports.
+- Current: paused/final-for-now playable baseline with a new run-sound diagnostic follow-up in progress. The app has the `Streets of Rage` display name, app icon, virtual joystick, pillar-safe CFG button, right-side Start/Back buttons, persistent custom layout settings, and visible crash reports.
 - Next: no active feature work. Patch only major bugs if they show up during real playtesting.
 
 Remaining work is no longer planned as an active roadmap. Future changes should be limited to major bug fixes found during normal gameplay. Minor polish/control tuning can wait unless it blocks play.
 
 Latest physical playtest result: the `ios-shell-playtest-real-point-guard-device-arm64` IPA fixed the reported gun-shot crash and the Stage 6 beach/water startup crash. A full SoR2 route clear with Axel completed without clear bugs or random crashes.
 
-Current follow-up target: `ios-shell-playtest-stable-sfx-edit-controls-device-arm64` keeps the same playable baseline, makes iOS WAV sample handles stable by filename to address the reported wrong run sound after screen transitions, maps Back Attack to `D`, aligns the right-side action columns, and changes edit mode so tapping a selected control again deselects it before using config buttons.
+Current follow-up target: `ios-shell-playtest-audio-sfx-diagnostics-device-arm64` keeps the same playable baseline and instruments the actual iOS SDL_mixer audio backend. It writes `ios_audio_sfx_diagnostics.txt` in the Files-visible diagnostics folder so the wrong dash/run sound after multiple scene transitions can be diagnosed by handle id, sample path, and current process.
 
 Known non-blocking issue: some no-input attract/demo scenes may ignore Start/Back presses even while showing a "press start" prompt. This does not block normal playability because the current build can be started, controlled, and played through; leave this alone unless it becomes a practical blocker or a clear crash/repro case appears.
 

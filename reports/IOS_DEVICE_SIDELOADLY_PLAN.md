@@ -794,6 +794,24 @@ On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/ios_latest_crash_report.txt
 
 The IPA remains asset-free and keeps BGM/SFX, custom controls, icon/name, D2-staged data, and visible diagnostics.
 
+## Playtest Audio SFX Diagnostics Artifact
+
+The stable-SFX/edit-controls artifact did not fully fix the wrong dash/run sound after multiple scene transitions. The next Sideloadly artifact instruments the actual iOS audio backend and writes a focused Files-visible diagnostic file:
+
+```text
+ios-shell-playtest-audio-sfx-diagnostics-device-arm64
+build-products/SorrIOSShell-playtest-audio-sfx-diagnostics-adhoc.ipa
+Build label: ios-playtest-audio-sfx-diagnostics
+```
+
+Install with the same Windows + Sideloadly route. Move through at least two scene transitions, then double-tap forward/back to run. If the dash sound becomes an enemy SFX, retrieve:
+
+```text
+On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/ios_audio_sfx_diagnostics.txt
+```
+
+That file logs iOS WAV load/reuse/unload/play events with handle ids, sample paths, current process names, channel results, and whether an unloaded handle was later played or reused. The IPA remains asset-free and keeps BGM/SFX, custom controls, icon/name, D2-staged data, and visible diagnostics.
+
 GitHub-side artifact proof:
 
 ```text

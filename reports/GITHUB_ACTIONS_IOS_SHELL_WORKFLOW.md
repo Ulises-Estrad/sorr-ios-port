@@ -2456,3 +2456,28 @@ Patch contents:
 - keeps BGM/SFX, custom controls, icon/name, D2-staged data, visible diagnostics, and asset-free IPA packaging.
 
 Manual test focus: install the new IPA, visit multiple screens, double-tap forward/back with Shiva SOR2 or another character with an obvious dash/run sound, confirm the correct run sound remains stable, verify Back Attack triggers `D`, and confirm `DONE` / `BIG` / `SML` no longer accidentally drag the selected control.
+
+## Playtest Audio SFX Diagnostics Follow-Up
+
+Physical testing of the stable-SFX/edit-controls artifact still reproduced the wrong dash/run sound after moving to a new scene twice. A source inspection found that the physical iPhone build uses the iOS-specific SDL_mixer backend in `sorr_ios_mod_sound_stub.c`, not the generic desktop `mod_sound.c` path. The next workflow target therefore instruments and hardens the active iOS backend directly:
+
+```text
+Device artifact: ios-shell-playtest-audio-sfx-diagnostics-device-arm64
+IPA: build-products/SorrIOSShell-playtest-audio-sfx-diagnostics-adhoc.ipa
+Build label: ios-playtest-audio-sfx-diagnostics
+Game data/assets bundled in IPA: no
+```
+
+Patch contents:
+
+- keeps the proven playable baseline: render, BGM/SFX, custom controls, icon/name, D2-staged data, visible crash reports, and asset-free packaging,
+- resets and writes a Files-visible `ios_audio_sfx_diagnostics.txt` on each launch,
+- logs iOS WAV `LOAD_WAV`, reuse, `UNLOAD_WAV`, and `PLAY_WAV` events with handle id, serial, current process, sample path, channel, and result,
+- keeps iOS WAV chunks alive across unloads for the app session so old game-side handles cannot be recycled into unrelated enemy samples,
+- force-frees handles only during audio shutdown.
+
+Manual test focus: install the new IPA, move through at least two scene transitions, double-tap forward/back with Shiva SOR2, and if the run sound becomes an enemy SFX, retrieve:
+
+```text
+On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/ios_audio_sfx_diagnostics.txt
+```

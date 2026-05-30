@@ -1,6 +1,6 @@
 # iOS Current Playtest Baseline
 
-Status: current playable iPhone baseline, paused/final for now, with one run-sound/edit-controls playtest follow-up target ready for GitHub Actions.
+Status: current playable iPhone baseline, paused/final for now, with one run-sound diagnostic follow-up target ready for GitHub Actions.
 
 This project is now a playable iPhone port baseline, not an early proof-only experiment. Historical milestone reports remain in `reports/` as evidence, but current work should use this playtest baseline framing. Active feature work is paused; future changes should be limited to major bug fixes found during normal playtesting.
 
@@ -17,7 +17,7 @@ This project is now a playable iPhone port baseline, not an early proof-only exp
 - The IPA remains asset-free; game data is imported locally through the iPhone Files route.
 - Latest physical playtest fix: gun firing works and Stage 6 beach/water startup no longer crashes after the GET_REAL_POINT guard.
 - Latest route playtest: the SoR2 path was cleared with Axel with no clear bugs or random crashes observed afterward.
-- Current follow-up target: fix a reported wrong run sound after some screen transitions, keep the circular action-button visuals, map Back Attack to `D`, align the action columns, and make edit-mode selection easier to clear before tapping config buttons.
+- Current follow-up target: diagnose and harden the reported wrong run sound after moving through multiple scenes. The new build keeps the custom controls from the previous follow-up and adds a Files-visible `ios_audio_sfx_diagnostics.txt` log from the actual iOS audio backend.
 
 ## Current Workflow Target
 
@@ -50,14 +50,9 @@ Game data/assets bundled in IPA: no
 Current follow-up target:
 
 ```text
-Actions run: 26673765318
-Commit: 8e926e3
-Artifact: ios-shell-playtest-stable-sfx-edit-controls-device-arm64
-IPA: build-products/SorrIOSShell-playtest-stable-sfx-edit-controls-adhoc.ipa
-Build label: ios-playtest-stable-sfx-edit-controls
-Artifact size: 1961595 bytes
-Device job result: success
-Simulator job result: success
+Artifact: ios-shell-playtest-audio-sfx-diagnostics-device-arm64
+IPA: build-products/SorrIOSShell-playtest-audio-sfx-diagnostics-adhoc.ipa
+Build label: ios-playtest-audio-sfx-diagnostics
 Game data/assets bundled in IPA: no
 ```
 
@@ -74,9 +69,9 @@ In edit mode, tapping selects a control, tapping the same selected control again
 
 ## Current Roadmap
 
-Current: final-for-now playable baseline. The latest IPA includes the GET_REAL_POINT pointer-output guard and crash-report version 3.
+Current: final-for-now playable baseline plus a focused run-sound diagnostic build. The latest proven baseline includes the GET_REAL_POINT pointer-output guard and crash-report version 3.
 
-Next: test the run-sound/edit-controls follow-up build on the physical iPhone. After that, return to free-time playtesting and patch only major bugs one by one if they are found during real play.
+Next: test the run-sound diagnostic build on the physical iPhone. After that, return to free-time playtesting and patch only major bugs one by one if they are found during real play.
 
 ## Latest Physical Playtest Result
 
@@ -103,4 +98,10 @@ If more context is needed, also retrieve:
 
 ```text
 On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/ios_current_run_stability_log.txt
+```
+
+For wrong dash/run SFX after scene transitions, retrieve:
+
+```text
+On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/ios_audio_sfx_diagnostics.txt
 ```

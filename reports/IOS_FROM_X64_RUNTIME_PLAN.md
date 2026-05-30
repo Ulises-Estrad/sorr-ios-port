@@ -1263,3 +1263,25 @@ Patch contents:
 - lets edit mode deselect a selected control by tapping it again.
 
 The playable baseline remains unchanged: real render, BGM/SFX, custom controls, icon/name, D2-staged data, visible diagnostics, and asset-free IPA packaging.
+
+## Current Playtest Bug Follow-Up: Audio SFX Diagnostics
+
+Physical testing of the stable-SFX/edit-controls artifact still reproduced the wrong dash/run sound after moving through new scenes twice. The important implementation correction is that the iPhone build's live audio path is `sorr_ios_mod_sound_stub.c`; the earlier generic `mod_sound.c` handle-table work was not the active physical-device playback path.
+
+Current artifact target:
+
+```text
+Artifact: ios-shell-playtest-audio-sfx-diagnostics-device-arm64
+IPA: build-products/SorrIOSShell-playtest-audio-sfx-diagnostics-adhoc.ipa
+Build label: ios-playtest-audio-sfx-diagnostics
+```
+
+Patch contents:
+
+- instruments the actual iOS SDL_mixer WAV backend,
+- writes `On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/ios_audio_sfx_diagnostics.txt`,
+- logs load/reuse/unload/play events with handle id, serial, sample path, channel, current process, and result,
+- keeps WAV handles alive across unloads for the app session and only force-frees them during audio shutdown,
+- keeps BGM/SFX, custom controls, icon/name, D2-staged data, visible crash reporting, and asset-free IPA packaging.
+
+Test focus: move through at least two scenes, double-tap forward/back to run, and if the dash sound becomes an enemy SFX, send `ios_audio_sfx_diagnostics.txt` so the exact handle/path mismatch can be traced.

@@ -24,11 +24,11 @@
 #include "SDL.h"
 
 #ifndef SORR_IOS_BUILD_LABEL
-#define SORR_IOS_BUILD_LABEL "ios-playtest-stable-sfx-edit-controls"
+#define SORR_IOS_BUILD_LABEL "ios-playtest-audio-sfx-diagnostics"
 #endif
 
 #ifndef SORR_IOS_ARTIFACT_LABEL
-#define SORR_IOS_ARTIFACT_LABEL "ios-shell-playtest-stable-sfx-edit-controls-device-arm64"
+#define SORR_IOS_ARTIFACT_LABEL "ios-shell-playtest-audio-sfx-diagnostics-device-arm64"
 #endif
 
 #ifdef SORR_IOS_D3_FIRST_RENDER
@@ -117,6 +117,7 @@ typedef struct sorr_ios_data_layout
     char d3_private_previous_run_path[1024];
     char d3_private_latest_crash_report_path[1024];
     char d4_touch_config_path[1024];
+    char audio_sfx_diagnostics_path[1024];
     bool d2_data_ready;
     bool d2_import_seen;
     bool d2_import_failed;
@@ -2773,6 +2774,8 @@ static void sorr_ios_d4a_prepare_run_logs(const sorr_ios_data_layout *layout)
     sorr_ios_d3_append_log_file(layout->d3_private_current_run_path, delimiter);
     sorr_ios_d3_append_log_file(layout->d3_visible_stability_path, delimiter);
     sorr_ios_d3_append_log_file(layout->d3_stability_path, delimiter);
+    remove(layout->audio_sfx_diagnostics_path);
+    sorr_ios_d3_append_log_file(layout->audio_sfx_diagnostics_path, delimiter);
 }
 
 static void sorr_ios_d3_log(const sorr_ios_data_layout *layout, const char *format, ...)
@@ -3195,6 +3198,7 @@ static int sorr_ios_run_d3_first_render(sorr_ios_data_layout *layout,
     sorr_ios_d3_log(layout, "current run log path=%s", layout->d3_current_run_path);
     sorr_ios_d3_log(layout, "previous run log path=%s", layout->d3_previous_run_path);
     sorr_ios_d3_log(layout, "latest crash report path=%s", layout->d3_latest_crash_report_path);
+    sorr_ios_d3_log(layout, "audio SFX diagnostics path=%s", layout->audio_sfx_diagnostics_path);
     sorr_ios_d3_log(layout, "touch config path=%s", layout->d4_touch_config_path);
     snprintf(sorr_ios_d3_visible_event_log_path,
              1024,
@@ -3295,6 +3299,7 @@ static int sorr_ios_run_d3_first_render(sorr_ios_data_layout *layout,
     SDL_setenv("SORR_PORTABLE_DIAG_LOOP", "1", 1);
     SDL_setenv("SORR_PORTABLE_DIAG_RENDER", "1", 1);
     SDL_setenv("SORR_PORTABLE_DIAG_VIDEO", "1", 1);
+    SDL_setenv("SORR_IOS_AUDIO_DIAG_PATH", layout->audio_sfx_diagnostics_path, 1);
     SDL_setenv("SDL_RENDER_DRIVER", "opengles2", 0);
 
     if (chdir(layout->support_root) != 0)
@@ -3599,7 +3604,8 @@ static int sorr_ios_prepare_data_layout(sorr_ios_data_layout *layout)
         !sorr_ios_join_path(layout->d3_private_current_run_path, sizeof(layout->d3_private_current_run_path), layout->logs_dir, "ios_current_run_stability_log.txt") ||
         !sorr_ios_join_path(layout->d3_private_previous_run_path, sizeof(layout->d3_private_previous_run_path), layout->logs_dir, "ios_previous_run_stability_log.txt") ||
         !sorr_ios_join_path(layout->d3_private_latest_crash_report_path, sizeof(layout->d3_private_latest_crash_report_path), layout->logs_dir, "ios_latest_crash_report.txt") ||
-        !sorr_ios_join_path(layout->d4_touch_config_path, sizeof(layout->d4_touch_config_path), layout->documents_diagnostics_dir, "ios_touch_controls.ini"))
+        !sorr_ios_join_path(layout->d4_touch_config_path, sizeof(layout->d4_touch_config_path), layout->documents_diagnostics_dir, "ios_touch_controls.ini") ||
+        !sorr_ios_join_path(layout->audio_sfx_diagnostics_path, sizeof(layout->audio_sfx_diagnostics_path), layout->documents_diagnostics_dir, "ios_audio_sfx_diagnostics.txt"))
     {
         SDL_Log("SORR iOS shell: data layout path construction failed");
         return 0;
@@ -3631,8 +3637,9 @@ static int sorr_ios_prepare_data_layout(sorr_ios_data_layout *layout)
     {
         sorr_ios_write_text_file(diagnostics_readme_path,
                                  "D3S diagnostics are mirrored here for Files access.\n"
-                                 "For D4a crashes, reopen SorrIOSShell once and send ios_latest_crash_report.txt.\n"
+                                 "For crashes, reopen Streets of Rage once and send ios_latest_crash_report.txt.\n"
                                  "If more context is needed, also send ios_current_run_stability_log.txt.\n"
+                                 "For wrong SFX/run sound bugs, send ios_audio_sfx_diagnostics.txt after reproducing.\n"
                                  "ios_previous_run_stability_log.txt contains the prior launch, and ios_d3_runtime_stability_probe.txt remains the full rolling log.\n"
                                  "D4b-lite touch settings are saved in ios_touch_controls.ini.\n");
     }

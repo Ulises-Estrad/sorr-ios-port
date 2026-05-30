@@ -1,6 +1,6 @@
 # iOS Playtest Run SFX And Back Attack Follow-Up
 
-Status: second run-sound/edit-controls follow-up target ready for GitHub Actions.
+Status: third run-sound follow-up target ready for GitHub Actions, with iOS-backend SFX diagnostics.
 
 ## Reported Issue
 
@@ -8,9 +8,9 @@ During physical iPhone playtesting, double-tapping forward or backward to run co
 
 ## Patch Target
 
-The first follow-up enabled the safe handle table on iOS/64-bit builds, but physical testing still reproduced the wrong run sound. The updated suspect is stale/reused WAV sample identity after screen cleanup: an old game-side sample handle can survive while the underlying runtime unload/reload path reuses sample slots for a different enemy sound.
+The first follow-up enabled the generic `mod_sound` handle table on iOS/64-bit builds, but the physical iPhone build uses the iOS-specific audio backend in `sorr_ios_mod_sound_stub.c`, so that patch did not hit the active playback path. The second follow-up still reproduced the wrong run sound after moving to a new scene twice.
 
-The current patch keeps iOS WAV chunk handles stable by filename for the app session. `LOAD_WAV` reuses an existing handle for the same path, and `UNLOAD_WAV` keeps the handle/chunk alive on iOS instead of clearing the slot for a different sample. This keeps SFX/BGM enabled and does not alter game data, touch controls, or the runtime path beyond safer audio handle identity.
+The current patch instruments and hardens the actual iOS SDL_mixer audio backend. `LOAD_WAV` reuses an existing handle for the same path, `UNLOAD_WAV` keeps the WAV chunk alive for the app session, and every load/reuse/unload/play event is written to a Files-visible diagnostic file. This should show whether the dash/run action is playing the intended sample path or a handle that has become associated with an enemy sample after scene transitions.
 
 ## Control UI Follow-Up
 
@@ -27,14 +27,9 @@ This target also updates the fixed touch interface:
 ## Artifact Target
 
 ```text
-Actions run: 26673765318
-Commit: 8e926e3
-Artifact: ios-shell-playtest-stable-sfx-edit-controls-device-arm64
-IPA: build-products/SorrIOSShell-playtest-stable-sfx-edit-controls-adhoc.ipa
-Build label: ios-playtest-stable-sfx-edit-controls
-Artifact size: 1961595 bytes
-Device job result: success
-Simulator job result: success
+Artifact: ios-shell-playtest-audio-sfx-diagnostics-device-arm64
+IPA: build-products/SorrIOSShell-playtest-audio-sfx-diagnostics-adhoc.ipa
+Build label: ios-playtest-audio-sfx-diagnostics
 Game data/assets bundled in IPA: no
 ```
 
@@ -42,15 +37,22 @@ Game data/assets bundled in IPA: no
 
 1. Install the IPA through the same Windows + Sideloadly path.
 2. Launch using the already staged SoRR data.
-3. Visit multiple screens and double-tap forward/back to run.
-4. Confirm the run sound stays correct and does not become an enemy SFX.
-5. Confirm circular action buttons are visible.
-6. Confirm Back Attack is above Attack and triggers the `D` / back-attack binding.
-7. Confirm Back Attack / Attack / Special sit close enough to the Jump / Police column.
-8. Enter CFG, tap a control to select it, tap it again to deselect it, and confirm `DONE` / `BIG` / `SML` no longer accidentally move the selected control.
-9. Confirm Attack, Jump, Special, Police, Start, Back, joystick, BGM, and SFX still work.
+3. Visit multiple screens. The reported repro is moving into a new scene twice.
+4. Double-tap forward/back to run with Shiva SOR2 or another character whose dash/run sound is obvious.
+5. If the run sound becomes an enemy SFX, stop and retrieve the SFX diagnostic file before relaunching again if possible.
+6. Confirm circular action buttons are visible.
+7. Confirm Back Attack is above Attack and triggers the `D` / back-attack binding.
+8. Confirm Back Attack / Attack / Special sit close enough to the Jump / Police column.
+9. Enter CFG, tap a control to select it, tap it again to deselect it, and confirm `DONE` / `BIG` / `SML` no longer accidentally move the selected control.
+10. Confirm Attack, Jump, Special, Police, Start, Back, joystick, BGM, and SFX still work.
 
-If the sound bug still occurs, reopen once after any crash and retrieve:
+If the sound bug still occurs, retrieve:
+
+```text
+On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/ios_audio_sfx_diagnostics.txt
+```
+
+If the app also crashes, reopen once and retrieve:
 
 ```text
 On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/ios_latest_crash_report.txt

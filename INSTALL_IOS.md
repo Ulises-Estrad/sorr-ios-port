@@ -26,25 +26,23 @@ This guide rebuilds the current iPhone setup from zero.
 1. Open the GitHub repo.
 2. Go to `Actions`.
 3. Open the latest successful `iOS Shell` workflow run.
-4. Download the latest successful device artifact. Current follow-up build:
+4. Download the latest successful device artifact. Current run-sound diagnostic target:
 
    ```text
-   Actions run: 26673765318
-   Commit: 8e926e3
-   Artifact: ios-shell-playtest-stable-sfx-edit-controls-device-arm64
+   Artifact: ios-shell-playtest-audio-sfx-diagnostics-device-arm64
    ```
 
    Previous proven baseline:
 
    ```text
-   ios-shell-playtest-real-point-guard-device-arm64
+   ios-shell-playtest-stable-sfx-edit-controls-device-arm64
    ```
 
 5. Extract the downloaded artifact on Windows.
-6. Install the IPA with Sideloadly. Current follow-up IPA target:
+6. Install the IPA with Sideloadly. Current run-sound diagnostic IPA target:
 
    ```text
-   build-products/SorrIOSShell-playtest-stable-sfx-edit-controls-adhoc.ipa
+   build-products/SorrIOSShell-playtest-audio-sfx-diagnostics-adhoc.ipa
    ```
 
 7. If iOS asks, enable Developer Mode and trust the developer profile.
@@ -130,8 +128,16 @@ After a crash:
 3. If more context is needed, also send:
 
    ```text
-   On My iPhone/SorrIOSShell/SORR_DIAGNOSTICS/ios_current_run_stability_log.txt
+   On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/ios_current_run_stability_log.txt
    ```
+
+For wrong dash/run SFX after scene transitions, also send:
+
+```text
+On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/ios_audio_sfx_diagnostics.txt
+```
+
+That file is reset on each launch and logs the actual iOS audio backend's WAV load/reuse/unload/play events, including the handle id, sample path, current process, and whether an unloaded handle was later reused.
 
 ## Updating Later
 
