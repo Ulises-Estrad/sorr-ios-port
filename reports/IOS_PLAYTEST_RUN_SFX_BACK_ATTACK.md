@@ -170,3 +170,34 @@ Patch contents:
 - preserves custom controls, BGM/SFX, icon/name, D2-staged data, clear diagnostic filenames, and asset-free IPA packaging.
 
 Manual test focus: install this IPA, replay the scene-transition path that abruptly exited, and if it still exits or crashes, reopen once and send `LATEST_CRASH_OR_ABRUPT_EXIT_REPORT.txt` plus `PREVIOUS_SESSION_RUNTIME_LOG.txt`.
+
+## Playtest Stage-Transition Diagnostics Follow-Up
+
+The runtime-exit-guard artifact still produced a same-build no-signal fallback:
+
+```text
+build=ios-playtest-runtime-exit-guard
+signal=none
+previous_has_sdl_terminating=0
+runtime_exit_guards=0
+previous_last_marker=runtime_family_unlink NO_CARGUES#70043...
+```
+
+That rules out the deliberate Bennu `EXIT()` and interpreter hard-exit paths that the previous target guarded. The next artifact keeps the playable baseline and all existing guards, but pivots the diagnostics to stage startup/load:
+
+```text
+Artifact: ios-shell-playtest-stage-transition-diagnostics-device-arm64
+IPA: build-products/SorrIOSShell-playtest-stage-transition-diagnostics-adhoc.ipa
+Build label: ios-playtest-stage-transition-diagnostics
+Game data/assets bundled in IPA: no
+```
+
+Patch contents:
+
+- adds `NO_CARGUES`, `DISTRIBUCION`, `RESET_HQ`, `TELON`, `LAYER`, `LAYOUT_CONTROL`, `BLURMOTION`, `BRILLO_LUZ`, `POLVO_SEC`, `CUADRO_VIDA1`, `CUADRO_MUERTE1`, `SOMBRA_OBJETO`, `ITEMS`, `VUELA_ITEM`, and `REPITE_LAYERX` to the iOS runtime watchlist,
+- treats those transition/load names as focused lookup diagnostics when they hit recently destroyed processes,
+- starts one-second transition heartbeats when those markers appear,
+- records `stage_transition_dense` context in crash reports,
+- keeps custom controls, BGM/SFX, icon/name, clear diagnostic filenames, stale process guards, runtime-exit guards, and asset-free IPA packaging.
+
+Manual test focus: install this IPA, replay the same scene transition that exits abruptly, reopen once if the app disappears, and send `LATEST_CRASH_OR_ABRUPT_EXIT_REPORT.txt` plus `PREVIOUS_SESSION_RUNTIME_LOG.txt`.

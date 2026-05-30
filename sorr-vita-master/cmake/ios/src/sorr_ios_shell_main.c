@@ -24,11 +24,11 @@
 #include "SDL.h"
 
 #ifndef SORR_IOS_BUILD_LABEL
-#define SORR_IOS_BUILD_LABEL "ios-playtest-runtime-exit-guard"
+#define SORR_IOS_BUILD_LABEL "ios-playtest-stage-transition-diagnostics"
 #endif
 
 #ifndef SORR_IOS_ARTIFACT_LABEL
-#define SORR_IOS_ARTIFACT_LABEL "ios-shell-playtest-runtime-exit-guard-device-arm64"
+#define SORR_IOS_ARTIFACT_LABEL "ios-shell-playtest-stage-transition-diagnostics-device-arm64"
 #endif
 
 #ifdef SORR_IOS_D3_FIRST_RENDER
@@ -2321,6 +2321,9 @@ static volatile Uint32 sorr_ios_d3_runtime_loop_start_ticks = 0;
 static volatile int sorr_ios_d3_dense_window_marker = 0;
 static volatile int sorr_ios_d3_first_frame_marker = 0;
 static volatile unsigned long long sorr_ios_d3_last_rss_bytes = 0;
+static volatile Uint32 sorr_ios_d3_transition_dense_until_ticks = 0;
+static volatile unsigned int sorr_ios_d3_transition_dense_count = 0;
+static char sorr_ios_d3_last_transition_marker[256] = "";
 
 extern int x_files_count;
 extern int max_x_files;
@@ -2544,7 +2547,7 @@ static void sorr_ios_d4a_write_crash_report_fd(int fd, int sig)
                                  "build=%s\n"
                                  "artifact=%s\n"
                                  "crash_report_version=6\n"
-                                 "debug_focus=playtest runtime exit guard / abrupt transition exit / effect-water fallback\n"
+                                 "debug_focus=playtest stage transition diagnostics / no-signal abrupt exit after NO_CARGUES / effect-water fallback\n"
                                  "run_id=%s\n"
                                  "run_number=%u\n"
                                  "signal=%d\n"
@@ -2584,6 +2587,11 @@ static void sorr_ios_d4a_write_crash_report_fd(int fd, int sig)
     sorr_ios_signal_write_format(fd, "last_lookup=%s\n", sorr_ios_d3_last_lookup_event);
     sorr_ios_signal_write_format(fd, "runtime_exit_guards=%u\n", sorr_ios_d3_runtime_exit_guard_count);
     sorr_ios_signal_write_format(fd, "last_runtime_exit=%s\n", sorr_ios_d3_last_exit_event);
+    sorr_ios_signal_write_format(fd,
+                                 "stage_transition_dense=count:%u until_ticks:%u last_marker:%s\n",
+                                 sorr_ios_d3_transition_dense_count,
+                                 sorr_ios_d3_transition_dense_until_ticks,
+                                 sorr_ios_d3_last_transition_marker);
     sorr_ios_signal_write_format(fd, "last_native_call=%s\n", sorr_ios_d3_last_native_call_event);
     sorr_ios_signal_write_format(fd, "last_native_return=%s\n", sorr_ios_d3_last_native_return_event);
     sorr_ios_signal_write_format(fd, "recent_native_call_ring=%s\n", sorr_ios_d3_native_call_events);
@@ -3462,6 +3470,76 @@ static unsigned long long sorr_ios_d3_resident_memory_bytes(void)
     return 0;
 }
 
+static int sorr_ios_d3_text_has_stage_transition_marker(const char *text, char *marker, size_t marker_size)
+{
+    static const char * const markers[] = {
+        "NO_CARGUES",
+        "FASE1",
+        "DESCARGA_SISTEMA",
+        "SISTEMA_SONIDO",
+        "ASIGNADOR_ENEMIGO",
+        "DISTRIBUCION",
+        "RESET_HQ",
+        "TELON",
+        "LAYER#",
+        "LAYOUT_CONTROL",
+        "LINEAS_FASE",
+        "FILTRO_RAPIDO",
+        "SALPICA_AGUA",
+        "BLURMOTION",
+        "BRILLO_LUZ",
+        "POLVO_SEC"
+    };
+    size_t i;
+
+    if (!text || !marker || marker_size == 0)
+    {
+        return 0;
+    }
+
+    for (i = 0; i < sizeof(markers) / sizeof(markers[0]); i++)
+    {
+        if (strstr(text, markers[i]))
+        {
+            snprintf(marker, marker_size, "%s", markers[i]);
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+static int sorr_ios_d3_find_stage_transition_marker(char *marker, size_t marker_size)
+{
+    char found[64];
+
+    if (!marker || marker_size == 0)
+    {
+        return 0;
+    }
+
+    if (sorr_ios_d3_text_has_stage_transition_marker(sorr_ios_d3_last_lifecycle_event, found, sizeof(found)))
+    {
+        snprintf(marker, marker_size, "%s", found);
+        return 1;
+    }
+
+    if (sorr_ios_d3_text_has_stage_transition_marker(sorr_ios_d3_last_family_unlink, found, sizeof(found)))
+    {
+        snprintf(marker, marker_size, "%s", found);
+        return 1;
+    }
+
+    if (sorr_ios_d3_text_has_stage_transition_marker(sorr_ios_d3_last_lookup_event, found, sizeof(found)))
+    {
+        snprintf(marker, marker_size, "%s", found);
+        return 1;
+    }
+
+    marker[0] = '\0';
+    return 0;
+}
+
 static Uint32 sorr_ios_d3_heartbeat_timer(Uint32 interval, void *param)
 {
     const sorr_ios_data_layout *layout = (const sorr_ios_data_layout *)param;
@@ -3471,9 +3549,50 @@ static Uint32 sorr_ios_d3_heartbeat_timer(Uint32 interval, void *param)
     Uint32 runtime_ms = loop_start ? ticks - loop_start : 0;
     Uint32 next_interval = SORR_IOS_D3_HEARTBEAT_NORMAL_MS;
     unsigned long long rss = sorr_ios_d3_resident_memory_bytes();
+    char transition_marker[256];
     sorr_ios_d3_last_rss_bytes = rss;
 
     (void)interval;
+
+    if (sorr_ios_d3_find_stage_transition_marker(transition_marker, sizeof(transition_marker)))
+    {
+        if (strcmp(transition_marker, sorr_ios_d3_last_transition_marker) != 0)
+        {
+            snprintf(sorr_ios_d3_last_transition_marker, sizeof(sorr_ios_d3_last_transition_marker), "%s", transition_marker);
+            sorr_ios_d3_transition_dense_until_ticks = ticks + 45000;
+            sorr_ios_d3_transition_dense_count++;
+            sorr_ios_d3_stability_log(layout,
+                                      "stage_transition_dense_start count=%u ticks=%u runtime_ms=%u until_ticks=%u marker=%s rss_bytes=%llu instances=%d render_objects=%d opened_files=%d x_files=%d last_lifecycle=%s last_family=%s runtime_snapshot=%s",
+                                      sorr_ios_d3_transition_dense_count,
+                                      ticks,
+                                      runtime_ms,
+                                      sorr_ios_d3_transition_dense_until_ticks,
+                                      transition_marker,
+                                      rss,
+                                      sorr_ios_d3_live_instance_count,
+                                      sorr_ios_d3_render_object_count,
+                                      opened_files,
+                                      x_files_count,
+                                      sorr_ios_d3_last_lifecycle_event,
+                                      sorr_ios_d3_last_family_unlink,
+                                      sorr_ios_d3_runtime_snapshot);
+        }
+    }
+
+    if (sorr_ios_d3_transition_dense_until_ticks && ticks <= sorr_ios_d3_transition_dense_until_ticks)
+    {
+        next_interval = SORR_IOS_D3_HEARTBEAT_DENSE_MS;
+    }
+    else if (sorr_ios_d3_transition_dense_until_ticks && ticks > sorr_ios_d3_transition_dense_until_ticks)
+    {
+        sorr_ios_d3_stability_log(layout,
+                                  "stage_transition_dense_end count=%u ticks=%u runtime_ms=%u last_marker=%s",
+                                  sorr_ios_d3_transition_dense_count,
+                                  ticks,
+                                  runtime_ms,
+                                  sorr_ios_d3_last_transition_marker);
+        sorr_ios_d3_transition_dense_until_ticks = 0;
+    }
 
     if (runtime_ms >= SORR_IOS_D3_DENSE_START_MS && runtime_ms <= SORR_IOS_D3_DENSE_END_MS)
     {

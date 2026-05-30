@@ -1,6 +1,6 @@
 # iOS Current Playtest Baseline
 
-Status: current playable iPhone baseline, paused/final for now, with a runtime-exit-guard follow-up target ready for playtesting.
+Status: current playable iPhone baseline, paused/final for now, with a stage-transition diagnostics follow-up target ready for playtesting.
 
 This project is now a playable iPhone port baseline, not an early proof-only experiment. Historical milestone reports remain in `reports/` as evidence, but current work should use this playtest baseline framing. Active feature work is paused; future changes should be limited to major bug fixes found during normal playtesting.
 
@@ -17,9 +17,20 @@ This project is now a playable iPhone port baseline, not an early proof-only exp
 - The IPA remains asset-free; game data is imported locally through the iPhone Files route.
 - Latest physical playtest fix: gun firing works and Stage 6 beach/water startup no longer crashes after the GET_REAL_POINT guard.
 - Latest route playtest: the SoR2 path was cleared with Axel with no clear bugs or random crashes observed afterward.
-- Current follow-up target: keep the stale remote process guard, clear diagnostic filenames, and add a runtime-exit guard so no-signal scene-transition exits leave actionable breadcrumbs instead of silently closing the app.
+- Current follow-up target: keep the stale remote process guard, clear diagnostic filenames, runtime-exit guard, and add focused stage-transition diagnostics because the latest no-signal report stopped after `NO_CARGUES` with `runtime_exit_guards=0`.
 
 ## Current Workflow Target
+
+```text
+Artifact: ios-shell-playtest-stage-transition-diagnostics-device-arm64
+IPA: build-products/SorrIOSShell-playtest-stage-transition-diagnostics-adhoc.ipa
+Build label: ios-playtest-stage-transition-diagnostics
+Game data/assets bundled in IPA: no
+```
+
+This target keeps custom controls, BGM/SFX, the app icon/name, clear Files-visible diagnostics, stale process guards, and runtime-exit guards. It adds `NO_CARGUES` and other stage startup/load processes to the explicit watchlist, starts one-second transition heartbeats when those markers appear, and records `stage_transition_dense` context in crash reports.
+
+Previous follow-up target:
 
 ```text
 Actions run: 26690777842

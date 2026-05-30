@@ -26,12 +26,10 @@ This guide rebuilds the current iPhone setup from zero.
 1. Open the GitHub repo.
 2. Go to `Actions`.
 3. Open the latest successful `iOS Shell` workflow run.
-4. Download the latest successful device artifact. Current runtime-exit-guard playtest target:
+4. Download the latest successful device artifact. Current stage-transition diagnostic playtest target:
 
    ```text
-   Actions run: 26690777842
-   Commit: 7568eca
-   Artifact: ios-shell-playtest-runtime-exit-guard-device-arm64
+   Artifact: ios-shell-playtest-stage-transition-diagnostics-device-arm64
    ```
 
    Previous proven baseline:
@@ -41,10 +39,10 @@ This guide rebuilds the current iPhone setup from zero.
    ```
 
 5. Extract the downloaded artifact on Windows.
-6. Install the IPA with Sideloadly. Current runtime-exit-guard IPA target:
+6. Install the IPA with Sideloadly. Current stage-transition diagnostic IPA target:
 
    ```text
-   build-products/SorrIOSShell-playtest-runtime-exit-guard-adhoc.ipa
+   build-products/SorrIOSShell-playtest-stage-transition-diagnostics-adhoc.ipa
    ```
 
 7. If iOS asks, enable Developer Mode and trust the developer profile.

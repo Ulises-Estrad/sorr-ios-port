@@ -547,7 +547,7 @@ char sorr_ios_d3_native_call_events[3072] = "native_events=none";
 char sorr_ios_d3_last_effect_water_event[1024] = "effect_water=none";
 volatile unsigned int sorr_ios_d3_runtime_exit_guard_count = 0;
 char sorr_ios_d3_last_exit_event[1024] = "exit=none";
-char sorr_ios_d3_runtime_snapshot[2048] = "snapshot=uninitialized";
+char sorr_ios_d3_runtime_snapshot[4096] = "snapshot=uninitialized";
 char sorr_ios_d3_lifecycle_events[1536] = "events=none";
 char sorr_ios_d3_destroyed_ring_snapshot[2048] = "destroyed=none";
 char sorr_ios_d3_family_events[3072] = "family_events=none";
@@ -592,7 +592,22 @@ static const char * const sorr_ios_d3_watch_proc_names[] = {
     "LINEAS_FASE",
     "AGUA",
     "PLAYA",
-    "FASE6"
+    "FASE6",
+    "DISTRIBUCION",
+    "RESET_HQ",
+    "NO_CARGUES",
+    "TELON",
+    "LAYER",
+    "LAYOUT_CONTROL",
+    "BLURMOTION",
+    "BRILLO_LUZ",
+    "POLVO_SEC",
+    "CUADRO_VIDA1",
+    "CUADRO_MUERTE1",
+    "SOMBRA_OBJETO",
+    "ITEMS",
+    "VUELA_ITEM",
+    "REPITE_LAYERX"
 };
 #define SORR_IOS_D3_WATCH_PROC_COUNT ( sizeof( sorr_ios_d3_watch_proc_names ) / sizeof( sorr_ios_d3_watch_proc_names[0] ) )
 #define SORR_IOS_D3_EVENT_SLOT_COUNT 12
@@ -685,7 +700,23 @@ static int sorr_ios_d3_enemy_related_name( const char * name )
         "LINEAS_FASE",
         "AGUA",
         "PLAYA",
-        "FASE6"
+        "FASE6",
+        "CONTROLADOR",
+        "LAYOUT_CONTROL",
+        "DISTRIBUCION",
+        "RESET_HQ",
+        "NO_CARGUES",
+        "TELON",
+        "LAYER",
+        "BLURMOTION",
+        "BRILLO_LUZ",
+        "POLVO_SEC",
+        "CUADRO_VIDA1",
+        "CUADRO_MUERTE1",
+        "SOMBRA_OBJETO",
+        "ITEMS",
+        "VUELA_ITEM",
+        "REPITE_LAYERX"
     };
     unsigned int n;
 
@@ -1490,10 +1521,10 @@ static void sorr_ios_d3_update_runtime_snapshot( const char * reason, int loop_c
     unsigned int watch_live[SORR_IOS_D3_WATCH_PROC_COUNT] = { 0 };
     unsigned int n;
     char sample[512];
-    char watch_summary[1024];
+    char watch_summary[2048];
     size_t used = 0;
     size_t watch_used = 0;
-    char next_snapshot[2048];
+    char next_snapshot[4096];
 
     sample[0] = '\0';
     watch_summary[0] = '\0';
