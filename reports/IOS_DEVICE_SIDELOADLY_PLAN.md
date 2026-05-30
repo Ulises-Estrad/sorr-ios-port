@@ -818,17 +818,17 @@ On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/ios_audio_sfx_diagnostics.txt
 
 That file logs iOS WAV load/reuse/unload/play events with handle ids, sample paths, current process names, channel results, and whether an unloaded handle was later played or reused. The IPA remains asset-free and keeps BGM/SFX, custom controls, icon/name, D2-staged data, and visible diagnostics.
 
-## Playtest Fallback Crash Report Artifact
+## Playtest Crash Report Archive Artifact
 
-The audio diagnostic artifact appears to have fixed the wrong run SFX, but a new abrupt scene-transition exit did not refresh `ios_latest_crash_report.txt`. The next Sideloadly artifact keeps audio diagnostics and adds fallback report generation on the next launch:
+The audio diagnostic artifact appears to have fixed the wrong run SFX, but a new abrupt scene-transition exit did not refresh `ios_latest_crash_report.txt`. The first fallback build generated a report, but an old-build/short lifecycle run could overwrite the useful latest file. The current Sideloadly artifact keeps audio diagnostics and archives fallback reports per run:
 
 ```text
-Actions run: 26675725620
-Commit: 555ba50
-ios-shell-playtest-fallback-crash-report-device-arm64
-build-products/SorrIOSShell-playtest-fallback-crash-report-adhoc.ipa
-Build label: ios-playtest-fallback-crash-report
-Artifact size: 1963861 bytes
+Actions run: 26676209972
+Commit: 70f6c04
+ios-shell-playtest-crash-report-archive-device-arm64
+build-products/SorrIOSShell-playtest-crash-report-archive-adhoc.ipa
+Build label: ios-playtest-crash-report-archive
+Artifact size: 1964110 bytes
 Device job result: success
 Simulator job result: success
 Game data/assets bundled in IPA: no
@@ -840,9 +840,10 @@ Install with the same Windows + Sideloadly route. If the app exits during a scen
 On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/ios_latest_crash_report.txt
 On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/ios_previous_run_stability_log.txt
 On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/ios_current_run_stability_log.txt
+On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/ios_previous_run_fallback_<run>.txt
 ```
 
-If the report says `crash_report_type=previous-run-nosignal-fallback`, it means the prior exit did not reach the signal handler and the report was synthesized from the previous run log.
+If the report says `crash_report_type=previous-run-nosignal-fallback`, it means the prior exit did not reach the signal handler and the report was synthesized from the previous run log. If `latest_crash_report_overwritten=0`, that fallback was archived but intentionally did not replace `ios_latest_crash_report.txt` because it looked stale or lifecycle-only.
 
 GitHub-side artifact proof:
 

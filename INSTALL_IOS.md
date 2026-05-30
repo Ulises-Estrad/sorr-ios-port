@@ -26,12 +26,12 @@ This guide rebuilds the current iPhone setup from zero.
 1. Open the GitHub repo.
 2. Go to `Actions`.
 3. Open the latest successful `iOS Shell` workflow run.
-4. Download the latest successful device artifact. Current fallback crash-report diagnostic target:
+4. Download the latest successful device artifact. Current crash-report archive diagnostic target:
 
    ```text
-   Actions run: 26675725620
-   Commit: 555ba50
-   Artifact: ios-shell-playtest-fallback-crash-report-device-arm64
+   Actions run: 26676209972
+   Commit: 70f6c04
+   Artifact: ios-shell-playtest-crash-report-archive-device-arm64
    ```
 
    Previous proven baseline:
@@ -41,10 +41,10 @@ This guide rebuilds the current iPhone setup from zero.
    ```
 
 5. Extract the downloaded artifact on Windows.
-6. Install the IPA with Sideloadly. Current fallback crash-report diagnostic IPA target:
+6. Install the IPA with Sideloadly. Current crash-report archive diagnostic IPA target:
 
    ```text
-   build-products/SorrIOSShell-playtest-fallback-crash-report-adhoc.ipa
+   build-products/SorrIOSShell-playtest-crash-report-archive-adhoc.ipa
    ```
 
 7. If iOS asks, enable Developer Mode and trust the developer profile.
@@ -141,7 +141,7 @@ On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/ios_audio_sfx_diagnostics.txt
 
 That file is reset on each launch and logs the actual iOS audio backend's WAV load/reuse/unload/play events, including the handle id, sample path, current process, and whether an unloaded handle was later reused.
 
-If the app exits abruptly without a normal signal crash report, the next launch now synthesizes `ios_latest_crash_report.txt` from `ios_previous_run_stability_log.txt`. In that case the report will say `crash_report_type=previous-run-nosignal-fallback`.
+If the app exits abruptly without a normal signal crash report, the next launch synthesizes a fallback report from `ios_previous_run_stability_log.txt`. Same-build, non-trivial runs can replace `ios_latest_crash_report.txt`; stale old-build runs and very short lifecycle/background exits are archived as `ios_previous_run_fallback_<run>.txt` so they do not bury the real latest report.
 
 ## Updating Later
 

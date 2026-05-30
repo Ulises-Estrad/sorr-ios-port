@@ -50,16 +50,18 @@ Game data/assets bundled in IPA: no
 Current follow-up target:
 
 ```text
-Actions run: 26675725620
-Commit: 555ba50
-Artifact: ios-shell-playtest-fallback-crash-report-device-arm64
-IPA: build-products/SorrIOSShell-playtest-fallback-crash-report-adhoc.ipa
-Build label: ios-playtest-fallback-crash-report
-Artifact size: 1963861 bytes
+Actions run: 26676209972
+Commit: 70f6c04
+Artifact: ios-shell-playtest-crash-report-archive-device-arm64
+IPA: build-products/SorrIOSShell-playtest-crash-report-archive-adhoc.ipa
+Build label: ios-playtest-crash-report-archive
+Artifact size: 1964110 bytes
 Device job result: success
 Simulator job result: success
 Game data/assets bundled in IPA: no
 ```
+
+The newest crash-report follow-up prevents stale old-build reports or very short lifecycle/background exits from overwriting `ios_latest_crash_report.txt`. Every no-signal previous run is still archived as `ios_previous_run_fallback_<run>.txt` in `SORR_DIAGNOSTICS`.
 
 ## Control Layout
 
@@ -74,9 +76,9 @@ In edit mode, tapping selects a control, tapping the same selected control again
 
 ## Current Roadmap
 
-Current: final-for-now playable baseline plus a focused run-sound diagnostic build. The latest proven baseline includes the GET_REAL_POINT pointer-output guard and crash-report version 3.
+Current: final-for-now playable baseline plus crash-report archive diagnostics. The latest proven baseline includes the GET_REAL_POINT pointer-output guard, SFX diagnostics, and per-run no-signal fallback archives.
 
-Next: test the run-sound diagnostic build on the physical iPhone. After that, return to free-time playtesting and patch only major bugs one by one if they are found during real play.
+Next: continue free-time playtesting and patch only major bugs one by one if they are found during real play.
 
 ## Latest Physical Playtest Result
 

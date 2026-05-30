@@ -1292,19 +1292,19 @@ Patch contents:
 
 Test focus: move through at least two scenes, double-tap forward/back to run, and if the dash sound becomes an enemy SFX, send `ios_audio_sfx_diagnostics.txt` so the exact handle/path mismatch can be traced.
 
-## Current Playtest Bug Follow-Up: Fallback Crash Report
+## Current Playtest Bug Follow-Up: Crash Report Archive
 
-Physical testing of the audio SFX diagnostic artifact suggests the wrong run SFX is no longer reproducing, but a new scene-transition exit did not refresh `ios_latest_crash_report.txt`. That means the exit likely did not reach the signal handler path.
+Physical testing of the audio SFX diagnostic artifact suggests the wrong run SFX is no longer reproducing, but a new scene-transition exit did not refresh `ios_latest_crash_report.txt`. That means the exit likely did not reach the signal handler path. The newest follow-up also prevents stale old-build or very short lifecycle/background fallback reports from overwriting the useful latest crash report.
 
 Current artifact target:
 
 ```text
-Actions run: 26675725620
-Commit: 555ba50
-Artifact: ios-shell-playtest-fallback-crash-report-device-arm64
-IPA: build-products/SorrIOSShell-playtest-fallback-crash-report-adhoc.ipa
-Build label: ios-playtest-fallback-crash-report
-Artifact size: 1963861 bytes
+Actions run: 26676209972
+Commit: 70f6c04
+Artifact: ios-shell-playtest-crash-report-archive-device-arm64
+IPA: build-products/SorrIOSShell-playtest-crash-report-archive-adhoc.ipa
+Build label: ios-playtest-crash-report-archive
+Artifact size: 1964110 bytes
 Device job result: success
 Simulator job result: success
 Game data/assets bundled in IPA: no
@@ -1314,8 +1314,9 @@ Patch contents:
 
 - appends `clean_shutdown=1` to current-run logs on normal shutdown,
 - checks the rotated `ios_previous_run_stability_log.txt` on the next launch,
-- if the previous run has no `clean_shutdown=1` and no `signal=`, writes `ios_latest_crash_report.txt` with `crash_report_type=previous-run-nosignal-fallback`,
-- includes the previous run tail in the fallback report,
+- if the previous run has no `clean_shutdown=1` and no `signal=`, writes an archived `ios_previous_run_fallback_<run>.txt`,
+- replaces `ios_latest_crash_report.txt` only when the previous run is from the same build and is not a very short lifecycle/background termination,
+- includes the previous run tail, previous build, current build, last tick, and overwrite policy in the fallback report,
 - preserves the iOS SFX diagnostic file, BGM/SFX, custom controls, icon/name, staged-data path, visible diagnostics, and asset-free packaging.
 
-Test focus: if the app exits during a scene transition, reopen once and send `ios_latest_crash_report.txt`, `ios_previous_run_stability_log.txt`, and `ios_current_run_stability_log.txt`.
+Test focus: if the app exits during a scene transition, reopen once and send `ios_latest_crash_report.txt`, `ios_previous_run_stability_log.txt`, `ios_current_run_stability_log.txt`, and any matching `ios_previous_run_fallback_<run>.txt`.

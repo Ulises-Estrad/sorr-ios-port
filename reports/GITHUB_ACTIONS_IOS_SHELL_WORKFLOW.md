@@ -2487,17 +2487,17 @@ Manual test focus: install the new IPA, move through at least two scene transiti
 On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/ios_audio_sfx_diagnostics.txt
 ```
 
-## Playtest Fallback Crash Report Follow-Up
+## Playtest Crash Report Archive Follow-Up
 
-Physical testing showed the audio issue no longer reproduced, but a new abrupt scene-transition exit did not refresh `ios_latest_crash_report.txt`. The next workflow target keeps the audio diagnostics and adds next-launch fallback crash-report synthesis:
+Physical testing showed the audio issue no longer reproduced, but a new abrupt scene-transition exit did not refresh `ios_latest_crash_report.txt`. The previous fallback build generated a report, but it could be overwritten by stale old-build or very short lifecycle/background runs. The current workflow target keeps the audio diagnostics and archives no-signal fallback reports without burying the actionable latest crash report:
 
 ```text
-Actions run: 26675725620
-Commit: 555ba50
-Device artifact: ios-shell-playtest-fallback-crash-report-device-arm64
-IPA: build-products/SorrIOSShell-playtest-fallback-crash-report-adhoc.ipa
-Build label: ios-playtest-fallback-crash-report
-Artifact size: 1963861 bytes
+Actions run: 26676209972
+Commit: 70f6c04
+Device artifact: ios-shell-playtest-crash-report-archive-device-arm64
+IPA: build-products/SorrIOSShell-playtest-crash-report-archive-adhoc.ipa
+Build label: ios-playtest-crash-report-archive
+Artifact size: 1964110 bytes
 Device job result: success
 Simulator job result: success
 Game data/assets bundled in IPA: no
@@ -2507,8 +2507,9 @@ Patch contents:
 
 - appends `clean_shutdown=1` to current-run logs on normal shutdown,
 - on the next launch, checks the rotated `ios_previous_run_stability_log.txt`,
-- if the previous run has no `clean_shutdown=1` and no `signal=`, writes `ios_latest_crash_report.txt` with `crash_report_type=previous-run-nosignal-fallback`,
-- includes the previous run tail in that fallback report,
+- if the previous run has no `clean_shutdown=1` and no `signal=`, writes an archived `ios_previous_run_fallback_<run>.txt`,
+- only replaces `ios_latest_crash_report.txt` when the previous run is from the same build and is not a very short lifecycle/background termination,
+- includes the previous run tail, previous build, current build, last tick, and overwrite policy in the fallback report,
 - preserves the iOS SFX diagnostic file, BGM/SFX, controls, icon/name, staged-data path, and asset-free IPA packaging.
 
-Manual test focus: if the app exits during a scene transition, reopen once and retrieve `ios_latest_crash_report.txt`, `ios_previous_run_stability_log.txt`, and `ios_current_run_stability_log.txt`.
+Manual test focus: if the app exits during a scene transition, reopen once and retrieve `ios_latest_crash_report.txt`, `ios_previous_run_stability_log.txt`, `ios_current_run_stability_log.txt`, and any matching `ios_previous_run_fallback_<run>.txt`.

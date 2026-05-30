@@ -1,6 +1,6 @@
 # iOS Playtest Run SFX And Back Attack Follow-Up
 
-Status: third run-sound follow-up target ready for GitHub Actions, with iOS-backend SFX diagnostics.
+Status: run-sound follow-up plus crash-report archive diagnostics available from GitHub Actions.
 
 ## Reported Issue
 
@@ -27,12 +27,12 @@ This target also updates the fixed touch interface:
 ## Artifact Target
 
 ```text
-Actions run: 26675725620
-Commit: 555ba50
-Artifact: ios-shell-playtest-fallback-crash-report-device-arm64
-IPA: build-products/SorrIOSShell-playtest-fallback-crash-report-adhoc.ipa
-Build label: ios-playtest-fallback-crash-report
-Artifact size: 1963861 bytes
+Actions run: 26676209972
+Commit: 70f6c04
+Artifact: ios-shell-playtest-crash-report-archive-device-arm64
+IPA: build-products/SorrIOSShell-playtest-crash-report-archive-adhoc.ipa
+Build label: ios-playtest-crash-report-archive
+Artifact size: 1964110 bytes
 Device job result: success
 Simulator job result: success
 Game data/assets bundled in IPA: no
@@ -61,7 +61,9 @@ If the app also crashes, reopen once and retrieve:
 
 ```text
 On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/ios_latest_crash_report.txt
+On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/ios_previous_run_stability_log.txt
 On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/ios_current_run_stability_log.txt
+On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/ios_previous_run_fallback_<run>.txt
 ```
 
-If the scene-transition exit does not generate a signal report, the next launch should still replace `ios_latest_crash_report.txt` with a fallback report built from `ios_previous_run_stability_log.txt`.
+If the scene-transition exit does not generate a signal report, the next launch archives a fallback report built from `ios_previous_run_stability_log.txt`. It only replaces `ios_latest_crash_report.txt` when the prior run is from the same build and is not just a short lifecycle/background termination.
