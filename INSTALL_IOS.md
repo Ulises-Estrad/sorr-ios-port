@@ -26,18 +26,18 @@ This guide rebuilds the current iPhone setup from zero.
 1. Open the GitHub repo.
 2. Go to `Actions`.
 3. Open the latest successful `iOS Shell` workflow run.
-4. Download the latest successful device artifact. Current proven baseline:
+4. Download the latest successful device artifact. Current follow-up build:
 
    ```text
-   Actions run: 26626858854
-   Commit: cd08c9b
-   Artifact: ios-shell-playtest-real-point-guard-device-arm64
+   Actions run: 26672932784
+   Commit: 3b7811e
+   Artifact: ios-shell-playtest-run-sfx-back-attack-device-arm64
    ```
 
-   Current follow-up target:
+   Previous proven baseline:
 
    ```text
-   ios-shell-playtest-run-sfx-back-attack-device-arm64
+   ios-shell-playtest-real-point-guard-device-arm64
    ```
 
 5. Extract the downloaded artifact on Windows.

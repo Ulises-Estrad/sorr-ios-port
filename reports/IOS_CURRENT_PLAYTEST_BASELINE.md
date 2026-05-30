@@ -1,6 +1,6 @@
 # iOS Current Playtest Baseline
 
-Status: current playable iPhone baseline, paused/final for now, with one active playtest follow-up patch target.
+Status: current playable iPhone baseline, paused/final for now, with one GitHub-built playtest follow-up ready for physical testing.
 
 This project is now a playable iPhone port baseline, not an early proof-only experiment. Historical milestone reports remain in `reports/` as evidence, but current work should use this playtest baseline framing. Active feature work is paused; future changes should be limited to major bug fixes found during normal playtesting.
 
@@ -36,10 +36,15 @@ Game data/assets bundled in IPA: no
 Follow-up target:
 
 ```text
+Actions run: 26672932784
+Commit: 3b7811e
 Artifact: ios-shell-playtest-run-sfx-back-attack-device-arm64
 IPA: build-products/SorrIOSShell-playtest-run-sfx-back-attack-adhoc.ipa
 Build label: ios-playtest-run-sfx-back-attack
-Status: pending GitHub Actions proof
+Artifact size: 1961521 bytes
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
 ```
 
 ## Control Layout
@@ -57,7 +62,7 @@ In edit mode, tapping selects a control, but rearranging requires dragging. This
 
 Current: final-for-now playable baseline. The latest IPA includes the GET_REAL_POINT pointer-output guard and crash-report version 3.
 
-Next: test the run-sound/back-attack follow-up build. After that, return to free-time playtesting and patch only major bugs one by one if they are found during real play.
+Next: test the run-sound/back-attack follow-up build on the physical iPhone. After that, return to free-time playtesting and patch only major bugs one by one if they are found during real play.
 
 ## Latest Physical Playtest Result
 

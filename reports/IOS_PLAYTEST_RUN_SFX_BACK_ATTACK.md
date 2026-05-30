@@ -1,6 +1,6 @@
 # iOS Playtest Run SFX And Back Attack Follow-Up
 
-Status: follow-up patch target after the current playable baseline.
+Status: GitHub-built follow-up ready for physical iPhone testing.
 
 ## Reported Issue
 
@@ -25,9 +25,14 @@ This target also updates the fixed touch interface:
 ## Artifact Target
 
 ```text
+Actions run: 26672932784
+Commit: 3b7811e
 Artifact: ios-shell-playtest-run-sfx-back-attack-device-arm64
 IPA: build-products/SorrIOSShell-playtest-run-sfx-back-attack-adhoc.ipa
 Build label: ios-playtest-run-sfx-back-attack
+Artifact size: 1961521 bytes
+Device job result: success
+Simulator job result: success
 Game data/assets bundled in IPA: no
 ```
 

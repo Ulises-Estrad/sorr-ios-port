@@ -797,6 +797,19 @@ The IPA remains asset-free and keeps BGM/SFX, custom controls, icon/name, D2-sta
 GitHub-side artifact proof:
 
 ```text
+Actions run: 26672932784
+Commit: 3b7811e
+Artifact: ios-shell-playtest-run-sfx-back-attack-device-arm64
+IPA: build-products/SorrIOSShell-playtest-run-sfx-back-attack-adhoc.ipa
+Artifact size: 1961521 bytes
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
+```
+
+GitHub-side artifact proof:
+
+```text
 Actions run: 26626858854
 Commit: cd08c9b
 Artifact: ios-shell-playtest-real-point-guard-device-arm64

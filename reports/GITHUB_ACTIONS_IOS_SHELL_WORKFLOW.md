@@ -2415,3 +2415,16 @@ Patch contents:
 - keeps the IPA asset-free.
 
 Manual test focus: visit multiple screens, double-tap forward/back to run, confirm the correct run sound plays, and verify Back Attack plus existing Attack/Jump/Special/Police/Start/Back controls.
+
+GitHub-side artifact proof:
+
+```text
+Actions run: 26672932784
+Commit: 3b7811e
+Device artifact: ios-shell-playtest-run-sfx-back-attack-device-arm64
+IPA: build-products/SorrIOSShell-playtest-run-sfx-back-attack-adhoc.ipa
+Artifact size: 1961521 bytes
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
+```
