@@ -2411,7 +2411,7 @@ Patch contents:
 - keeps BGM/SFX enabled,
 - keeps the joystick and current Bennu key injection path,
 - changes action-button visuals to circular controls,
-- adds Back Attack above Attack, mapped to Bennu key `57` / Space,
+- adds Back Attack above Attack, mapped to Bennu key `57` / Space in that superseded artifact,
 - keeps the IPA asset-free.
 
 Manual test focus: visit multiple screens, double-tap forward/back to run, confirm the correct run sound plays, and verify Back Attack plus existing Attack/Jump/Special/Police/Start/Back controls.
@@ -2428,3 +2428,25 @@ Device job result: success
 Simulator job result: success
 Game data/assets bundled in IPA: no
 ```
+
+## Playtest Stable SFX / Edit Controls Follow-Up
+
+Physical testing of the first run-SFX follow-up still reproduced the wrong run sound after some screen transitions. The next workflow target keeps the same playable baseline but changes the suspected audio failure class from pointer truncation to stale/recycled WAV sample identity:
+
+```text
+Device artifact: ios-shell-playtest-stable-sfx-edit-controls-device-arm64
+IPA: build-products/SorrIOSShell-playtest-stable-sfx-edit-controls-adhoc.ipa
+Build label: ios-playtest-stable-sfx-edit-controls
+```
+
+Patch contents:
+
+- keeps iOS WAV chunk handles stable by filename for the app session,
+- reuses a previous `LOAD_WAV` handle when the same path is loaded again,
+- keeps iOS `UNLOAD_WAV` handles alive instead of clearing the slot for a different sample,
+- maps Back Attack to Bennu key `32` / `D`,
+- moves the Back Attack / Attack / Special column closer to Jump / Police,
+- lets edit mode deselect a selected control by tapping it again before using config buttons,
+- keeps BGM/SFX, custom controls, icon/name, D2-staged data, visible diagnostics, and asset-free IPA packaging.
+
+Manual test focus: install the new IPA, visit multiple screens, double-tap forward/back with Shiva SOR2 or another character with an obvious dash/run sound, confirm the correct run sound remains stable, verify Back Attack triggers `D`, and confirm `DONE` / `BIG` / `SML` no longer accidentally drag the selected control.

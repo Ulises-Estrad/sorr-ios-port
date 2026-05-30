@@ -29,9 +29,7 @@ This guide rebuilds the current iPhone setup from zero.
 4. Download the latest successful device artifact. Current follow-up build:
 
    ```text
-   Actions run: 26672932784
-   Commit: 3b7811e
-   Artifact: ios-shell-playtest-run-sfx-back-attack-device-arm64
+   Artifact: ios-shell-playtest-stable-sfx-edit-controls-device-arm64
    ```
 
    Previous proven baseline:
@@ -44,7 +42,7 @@ This guide rebuilds the current iPhone setup from zero.
 6. Install the IPA with Sideloadly. Current follow-up IPA target:
 
    ```text
-   build-products/SorrIOSShell-playtest-run-sfx-back-attack-adhoc.ipa
+   build-products/SorrIOSShell-playtest-stable-sfx-edit-controls-adhoc.ipa
    ```
 
 7. If iOS asks, enable Developer Mode and trust the developer profile.
@@ -104,7 +102,7 @@ Controls are configurable in-app through `CFG`.
 - Use `RST` to reset the default layout.
 - Use `DONE` to save and exit.
 - `CFG` lives in the left pillar area. `START` is in the right pillar area, and `BACK` is directly below it.
-- Gameplay action buttons are circular. `Back Attack` sits above `Attack` and maps to the Space/back-attack binding.
+- Gameplay action buttons are circular. `Back Attack` sits above `Attack` and maps to the `D` / back-attack binding.
 
 Settings persist here:
 

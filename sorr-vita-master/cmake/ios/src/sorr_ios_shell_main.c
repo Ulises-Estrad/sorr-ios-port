@@ -24,11 +24,11 @@
 #include "SDL.h"
 
 #ifndef SORR_IOS_BUILD_LABEL
-#define SORR_IOS_BUILD_LABEL "ios-playtest-run-sfx-back-attack"
+#define SORR_IOS_BUILD_LABEL "ios-playtest-stable-sfx-edit-controls"
 #endif
 
 #ifndef SORR_IOS_ARTIFACT_LABEL
-#define SORR_IOS_ARTIFACT_LABEL "ios-shell-playtest-run-sfx-back-attack-device-arm64"
+#define SORR_IOS_ARTIFACT_LABEL "ios-shell-playtest-stable-sfx-edit-controls-device-arm64"
 #endif
 
 #ifdef SORR_IOS_D3_FIRST_RENDER
@@ -361,7 +361,7 @@ static void sorr_ios_touch_set_bennu_key(int code, int pressed)
 #define SORR_IOS_D4A_JOYSTICK_DIAGONAL_RATIO 0.58f
 #define SORR_IOS_D4A_CONFIG_HIT_SLOP 0.016f
 #define SORR_IOS_D4A_TOUCH_MOUSE_SUPPRESS_MS 450
-#define SORR_IOS_D4A_CONTROL_CONFIG_VERSION 5
+#define SORR_IOS_D4A_CONTROL_CONFIG_VERSION 6
 #define SORR_IOS_D4A_UTILITY_BUTTON_HIT_SLOP 0.012f
 #define SORR_IOS_D4A_EDIT_DRAG_THRESHOLD 0.018f
 
@@ -435,13 +435,13 @@ typedef struct sorr_ios_d4a_control_layout
 } sorr_ios_d4a_control_layout;
 
 static const sorr_ios_d4a_touch_button sorr_ios_d4a_touch_buttons[SORR_IOS_D4A_TOUCH_BUTTON_COUNT] = {
-    {"Attack", "ATK", 46, -1, 0.760f, 0.620f, 0.065f, 0.140f},
+    {"Attack", "ATK", 46, -1, 0.800f, 0.620f, 0.065f, 0.140f},
     {"Jump", "JUMP", 47, -1, 0.875f, 0.620f, 0.065f, 0.140f},
-    {"Special", "SPC", 45, -1, 0.760f, 0.790f, 0.065f, 0.140f},
+    {"Special", "SPC", 45, -1, 0.800f, 0.790f, 0.065f, 0.140f},
     {"Police", "POL", 48, -1, 0.875f, 0.790f, 0.065f, 0.140f},
     {"Start", "START", 28, -1, 0.921f, 0.095f, 0.055f, 0.052f},
     {"Back", "BACK", 1, 14, 0.921f, 0.220f, 0.055f, 0.052f},
-    {"Back Attack", "B-ATK", 57, -1, 0.760f, 0.440f, 0.065f, 0.140f}
+    {"Back Attack", "B-ATK", 32, -1, 0.800f, 0.440f, 0.065f, 0.140f}
 };
 
 static int sorr_ios_d4a_button_press_count[SORR_IOS_D4A_TOUCH_BUTTON_COUNT];
@@ -455,7 +455,7 @@ static float sorr_ios_d4a_joystick_norm_x = 0.0f;
 static float sorr_ios_d4a_joystick_norm_y = 0.0f;
 static Uint32 sorr_ios_d4a_ignore_mouse_until_ticks = 0;
 static int sorr_ios_d4a_edit_mode = 0;
-static int sorr_ios_d4a_selected_target = SORR_IOS_D4A_EDIT_TARGET_DPAD;
+static int sorr_ios_d4a_selected_target = SORR_IOS_D4A_EDIT_TARGET_NONE;
 
 static float sorr_ios_d4a_clampf(float value, float min_value, float max_value)
 {
@@ -539,6 +539,15 @@ static void sorr_ios_d4a_apply_version5_button_defaults(void)
         }
     }
     sorr_ios_d4a_apply_button_default(SORR_IOS_D4A_BUTTON_BACK_ATTACK);
+}
+
+static void sorr_ios_d4a_apply_version6_button_defaults(void)
+{
+    sorr_ios_d4a_apply_button_default(SORR_IOS_D4A_BUTTON_BACK_ATTACK);
+    sorr_ios_d4a_apply_button_default(0);
+    sorr_ios_d4a_apply_button_default(1);
+    sorr_ios_d4a_apply_button_default(2);
+    sorr_ios_d4a_apply_button_default(3);
 }
 
 static void sorr_ios_d4a_reset_control_defaults(void)
@@ -734,8 +743,12 @@ static void sorr_ios_d4a_load_control_config(void)
         {
             sorr_ios_d4a_apply_version5_button_defaults();
         }
+        if (sorr_ios_d4a_controls.config_version < 6)
+        {
+            sorr_ios_d4a_apply_version6_button_defaults();
+        }
         sorr_ios_d4a_controls.config_version = SORR_IOS_D4A_CONTROL_CONFIG_VERSION;
-        sorr_ios_d4a_touch_log("control config migrated old_version=%d version=%d labels_visible=0 circular_actions=1 back_attack=default",
+        sorr_ios_d4a_touch_log("control config migrated old_version=%d version=%d labels_visible=0 circular_actions=1 back_attack=d action_column=aligned",
                                old_version,
                                SORR_IOS_D4A_CONTROL_CONFIG_VERSION);
     }
@@ -1180,9 +1193,8 @@ static void sorr_ios_d4a_resize_selected(float factor)
     }
     else
     {
-        sorr_ios_d4a_controls.dpad_radius_x *= factor;
-        sorr_ios_d4a_controls.dpad_radius_y *= factor;
-        sorr_ios_d4a_selected_target = SORR_IOS_D4A_EDIT_TARGET_DPAD;
+        sorr_ios_d4a_touch_log("config resize ignored no selection factor=%.2f", factor);
+        return;
     }
     sorr_ios_d4a_clamp_control_layout();
     sorr_ios_d4a_save_control_config();
@@ -1218,7 +1230,7 @@ static void sorr_ios_d4a_handle_config_button(sorr_ios_d4a_config_button button)
         case SORR_IOS_D4A_CONFIG_TOGGLE:
             sorr_ios_d4a_release_all("config-enter");
             sorr_ios_d4a_edit_mode = 1;
-            sorr_ios_d4a_selected_target = SORR_IOS_D4A_EDIT_TARGET_DPAD;
+            sorr_ios_d4a_selected_target = SORR_IOS_D4A_EDIT_TARGET_NONE;
             sorr_ios_d4a_touch_log("config edit_mode=1");
             break;
         case SORR_IOS_D4A_CONFIG_DONE:
@@ -1231,7 +1243,7 @@ static void sorr_ios_d4a_handle_config_button(sorr_ios_d4a_config_button button)
             sorr_ios_d4a_release_all("config-reset");
             sorr_ios_d4a_reset_control_defaults();
             sorr_ios_d4a_controls.loaded_from_disk = 1;
-            sorr_ios_d4a_selected_target = SORR_IOS_D4A_EDIT_TARGET_DPAD;
+            sorr_ios_d4a_selected_target = SORR_IOS_D4A_EDIT_TARGET_NONE;
             sorr_ios_d4a_save_control_config();
             sorr_ios_d4a_touch_log("config reset defaults");
             break;
@@ -1350,6 +1362,18 @@ static void sorr_ios_d4a_update_finger(SDL_FingerID finger_id, float x, float y,
             float drag_dx = 0.0f;
             float drag_dy = 0.0f;
             int target = sorr_ios_d4a_edit_target_for_point(x, y, &drag_dx, &drag_dy);
+            if (!is_motion && target != SORR_IOS_D4A_EDIT_TARGET_NONE &&
+                target == sorr_ios_d4a_selected_target)
+            {
+                sorr_ios_d4a_selected_target = SORR_IOS_D4A_EDIT_TARGET_NONE;
+                sorr_ios_d4a_touch_fingers[finger_slot].is_config = 1;
+                sorr_ios_d4a_touch_fingers[finger_slot].edit_target = SORR_IOS_D4A_EDIT_TARGET_NONE;
+                sorr_ios_d4a_touch_fingers[finger_slot].drag_started = 0;
+                sorr_ios_d4a_touch_fingers[finger_slot].start_x = x;
+                sorr_ios_d4a_touch_fingers[finger_slot].start_y = y;
+                sorr_ios_d4a_touch_log("config deselected=%d", target);
+                return;
+            }
             sorr_ios_d4a_touch_fingers[finger_slot].is_config = 1;
             sorr_ios_d4a_touch_fingers[finger_slot].edit_target = target;
             sorr_ios_d4a_touch_fingers[finger_slot].drag_started = 0;

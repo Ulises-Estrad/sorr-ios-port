@@ -837,3 +837,17 @@ Build label: ios-playtest-run-sfx-back-attack
 Install with the same Windows + Sideloadly route. Test multiple screen transitions and double-tap forward/back to run. Also verify that the circular action buttons are visible and Back Attack appears above Attack.
 
 The IPA remains asset-free and keeps BGM/SFX, custom controls, icon/name, D2-staged data, and visible diagnostics.
+
+## Playtest Stable SFX / Edit Controls Artifact
+
+The first run-SFX/back-attack artifact still reproduced the wrong run sound after some screen transitions, so the next Sideloadly artifact keeps WAV sample handles stable by filename on iOS instead of letting old game-side handles become ambiguous after unload/reload cycles:
+
+```text
+ios-shell-playtest-stable-sfx-edit-controls-device-arm64
+build-products/SorrIOSShell-playtest-stable-sfx-edit-controls-adhoc.ipa
+Build label: ios-playtest-stable-sfx-edit-controls
+```
+
+Install with the same Windows + Sideloadly route. Test multiple screen transitions and double-tap forward/back to run. Also verify that Back Attack maps to `D`, the right-side action columns are closer together, and tapping a selected edit-mode control again deselects it before using `DONE`, `BIG`, or `SML`.
+
+The IPA remains asset-free and keeps BGM/SFX, custom controls, icon/name, D2-staged data, and visible diagnostics.

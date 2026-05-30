@@ -1231,6 +1231,29 @@ Patch contents:
 - avoids passing `Mix_Chunk *` and `Mix_Music *` through truncated `int` values on iOS arm64,
 - keeps the existing real BGM/SFX backend enabled,
 - adds circular action-button visuals,
-- adds Back Attack above Attack, mapped to Bennu key `57` / Space.
+- adds Back Attack above Attack, mapped to Bennu key `57` / Space in that superseded artifact.
+
+The playable baseline remains unchanged: real render, BGM/SFX, custom controls, icon/name, D2-staged data, visible diagnostics, and asset-free IPA packaging.
+
+## Current Playtest Bug Follow-Up: Stable SFX / Edit Controls
+
+Physical testing showed that the first run-SFX/back-attack follow-up did not fully fix the wrong run sound. The next patch keeps the iOS handle table but also treats WAV sample identity as session-stable by filename so stale game-side handles cannot later resolve to a different enemy sample after screen cleanup.
+
+Current artifact target:
+
+```text
+Artifact: ios-shell-playtest-stable-sfx-edit-controls-device-arm64
+IPA: build-products/SorrIOSShell-playtest-stable-sfx-edit-controls-adhoc.ipa
+Build label: ios-playtest-stable-sfx-edit-controls
+```
+
+Patch contents:
+
+- reuses existing `LOAD_WAV` handles by path on iOS,
+- keeps iOS WAV chunks alive across `UNLOAD_WAV` for the app session,
+- preserves real BGM/SFX,
+- maps Back Attack to Bennu key `32` / `D`,
+- aligns the Back Attack / Attack / Special column closer to Jump / Police,
+- lets edit mode deselect a selected control by tapping it again.
 
 The playable baseline remains unchanged: real render, BGM/SFX, custom controls, icon/name, D2-staged data, visible diagnostics, and asset-free IPA packaging.

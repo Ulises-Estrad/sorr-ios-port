@@ -59,17 +59,92 @@ static int audio_initialized = 0 ;
 #if defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES) || (UINTPTR_MAX > UINT32_MAX)
 #define MODSOUND_X64_HANDLE_TABLE_SIZE 4096
 static Mix_Chunk * modsound_x64_chunks[MODSOUND_X64_HANDLE_TABLE_SIZE];
+static char * modsound_x64_chunk_names[MODSOUND_X64_HANDLE_TABLE_SIZE];
+static unsigned char modsound_x64_chunk_retired[MODSOUND_X64_HANDLE_TABLE_SIZE];
 static Mix_Music * modsound_x64_music[MODSOUND_X64_HANDLE_TABLE_SIZE];
 
-static int modsound_x64_chunk_handle( Mix_Chunk * chunk, const char * op )
+#if defined(TARGET_IOS) || defined(SORR_IOS_USE_SDL_MIXER_AUDIO)
+#define MODSOUND_X64_KEEP_WAV_HANDLES 1
+#endif
+
+static char * modsound_x64_strdup( const char * text )
+{
+    size_t len;
+    char * copy;
+
+    if ( !text ) return NULL;
+    len = strlen( text ) + 1;
+    copy = ( char * ) malloc( len );
+    if ( copy ) memcpy( copy, text, len );
+    return copy;
+}
+
+static int modsound_x64_chunk_filename_handle( const char * filename, const char * op )
+{
+    int i;
+
+    if ( !filename || !filename[0] ) return 0;
+
+    for ( i = 1; i < MODSOUND_X64_HANDLE_TABLE_SIZE; i++ )
+    {
+        if ( modsound_x64_chunks[i] && modsound_x64_chunk_names[i] && strcmp( modsound_x64_chunk_names[i], filename ) == 0 )
+        {
+            modsound_x64_chunk_retired[i] = 0;
+#ifdef PORTABLE_RUNTIME_DIAG
+            PORTABLE_DIAG_LOG( "AUDIO", "x64 chunk handle reuse op=%s handle=%d chunk=%p path=%s", op ? op : "(null)", i, ( void * )modsound_x64_chunks[i], filename );
+#endif
+            return i;
+        }
+    }
+
+    return 0;
+}
+
+static void modsound_x64_chunk_table_clear( void )
+{
+    int i;
+
+    for ( i = 1; i < MODSOUND_X64_HANDLE_TABLE_SIZE; i++ )
+    {
+        if ( modsound_x64_chunks[i] )
+        {
+            Mix_FreeChunk( modsound_x64_chunks[i] );
+            modsound_x64_chunks[i] = NULL;
+        }
+        if ( modsound_x64_chunk_names[i] )
+        {
+            free( modsound_x64_chunk_names[i] );
+            modsound_x64_chunk_names[i] = NULL;
+        }
+        modsound_x64_chunk_retired[i] = 0;
+    }
+}
+
+static int modsound_x64_chunk_handle( Mix_Chunk * chunk, const char * filename, const char * op )
 {
     int i;
 
     if ( !chunk ) return 0;
 
+    if ( filename && filename[0] )
+    {
+        int existing = modsound_x64_chunk_filename_handle( filename, op );
+        if ( existing )
+        {
+            Mix_FreeChunk( chunk );
+            return existing;
+        }
+    }
+
     for ( i = 1; i < MODSOUND_X64_HANDLE_TABLE_SIZE; i++ )
     {
-        if ( modsound_x64_chunks[i] == chunk ) return i;
+        if ( modsound_x64_chunks[i] == chunk )
+        {
+            modsound_x64_chunk_retired[i] = 0;
+            if ( filename && filename[0] && !modsound_x64_chunk_names[i] )
+                modsound_x64_chunk_names[i] = modsound_x64_strdup( filename );
+            return i;
+        }
     }
 
     for ( i = 1; i < MODSOUND_X64_HANDLE_TABLE_SIZE; i++ )
@@ -77,15 +152,18 @@ static int modsound_x64_chunk_handle( Mix_Chunk * chunk, const char * op )
         if ( !modsound_x64_chunks[i] )
         {
             modsound_x64_chunks[i] = chunk;
+            modsound_x64_chunk_retired[i] = 0;
+            if ( filename && filename[0] )
+                modsound_x64_chunk_names[i] = modsound_x64_strdup( filename );
 #ifdef PORTABLE_RUNTIME_DIAG
-            PORTABLE_DIAG_LOG( "AUDIO", "x64 chunk handle store op=%s handle=%d chunk=%p", op ? op : "(null)", i, ( void * )chunk );
+            PORTABLE_DIAG_LOG( "AUDIO", "x64 chunk handle store op=%s handle=%d chunk=%p path=%s", op ? op : "(null)", i, ( void * )chunk, filename ? filename : "(null)" );
 #endif
             return i;
         }
     }
 
 #ifdef PORTABLE_RUNTIME_DIAG
-    PORTABLE_DIAG_LOG( "AUDIO", "x64 chunk handle table full op=%s chunk=%p", op ? op : "(null)", ( void * )chunk );
+    PORTABLE_DIAG_LOG( "AUDIO", "x64 chunk handle table full op=%s chunk=%p path=%s", op ? op : "(null)", ( void * )chunk, filename ? filename : "(null)" );
 #endif
     return 0;
 }
@@ -98,7 +176,7 @@ static Mix_Chunk * modsound_x64_chunk_ptr( int handle, const char * op )
         chunk = modsound_x64_chunks[handle];
 
 #ifdef PORTABLE_RUNTIME_DIAG
-    PORTABLE_DIAG_LOG( "AUDIO", "x64 chunk handle get op=%s handle=%d chunk=%p", op ? op : "(null)", handle, ( void * )chunk );
+    PORTABLE_DIAG_LOG( "AUDIO", "x64 chunk handle get op=%s handle=%d chunk=%p path=%s retired=%d", op ? op : "(null)", handle, ( void * )chunk, ( handle > 0 && handle < MODSOUND_X64_HANDLE_TABLE_SIZE && modsound_x64_chunk_names[handle] ) ? modsound_x64_chunk_names[handle] : "(null)", ( handle > 0 && handle < MODSOUND_X64_HANDLE_TABLE_SIZE ) ? modsound_x64_chunk_retired[handle] : 0 );
 #endif
     return chunk;
 }
@@ -108,10 +186,28 @@ static Mix_Chunk * modsound_x64_chunk_release( int handle, const char * op )
     Mix_Chunk * chunk = modsound_x64_chunk_ptr( handle, op );
 
     if ( chunk && handle > 0 && handle < MODSOUND_X64_HANDLE_TABLE_SIZE )
+    {
+#ifdef MODSOUND_X64_KEEP_WAV_HANDLES
+        modsound_x64_chunk_retired[handle] = 1;
+#else
         modsound_x64_chunks[handle] = NULL;
+        if ( modsound_x64_chunk_names[handle] )
+        {
+            free( modsound_x64_chunk_names[handle] );
+            modsound_x64_chunk_names[handle] = NULL;
+        }
+        modsound_x64_chunk_retired[handle] = 0;
+#endif
+    }
 
 #ifdef PORTABLE_RUNTIME_DIAG
-    PORTABLE_DIAG_LOG( "AUDIO", "x64 chunk handle release op=%s handle=%d chunk=%p", op ? op : "(null)", handle, ( void * )chunk );
+    PORTABLE_DIAG_LOG( "AUDIO", "x64 chunk handle release op=%s handle=%d chunk=%p path=%s keep_alive=%d", op ? op : "(null)", handle, ( void * )chunk, ( handle > 0 && handle < MODSOUND_X64_HANDLE_TABLE_SIZE && modsound_x64_chunk_names[handle] ) ? modsound_x64_chunk_names[handle] : "(null)",
+#ifdef MODSOUND_X64_KEEP_WAV_HANDLES
+                       1
+#else
+                       0
+#endif
+    );
 #endif
     return chunk;
 }
@@ -171,9 +267,11 @@ static Mix_Music * modsound_x64_music_release( int handle, const char * op )
     return music;
 }
 #else
-#define modsound_x64_chunk_handle(chunk,op) (( int )( chunk ))
+#define modsound_x64_chunk_handle(chunk,filename,op) (( int )( chunk ))
 #define modsound_x64_chunk_ptr(handle,op) (( Mix_Chunk * )( handle ))
 #define modsound_x64_chunk_release(handle,op) (( Mix_Chunk * )( handle ))
+#define modsound_x64_chunk_filename_handle(filename,op) 0
+#define modsound_x64_chunk_table_clear()
 #define modsound_x64_music_handle(music,op) (( int )( music ))
 #define modsound_x64_music_ptr(handle,op) (( Mix_Music * )( handle ))
 #define modsound_x64_music_release(handle,op) (( Mix_Music * )( handle ))
@@ -665,6 +763,11 @@ static int load_wav( const char * filename )
 
     if ( !audio_initialized && sound_init() ) return ( 0 );
 
+    {
+        int existing = modsound_x64_chunk_filename_handle( filename, "LOAD_WAV" );
+        if ( existing ) return existing;
+    }
+
     if ( !( fp = file_open( filename, "rb0" ) ) ) return ( 0 );
 
     SDL_RWops * rwops = SDL_RWFromBGDFP( fp );
@@ -676,7 +779,7 @@ static int load_wav( const char * filename )
     // Don't need free rwops, SDL will do
     if ( !( music = Mix_LoadWAV_RW( rwops, 1 ) ) ) return ( 0 );
 
-    return modsound_x64_chunk_handle( music, "LOAD_WAV" );
+    return modsound_x64_chunk_handle( music, filename, "LOAD_WAV" );
 }
 
 /* --------------------------------------------------------------------------- */
@@ -702,8 +805,13 @@ static int play_wav( int id, int loops, int channel )
     if ( audio_initialized && id )
     {
         Mix_Chunk * chunk = modsound_x64_chunk_ptr( id, "PLAY_WAV" );
+        int result;
         if ( !chunk ) return -1;
-        return ( ( int ) Mix_PlayChannel( channel, chunk, loops ) );
+        result = ( int ) Mix_PlayChannel( channel, chunk, loops );
+#ifdef PORTABLE_RUNTIME_DIAG
+        PORTABLE_DIAG_LOG( "AUDIO", "PLAY_WAV handle=%d channel=%d loops=%d result=%d", id, channel, loops, result );
+#endif
+        return result;
     }
     return ( -1 );
 }
@@ -729,7 +837,11 @@ static int unload_wav( int id )
     if ( audio_initialized && id )
     {
         Mix_Chunk * chunk = modsound_x64_chunk_release( id, "UNLOAD_WAV" );
+#ifndef MODSOUND_X64_KEEP_WAV_HANDLES
         if ( chunk ) Mix_FreeChunk( chunk );
+#else
+        ( void )chunk;
+#endif
     }
     return ( 0 );
 }
@@ -1894,6 +2006,7 @@ void  __bgdexport( mod_sound, module_initialize )()
 void __bgdexport( mod_sound, module_finalize )()
 {
 #ifndef TARGET_DINGUX_A320
+    modsound_x64_chunk_table_clear();
     if ( SDL_WasInit( SDL_INIT_AUDIO ) ) SDL_QuitSubSystem( SDL_INIT_AUDIO );
 #endif
 }
