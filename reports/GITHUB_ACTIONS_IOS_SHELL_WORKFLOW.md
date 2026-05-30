@@ -2574,3 +2574,20 @@ On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/LATEST_CRASH_OR_ABRUPT_EXIT_REPORT
 On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/CURRENT_SESSION_RUNTIME_LOG.txt
 On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/PREVIOUS_SESSION_RUNTIME_LOG.txt
 ```
+
+## Playtest Runtime Exit Guard Artifact
+
+Actions run `26690777842` passed after adding an iOS runtime-exit guard for a same-build no-signal scene-transition exit reported from the clear-diagnostics build.
+
+```text
+Commit: 7568eca
+Device artifact: ios-shell-playtest-runtime-exit-guard-device-arm64
+IPA: build-products/SorrIOSShell-playtest-runtime-exit-guard-adhoc.ipa
+Build label: ios-playtest-runtime-exit-guard
+Artifact size: 1968239 bytes
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
+```
+
+The artifact keeps the current playable baseline, clear diagnostics filenames, custom controls, BGM/SFX, icon/name, and asset-free IPA packaging. It adds `runtime_exit_request` breadcrumbs for Bennu `EXIT()`, `bgdrtm_exit`, `must_exit`, and interpreter hard-exit paths so future abrupt exits identify whether the app quit by script/runtime request or reached a fatal VM path.

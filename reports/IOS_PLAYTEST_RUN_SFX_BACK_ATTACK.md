@@ -132,3 +132,41 @@ On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/LATEST_CRASH_OR_ABRUPT_EXIT_REPORT
 On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/CURRENT_SESSION_RUNTIME_LOG.txt
 On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/PREVIOUS_SESSION_RUNTIME_LOG.txt
 ```
+
+## Playtest Runtime Exit Guard Follow-Up
+
+The next attached reports were from the clear-diagnostics build and showed a same-build no-signal fallback:
+
+```text
+crash_report_type=previous-run-nosignal-fallback
+previous_build=ios-playtest-clear-diagnostics
+current_build=ios-playtest-clear-diagnostics
+previous_has_sdl_terminating=0
+previous_short_lifecycle_termination=0
+previous_last_marker=runtime_family_unlink NO_CARGUES#69849...
+```
+
+The prior run was alive during a stage/scene startup transition with BGM/SFX healthy, then exited without a signal handler report. The runtime-exit guard build keeps the playable baseline and adds iOS-only logging/guards around script and interpreter exit paths.
+
+```text
+Actions run: 26690777842
+Commit: 7568eca
+Device artifact: ios-shell-playtest-runtime-exit-guard-device-arm64
+IPA: build-products/SorrIOSShell-playtest-runtime-exit-guard-adhoc.ipa
+Build label: ios-playtest-runtime-exit-guard
+Artifact size: 1968239 bytes
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
+```
+
+Patch contents:
+
+- ignores Bennu script `EXIT()` calls on iOS so a script-level quit request does not close the physical-device app during playtesting,
+- logs `runtime_exit_request ...` breadcrumbs with current process, lookup guard, lifecycle, family, and render context,
+- logs `bgdrtm_exit` requests before final app exit paths,
+- adds runtime-exit guard counters to heartbeats and crash reports,
+- turns interpreter hard `exit(0)` paths into signal-backed reports so the next report is actionable if a fatal VM path is hit,
+- preserves custom controls, BGM/SFX, icon/name, D2-staged data, clear diagnostic filenames, and asset-free IPA packaging.
+
+Manual test focus: install this IPA, replay the scene-transition path that abruptly exited, and if it still exits or crashes, reopen once and send `LATEST_CRASH_OR_ABRUPT_EXIT_REPORT.txt` plus `PREVIOUS_SESSION_RUNTIME_LOG.txt`.

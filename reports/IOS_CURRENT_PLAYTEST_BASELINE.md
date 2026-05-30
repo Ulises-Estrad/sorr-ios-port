@@ -1,6 +1,6 @@
 # iOS Current Playtest Baseline
 
-Status: current playable iPhone baseline, paused/final for now, with a clear-diagnostics follow-up target ready for GitHub Actions.
+Status: current playable iPhone baseline, paused/final for now, with a runtime-exit-guard follow-up target ready for playtesting.
 
 This project is now a playable iPhone port baseline, not an early proof-only experiment. Historical milestone reports remain in `reports/` as evidence, but current work should use this playtest baseline framing. Active feature work is paused; future changes should be limited to major bug fixes found during normal playtesting.
 
@@ -17,9 +17,23 @@ This project is now a playable iPhone port baseline, not an early proof-only exp
 - The IPA remains asset-free; game data is imported locally through the iPhone Files route.
 - Latest physical playtest fix: gun firing works and Stage 6 beach/water startup no longer crashes after the GET_REAL_POINT guard.
 - Latest route playtest: the SoR2 path was cleared with Axel with no clear bugs or random crashes observed afterward.
-- Current follow-up target: keep the stale remote process guard and make the Files-visible diagnostics refresh into clear current/previous/latest filenames each app session.
+- Current follow-up target: keep the stale remote process guard, clear diagnostic filenames, and add a runtime-exit guard so no-signal scene-transition exits leave actionable breadcrumbs instead of silently closing the app.
 
 ## Current Workflow Target
+
+```text
+Actions run: 26690777842
+Commit: 7568eca
+Artifact: ios-shell-playtest-runtime-exit-guard-device-arm64
+IPA: build-products/SorrIOSShell-playtest-runtime-exit-guard-adhoc.ipa
+Build label: ios-playtest-runtime-exit-guard
+Artifact size: 1968239 bytes
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
+```
+
+Previous gameplay-crash target:
 
 ```text
 Actions run: 26626858854
@@ -63,7 +77,7 @@ Game data/assets bundled in IPA: no
 
 That older crash-report follow-up prevented stale old-build reports or very short lifecycle/background exits from overwriting the latest report, but its per-run fallback filenames are superseded by the clearer current/previous/latest names in the current target.
 
-Current follow-up target:
+Previous follow-up target:
 
 ```text
 Actions run: 26677510668
@@ -78,6 +92,22 @@ Game data/assets bundled in IPA: no
 ```
 
 This follow-up removes old visible `ios_*` diagnostic files on launch, rotates the prior app session to `PREVIOUS_SESSION_RUNTIME_LOG.txt`, starts a fresh `CURRENT_SESSION_RUNTIME_LOG.txt`, and uses `LATEST_CRASH_OR_ABRUPT_EXIT_REPORT.txt` as the single report to send after a crash or abrupt exit.
+
+Current follow-up target:
+
+```text
+Actions run: 26690777842
+Commit: 7568eca
+Artifact: ios-shell-playtest-runtime-exit-guard-device-arm64
+IPA: build-products/SorrIOSShell-playtest-runtime-exit-guard-adhoc.ipa
+Build label: ios-playtest-runtime-exit-guard
+Artifact size: 1968239 bytes
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
+```
+
+The latest attached diagnostics showed a same-build no-signal fallback from `ios-playtest-clear-diagnostics`, no SDL terminating event, healthy BGM/SFX, and an abrupt exit during scene transition/startup after `NO_CARGUES`. This target keeps the playable baseline, ignores script-level `EXIT()` requests on iOS, logs `runtime_exit_request` breadcrumbs for Bennu/runtime exit paths, and converts interpreter hard `exit(0)` paths into signal-backed reports instead of silent app exits.
 
 Previous follow-up target:
 
@@ -108,7 +138,7 @@ In edit mode, tapping selects a control, tapping the same selected control again
 
 ## Current Roadmap
 
-Current: final-for-now playable baseline plus stale remote-process reference guards. The latest proven baseline includes the GET_REAL_POINT pointer-output guard, SFX diagnostics, per-run no-signal fallback archives, and iOS-only remote process dereference guards.
+Current: final-for-now playable baseline plus stale remote-process reference guards and runtime-exit guard diagnostics. The latest proven baseline includes the GET_REAL_POINT pointer-output guard, SFX diagnostics, clear current/previous/latest diagnostic files, iOS-only remote process dereference guards, and iOS runtime-exit breadcrumbs.
 
 Next: continue free-time playtesting and patch only major bugs one by one if they are found during real play.
 
