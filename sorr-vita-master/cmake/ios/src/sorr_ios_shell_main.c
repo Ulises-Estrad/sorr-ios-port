@@ -24,11 +24,11 @@
 #include "SDL.h"
 
 #ifndef SORR_IOS_BUILD_LABEL
-#define SORR_IOS_BUILD_LABEL "ios-playtest-crash-report-archive"
+#define SORR_IOS_BUILD_LABEL "ios-playtest-remote-ref-guard"
 #endif
 
 #ifndef SORR_IOS_ARTIFACT_LABEL
-#define SORR_IOS_ARTIFACT_LABEL "ios-shell-playtest-crash-report-archive-device-arm64"
+#define SORR_IOS_ARTIFACT_LABEL "ios-shell-playtest-remote-ref-guard-device-arm64"
 #endif
 
 #ifdef SORR_IOS_D3_FIRST_RENDER

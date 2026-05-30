@@ -936,9 +936,10 @@ void sorr_ios_d3_note_instance_lookup( int requested_id, const INSTANCE * candid
     const SORR_IOS_D3_DESTROYED_ENTRY * recent = sorr_ios_d3_find_recent_destroyed( ( uint32_t )requested_id );
     int reason_is_mismatch = reason && strcmp( reason, "id-mismatch" ) == 0;
     int reason_is_dead_slot = reason && strcmp( reason, "dead-slot" ) == 0;
+    int reason_is_remote_guard = reason && strncmp( reason, "remote-", 7 ) == 0;
     char line[1024];
 
-    if ( !current_is_enemy && !recent && !reason_is_mismatch && !reason_is_dead_slot ) return;
+    if ( !current_is_enemy && !recent && !reason_is_mismatch && !reason_is_dead_slot && !reason_is_remote_guard ) return;
 
     sorr_ios_d3_lookup_guard_count++;
     sorr_ios_d3_last_lookup_id = ( unsigned int )requested_id;
@@ -975,6 +976,36 @@ void sorr_ios_d3_note_instance_lookup( int requested_id, const INSTANCE * candid
     );
     snprintf( sorr_ios_d3_last_lookup_event, sizeof( sorr_ios_d3_last_lookup_event ), "%s", line );
     sorr_ios_d3_append_visible_event_line( line );
+}
+
+static int32_t sorr_ios_d3_remote_null_dword = 0;
+
+static INSTANCE * sorr_ios_d3_remote_instance_or_guard( INSTANCE * current, int requested_id, const char * op )
+{
+    INSTANCE * target = instance_get( requested_id );
+
+    if ( target ) return target;
+
+    if ( current )
+    {
+        sorr_ios_d3_current_proc_ptr = ( unsigned long long )( uintptr_t )current;
+#if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
+        portable_x64_current_instance_for_guard = current;
+#endif
+    }
+    sorr_ios_d3_note_instance_lookup( requested_id, NULL, op );
+    return NULL;
+}
+
+static void sorr_ios_d3_remote_set_null_ptr( int * cell )
+{
+    if ( !cell ) return;
+    sorr_ios_d3_remote_null_dword = 0;
+#if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
+    portable_x64_stack_set_ptr( cell, &sorr_ios_d3_remote_null_dword );
+#else
+    *cell = ( uint32_t )&sorr_ios_d3_remote_null_dword;
+#endif
 }
 
 void sorr_ios_d3_note_instance_create( const INSTANCE * r )
@@ -1169,7 +1200,9 @@ static void sorr_ios_d3_note_instance_run( const INSTANCE * r )
     sorr_ios_d3_instance_run_count++;
     sorr_ios_d3_copy_proc_name( sorr_ios_d3_last_proc_name, sizeof( sorr_ios_d3_last_proc_name ), r );
     sorr_ios_d3_current_proc_ptr = ( unsigned long long )( uintptr_t )r;
+#if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
     portable_x64_current_instance_for_guard = ( INSTANCE * )r;
+#endif
 
     if ( r )
     {
@@ -2059,21 +2092,30 @@ int instance_go( INSTANCE * r )
             case MN_REMOTE | MN_BYTE | MN_UNSIGNED:
             case MN_REMOTE | MN_STRING:
             case MN_REMOTE | MN_FLOAT:
+#ifdef SORR_IOS_D3_FIRST_RENDER
+                i = sorr_ios_d3_remote_instance_or_guard( r, r->stack_ptr[-1], "remote-local-ptr" ) ;
+                if ( !i )
+                {
+                    sorr_ios_d3_remote_set_null_ptr( &r->stack_ptr[-1] );
+                    ptr += 2 ;
+                    break ;
+                }
+#else
                 i = instance_get( r->stack_ptr[-1] ) ;
                 if ( !i )
                 {
                     fprintf( stderr, "ERROR: Runtime error in %s(%d) - Process %d not active\n", r->proc->name, LOCDWORD( r, PROCESS_ID ), r->stack_ptr[-1] ) ;
                     exit( 0 );
                 }
-                else
+#endif
 #if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
 #ifdef SORR_IOS_D3_FIRST_RENDER
-                    portable_x64_stack_set_ptr_owned( &r->stack_ptr[-1], &LOCDWORD( i, ptr[1] ), i, "remote_local" );
+                portable_x64_stack_set_ptr_owned( &r->stack_ptr[-1], &LOCDWORD( i, ptr[1] ), i, "remote_local" );
 #else
-                    portable_x64_stack_set_ptr( &r->stack_ptr[-1], &LOCDWORD( i, ptr[1] ) );
+                portable_x64_stack_set_ptr( &r->stack_ptr[-1], &LOCDWORD( i, ptr[1] ) );
 #endif
 #else
-                    r->stack_ptr[-1] = ( uint32_t ) & LOCDWORD( i, ptr[1] ) ;
+                r->stack_ptr[-1] = ( uint32_t ) & LOCDWORD( i, ptr[1] ) ;
 #endif
                 ptr += 2 ;
                 break ;
@@ -2086,21 +2128,30 @@ int instance_go( INSTANCE * r )
             case MN_REMOTE_PUBLIC | MN_BYTE | MN_UNSIGNED:
             case MN_REMOTE_PUBLIC | MN_STRING:
             case MN_REMOTE_PUBLIC | MN_FLOAT:
+#ifdef SORR_IOS_D3_FIRST_RENDER
+                i = sorr_ios_d3_remote_instance_or_guard( r, r->stack_ptr[-1], "remote-public-ptr" ) ;
+                if ( !i )
+                {
+                    sorr_ios_d3_remote_set_null_ptr( &r->stack_ptr[-1] );
+                    ptr += 2 ;
+                    break ;
+                }
+#else
                 i = instance_get( r->stack_ptr[-1] ) ;
                 if ( !i )
                 {
                     fprintf( stderr, "ERROR: Runtime error in %s(%d) - Process %d not active\n", r->proc->name, LOCDWORD( r, PROCESS_ID ), r->stack_ptr[-1] ) ;
                     exit( 0 );
                 }
-                else
+#endif
 #if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
 #ifdef SORR_IOS_D3_FIRST_RENDER
-                    portable_x64_stack_set_ptr_owned( &r->stack_ptr[-1], &PUBDWORD( i, ptr[1] ), i, "remote_public" );
+                portable_x64_stack_set_ptr_owned( &r->stack_ptr[-1], &PUBDWORD( i, ptr[1] ), i, "remote_public" );
 #else
-                    portable_x64_stack_set_ptr( &r->stack_ptr[-1], &PUBDWORD( i, ptr[1] ) );
+                portable_x64_stack_set_ptr( &r->stack_ptr[-1], &PUBDWORD( i, ptr[1] ) );
 #endif
 #else
-                    r->stack_ptr[-1] = ( uint32_t ) & PUBDWORD( i, ptr[1] ) ;
+                r->stack_ptr[-1] = ( uint32_t ) & PUBDWORD( i, ptr[1] ) ;
 #endif
                 ptr += 2 ;
                 break ;
@@ -2138,28 +2189,46 @@ int instance_go( INSTANCE * r )
             case MN_GET_REMOTE:
             case MN_GET_REMOTE | MN_FLOAT:
             case MN_GET_REMOTE | MN_UNSIGNED:
+#ifdef SORR_IOS_D3_FIRST_RENDER
+                i = sorr_ios_d3_remote_instance_or_guard( r, r->stack_ptr[-1], "remote-local-get" ) ;
+                if ( !i )
+                {
+                    r->stack_ptr[-1] = 0;
+                    ptr += 2 ;
+                    break ;
+                }
+#else
                 i = instance_get( r->stack_ptr[-1] ) ;
                 if ( !i )
                 {
                     fprintf( stderr, "ERROR: Runtime error in %s(%d) - Process %d not active\n", r->proc->name, LOCDWORD( r, PROCESS_ID ), r->stack_ptr[-1] ) ;
                     exit( 0 );
                 }
-                else
-                    r->stack_ptr[-1] = LOCDWORD( i, ptr[1] ) ;
+#endif
+                r->stack_ptr[-1] = LOCDWORD( i, ptr[1] ) ;
                 ptr += 2 ;
                 break ;
 
             case MN_GET_REMOTE_PUBLIC:
             case MN_GET_REMOTE_PUBLIC | MN_FLOAT:
             case MN_GET_REMOTE_PUBLIC | MN_UNSIGNED:
+#ifdef SORR_IOS_D3_FIRST_RENDER
+                i = sorr_ios_d3_remote_instance_or_guard( r, r->stack_ptr[-1], "remote-public-get" ) ;
+                if ( !i )
+                {
+                    r->stack_ptr[-1] = 0;
+                    ptr += 2 ;
+                    break ;
+                }
+#else
                 i = instance_get( r->stack_ptr[-1] ) ;
                 if ( !i )
                 {
                     fprintf( stderr, "ERROR: Runtime error in %s(%d) - Process %d not active\n", r->proc->name, LOCDWORD( r, PROCESS_ID ), r->stack_ptr[-1] ) ;
                     exit( 0 );
                 }
-                else
-                    r->stack_ptr[-1] = PUBDWORD( i, ptr[1] ) ;
+#endif
+                r->stack_ptr[-1] = PUBDWORD( i, ptr[1] ) ;
                 ptr += 2 ;
                 break ;
 
@@ -2207,27 +2276,47 @@ int instance_go( INSTANCE * r )
                 break ;
 
             case MN_GET_REMOTE | MN_STRING:
+#ifdef SORR_IOS_D3_FIRST_RENDER
+                i = sorr_ios_d3_remote_instance_or_guard( r, r->stack_ptr[-1], "remote-local-get-string" ) ;
+                if ( !i )
+                {
+                    r->stack_ptr[-1] = 0;
+                    string_use( r->stack_ptr[-1] );
+                    ptr += 2 ;
+                    break ;
+                }
+#else
                 i = instance_get( r->stack_ptr[-1] ) ;
                 if ( !i )
                 {
                     fprintf( stderr, "ERROR: Runtime error in %s(%d) - Process %d not active\n", r->proc->name, LOCDWORD( r, PROCESS_ID ), r->stack_ptr[-1] ) ;
                     exit( 0 );
                 }
-                else
-                    r->stack_ptr[-1] = LOCDWORD( i, ptr[1] ) ;
+#endif
+                r->stack_ptr[-1] = LOCDWORD( i, ptr[1] ) ;
                 string_use( r->stack_ptr[-1] );
                 ptr += 2 ;
                 break ;
 
             case MN_GET_REMOTE_PUBLIC | MN_STRING:
+#ifdef SORR_IOS_D3_FIRST_RENDER
+                i = sorr_ios_d3_remote_instance_or_guard( r, r->stack_ptr[-1], "remote-public-get-string" ) ;
+                if ( !i )
+                {
+                    r->stack_ptr[-1] = 0;
+                    string_use( r->stack_ptr[-1] );
+                    ptr += 2 ;
+                    break ;
+                }
+#else
                 i = instance_get( r->stack_ptr[-1] );
                 if ( !i )
                 {
                     fprintf( stderr, "ERROR: Runtime error in %s(%d) - Process %d not active\n", r->proc->name, LOCDWORD( r, PROCESS_ID ), r->stack_ptr[-1] ) ;
                     exit( 0 );
                 }
-                else
-                    r->stack_ptr[-1] = PUBDWORD( i, ptr[1] ) ;
+#endif
+                r->stack_ptr[-1] = PUBDWORD( i, ptr[1] ) ;
                 string_use( r->stack_ptr[-1] );
                 ptr += 2 ;
                 break ;
@@ -2291,50 +2380,86 @@ int instance_go( INSTANCE * r )
                 break ;
 
             case MN_WORD | MN_GET_REMOTE:
+#ifdef SORR_IOS_D3_FIRST_RENDER
+                i = sorr_ios_d3_remote_instance_or_guard( r, r->stack_ptr[-1], "remote-local-get-word" ) ;
+                if ( !i )
+                {
+                    r->stack_ptr[-1] = 0;
+                    ptr += 2 ;
+                    break ;
+                }
+#else
                 i = instance_get( r->stack_ptr[-1] ) ;
                 if ( !i )
                 {
                     fprintf( stderr, "ERROR: Runtime error in %s(%d) - Process %d not active\n", r->proc->name, LOCDWORD( r, PROCESS_ID ), r->stack_ptr[-1] ) ;
                     exit( 0 );
                 }
-                else
-                    r->stack_ptr[-1] = LOCINT16( i, ptr[1] ) ;
+#endif
+                r->stack_ptr[-1] = LOCINT16( i, ptr[1] ) ;
                 ptr += 2 ;
                 break ;
 
             case MN_WORD | MN_GET_REMOTE | MN_UNSIGNED:
+#ifdef SORR_IOS_D3_FIRST_RENDER
+                i = sorr_ios_d3_remote_instance_or_guard( r, r->stack_ptr[-1], "remote-local-get-uword" ) ;
+                if ( !i )
+                {
+                    r->stack_ptr[-1] = 0;
+                    ptr += 2 ;
+                    break ;
+                }
+#else
                 i = instance_get( r->stack_ptr[-1] ) ;
                 if ( !i )
                 {
                     fprintf( stderr, "ERROR: Runtime error in %s(%d) - Process %d not active\n", r->proc->name, LOCDWORD( r, PROCESS_ID ), r->stack_ptr[-1] ) ;
                     exit( 0 );
                 }
-                else
-                    r->stack_ptr[-1] = LOCWORD( i, ptr[1] ) ;
+#endif
+                r->stack_ptr[-1] = LOCWORD( i, ptr[1] ) ;
                 ptr += 2 ;
                 break ;
 
             case MN_WORD | MN_GET_REMOTE_PUBLIC:
+#ifdef SORR_IOS_D3_FIRST_RENDER
+                i = sorr_ios_d3_remote_instance_or_guard( r, r->stack_ptr[-1], "remote-public-get-word" ) ;
+                if ( !i )
+                {
+                    r->stack_ptr[-1] = 0;
+                    ptr += 2 ;
+                    break ;
+                }
+#else
                 i = instance_get( r->stack_ptr[-1] ) ;
                 if ( !i )
                 {
                     fprintf( stderr, "ERROR: Runtime error in %s(%d) - Process %d not active\n", r->proc->name, LOCDWORD( r, PROCESS_ID ), r->stack_ptr[-1] ) ;
                     exit( 0 );
                 }
-                else
-                    r->stack_ptr[-1] = PUBINT16( i, ptr[1] ) ;
+#endif
+                r->stack_ptr[-1] = PUBINT16( i, ptr[1] ) ;
                 ptr += 2 ;
                 break ;
 
             case MN_WORD | MN_GET_REMOTE_PUBLIC | MN_UNSIGNED:
+#ifdef SORR_IOS_D3_FIRST_RENDER
+                i = sorr_ios_d3_remote_instance_or_guard( r, r->stack_ptr[-1], "remote-public-get-uword" ) ;
+                if ( !i )
+                {
+                    r->stack_ptr[-1] = 0;
+                    ptr += 2 ;
+                    break ;
+                }
+#else
                 i = instance_get( r->stack_ptr[-1] ) ;
                 if ( !i )
                 {
                     fprintf( stderr, "ERROR: Runtime error in %s(%d) - Process %d not active\n", r->proc->name, LOCDWORD( r, PROCESS_ID ), r->stack_ptr[-1] ) ;
                     exit( 0 );
                 }
-                else
-                    r->stack_ptr[-1] = PUBWORD( i, ptr[1] ) ;
+#endif
+                r->stack_ptr[-1] = PUBWORD( i, ptr[1] ) ;
                 ptr += 2 ;
                 break ;
 
@@ -2399,50 +2524,86 @@ int instance_go( INSTANCE * r )
                 break ;
 
             case MN_BYTE | MN_GET_REMOTE:
+#ifdef SORR_IOS_D3_FIRST_RENDER
+                i = sorr_ios_d3_remote_instance_or_guard( r, r->stack_ptr[-1], "remote-local-get-byte" ) ;
+                if ( !i )
+                {
+                    r->stack_ptr[-1] = 0;
+                    ptr += 2 ;
+                    break ;
+                }
+#else
                 i = instance_get( r->stack_ptr[-1] ) ;
                 if ( !i )
                 {
                     fprintf( stderr, "ERROR: Runtime error in %s(%d) - Process %d not active\n", r->proc->name, LOCDWORD( r, PROCESS_ID ), r->stack_ptr[-1] ) ;
                     exit( 0 );
                 }
-                else
-                    r->stack_ptr[-1] = LOCINT8( i, ptr[1] ) ;
+#endif
+                r->stack_ptr[-1] = LOCINT8( i, ptr[1] ) ;
                 ptr += 2 ;
                 break ;
 
             case MN_BYTE | MN_GET_REMOTE | MN_UNSIGNED:
+#ifdef SORR_IOS_D3_FIRST_RENDER
+                i = sorr_ios_d3_remote_instance_or_guard( r, r->stack_ptr[-1], "remote-local-get-ubyte" ) ;
+                if ( !i )
+                {
+                    r->stack_ptr[-1] = 0;
+                    ptr += 2 ;
+                    break ;
+                }
+#else
                 i = instance_get( r->stack_ptr[-1] ) ;
                 if ( !i )
                 {
                     fprintf( stderr, "ERROR: Runtime error in %s(%d) - Process %d not active\n", r->proc->name, LOCDWORD( r, PROCESS_ID ), r->stack_ptr[-1] ) ;
                     exit( 0 );
                 }
-                else
-                    r->stack_ptr[-1] = LOCBYTE( i, ptr[1] ) ;
+#endif
+                r->stack_ptr[-1] = LOCBYTE( i, ptr[1] ) ;
                 ptr += 2 ;
                 break ;
 
             case MN_BYTE | MN_GET_REMOTE_PUBLIC:
+#ifdef SORR_IOS_D3_FIRST_RENDER
+                i = sorr_ios_d3_remote_instance_or_guard( r, r->stack_ptr[-1], "remote-public-get-byte" ) ;
+                if ( !i )
+                {
+                    r->stack_ptr[-1] = 0;
+                    ptr += 2 ;
+                    break ;
+                }
+#else
                 i = instance_get( r->stack_ptr[-1] ) ;
                 if ( !i )
                 {
                     fprintf( stderr, "ERROR: Runtime error in %s(%d) - Process %d not active\n", r->proc->name, LOCDWORD( r, PROCESS_ID ), r->stack_ptr[-1] ) ;
                     exit( 0 );
                 }
-                else
-                    r->stack_ptr[-1] = PUBINT8( i, ptr[1] ) ;
+#endif
+                r->stack_ptr[-1] = PUBINT8( i, ptr[1] ) ;
                 ptr += 2 ;
                 break ;
 
             case MN_BYTE | MN_GET_REMOTE_PUBLIC | MN_UNSIGNED:
+#ifdef SORR_IOS_D3_FIRST_RENDER
+                i = sorr_ios_d3_remote_instance_or_guard( r, r->stack_ptr[-1], "remote-public-get-ubyte" ) ;
+                if ( !i )
+                {
+                    r->stack_ptr[-1] = 0;
+                    ptr += 2 ;
+                    break ;
+                }
+#else
                 i = instance_get( r->stack_ptr[-1] ) ;
                 if ( !i )
                 {
                     fprintf( stderr, "ERROR: Runtime error in %s(%d) - Process %d not active\n", r->proc->name, LOCDWORD( r, PROCESS_ID ), r->stack_ptr[-1] ) ;
                     exit( 0 );
                 }
-                else
-                    r->stack_ptr[-1] = PUBBYTE( i, ptr[1] ) ;
+#endif
+                r->stack_ptr[-1] = PUBBYTE( i, ptr[1] ) ;
                 ptr += 2 ;
                 break ;
 
