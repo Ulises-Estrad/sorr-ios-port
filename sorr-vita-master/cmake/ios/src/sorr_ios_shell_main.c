@@ -4375,10 +4375,6 @@ int main(int argc, char *argv[])
                     "clean_shutdown=1 ticks=%u stage=%s",
                     SDL_GetTicks(),
                     sorr_ios_d3_stage_name(sorr_ios_d3_stage));
-#else
-    sorr_ios_d3_log(&data_layout,
-                    "clean_shutdown=1 ticks=%u stage=shell-loop",
-                    SDL_GetTicks());
 #endif
     SDL_Log("SORR iOS shell: clean shutdown");
     if (renderer)
