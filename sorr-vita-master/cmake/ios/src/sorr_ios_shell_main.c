@@ -24,11 +24,11 @@
 #include "SDL.h"
 
 #ifndef SORR_IOS_BUILD_LABEL
-#define SORR_IOS_BUILD_LABEL "ios-playtest-fallback-crash-report"
+#define SORR_IOS_BUILD_LABEL "ios-playtest-crash-report-archive"
 #endif
 
 #ifndef SORR_IOS_ARTIFACT_LABEL
-#define SORR_IOS_ARTIFACT_LABEL "ios-shell-playtest-fallback-crash-report-device-arm64"
+#define SORR_IOS_ARTIFACT_LABEL "ios-shell-playtest-crash-report-archive-device-arm64"
 #endif
 
 #ifdef SORR_IOS_D3_FIRST_RENDER
@@ -2914,6 +2914,156 @@ static int sorr_ios_file_contains_line_prefix(const char *path, const char *pref
     return 0;
 }
 
+static int sorr_ios_file_contains_text(const char *path, const char *needle)
+{
+    FILE *fp;
+    char line[4096];
+
+    if (!path || !path[0] || !needle || !needle[0])
+    {
+        return 0;
+    }
+
+    fp = fopen(path, "rb");
+    if (!fp)
+    {
+        return 0;
+    }
+
+    while (fgets(line, sizeof(line), fp))
+    {
+        if (strstr(line, needle))
+        {
+            fclose(fp);
+            return 1;
+        }
+    }
+
+    fclose(fp);
+    return 0;
+}
+
+static void sorr_ios_extract_token_after(const char *line,
+                                         const char *marker,
+                                         char *out,
+                                         size_t out_size)
+{
+    const char *start;
+    size_t i = 0;
+
+    if (!out || out_size == 0)
+    {
+        return;
+    }
+
+    out[0] = '\0';
+
+    if (!line || !marker)
+    {
+        return;
+    }
+
+    start = strstr(line, marker);
+    if (!start)
+    {
+        return;
+    }
+
+    start += strlen(marker);
+    while (*start == ' ')
+    {
+        start++;
+    }
+
+    while (start[i] && start[i] != ' ' && start[i] != '\r' && start[i] != '\n' && i + 1 < out_size)
+    {
+        out[i] = start[i];
+        i++;
+    }
+
+    out[i] = '\0';
+}
+
+static void sorr_ios_read_previous_run_metadata(const char *path,
+                                                char *run_id,
+                                                size_t run_id_size,
+                                                char *build,
+                                                size_t build_size)
+{
+    FILE *fp;
+    char line[1024];
+
+    if (run_id && run_id_size > 0)
+    {
+        run_id[0] = '\0';
+    }
+
+    if (build && build_size > 0)
+    {
+        build[0] = '\0';
+    }
+
+    if (!path || !path[0])
+    {
+        return;
+    }
+
+    fp = fopen(path, "rb");
+    if (!fp)
+    {
+        return;
+    }
+
+    while (fgets(line, sizeof(line), fp))
+    {
+        if (strncmp(line, "===== SORR IOS RUN ", 19) == 0)
+        {
+            if (run_id && run_id_size > 0)
+            {
+                sorr_ios_extract_token_after(line, "===== SORR IOS RUN ", run_id, run_id_size);
+            }
+            if (build && build_size > 0)
+            {
+                sorr_ios_extract_token_after(line, "build=", build, build_size);
+            }
+            break;
+        }
+    }
+
+    fclose(fp);
+}
+
+static unsigned int sorr_ios_file_last_tick_value(const char *path)
+{
+    FILE *fp;
+    char line[4096];
+    unsigned int last_tick = 0;
+
+    if (!path || !path[0])
+    {
+        return 0;
+    }
+
+    fp = fopen(path, "rb");
+    if (!fp)
+    {
+        return 0;
+    }
+
+    while (fgets(line, sizeof(line), fp))
+    {
+        char *cursor = line;
+        while ((cursor = strstr(cursor, "ticks=")) != NULL)
+        {
+            cursor += 6;
+            last_tick = (unsigned int)strtoul(cursor, NULL, 10);
+        }
+    }
+
+    fclose(fp);
+    return last_tick;
+}
+
 static void sorr_ios_write_file_tail(FILE *out, const char *path, int max_lines)
 {
     FILE *fp;
@@ -2974,7 +3124,14 @@ static void sorr_ios_write_file_tail(FILE *out, const char *path, int max_lines)
 static void sorr_ios_write_previous_run_fallback_report(const sorr_ios_data_layout *layout,
                                                         const char *path,
                                                         const char *previous_last_marker,
-                                                        const char *reason)
+                                                        const char *reason,
+                                                        const char *previous_run_id,
+                                                        const char *previous_build,
+                                                        unsigned int previous_last_ticks,
+                                                        int previous_has_terminating,
+                                                        int previous_short_lifecycle,
+                                                        int previous_build_matches_current,
+                                                        int overwrote_latest)
 {
     FILE *fp;
 
@@ -2999,10 +3156,22 @@ static void sorr_ios_write_previous_run_fallback_report(const sorr_ios_data_layo
     fprintf(fp, "run_number=%u\n", sorr_ios_d4a_run_number);
     fprintf(fp, "signal=none\n");
     fprintf(fp, "stage=next-launch-fallback\n");
+    fprintf(fp, "latest_crash_report_overwritten=%d\n", overwrote_latest ? 1 : 0);
+    fprintf(fp, "previous_run_id=%s\n", previous_run_id && previous_run_id[0] ? previous_run_id : "(unknown)");
+    fprintf(fp, "previous_build=%s\n", previous_build && previous_build[0] ? previous_build : "(unknown)");
+    fprintf(fp, "current_build=%s\n", SORR_IOS_BUILD_LABEL);
+    fprintf(fp, "previous_build_matches_current=%d\n", previous_build_matches_current ? 1 : 0);
+    fprintf(fp, "previous_last_ticks=%u\n", previous_last_ticks);
+    fprintf(fp, "previous_has_sdl_terminating=%d\n", previous_has_terminating ? 1 : 0);
+    fprintf(fp, "previous_short_lifecycle_termination=%d\n", previous_short_lifecycle ? 1 : 0);
     fprintf(fp, "previous_run_log=%s\n", layout->d3_previous_run_path);
     fprintf(fp, "previous_private_run_log=%s\n", layout->d3_private_previous_run_path);
     fprintf(fp, "previous_last_marker=%s\n", previous_last_marker && previous_last_marker[0] ? previous_last_marker : "(none)");
     fprintf(fp, "note=This report was synthesized on the next launch because the prior run did not reach the signal handler.\n");
+    if (!overwrote_latest)
+    {
+        fprintf(fp, "note=This no-signal run was archived but did not replace ios_latest_crash_report.txt because it looked stale or lifecycle-only.\n");
+    }
     fprintf(fp, "note=Use the previous_run_tail below plus ios_previous_run_stability_log.txt to debug abrupt exits or iOS kills.\n");
     fprintf(fp, "previous_run_tail:\n");
     sorr_ios_write_file_tail(fp, layout->d3_previous_run_path, 180);
@@ -3012,9 +3181,20 @@ static void sorr_ios_write_previous_run_fallback_report(const sorr_ios_data_layo
 static void sorr_ios_maybe_write_previous_run_fallback_report(const sorr_ios_data_layout *layout)
 {
     char previous_last_marker[1024] = "";
+    char previous_run_id[128] = "";
+    char previous_build[128] = "";
+    char archive_name[256];
+    char archive_path[1024];
+    char private_archive_path[1024];
+    char status_line[1024];
     int has_previous;
     int has_clean_shutdown;
     int has_signal;
+    int has_terminating;
+    int previous_build_matches_current;
+    int previous_short_lifecycle;
+    int should_overwrite_latest;
+    unsigned int previous_last_ticks;
 
     if (!layout)
     {
@@ -3037,18 +3217,103 @@ static void sorr_ios_maybe_write_previous_run_fallback_report(const sorr_ios_dat
         return;
     }
 
-    sorr_ios_write_previous_run_fallback_report(layout,
-                                                layout->d3_latest_crash_report_path,
-                                                previous_last_marker,
-                                                "previous current-run log rotated without clean_shutdown=1 or signal=");
-    sorr_ios_write_previous_run_fallback_report(layout,
-                                                layout->d3_private_latest_crash_report_path,
-                                                previous_last_marker,
-                                                "previous current-run log rotated without clean_shutdown=1 or signal=");
-    sorr_ios_d3_append_log_file(layout->d3_current_run_path,
-                                "previous_run_fallback_crash_report=ios_latest_crash_report.txt reason=no-clean-shutdown-no-signal");
-    sorr_ios_d3_append_log_file(layout->d3_private_current_run_path,
-                                "previous_run_fallback_crash_report=ios_latest_crash_report.txt reason=no-clean-shutdown-no-signal");
+    sorr_ios_read_previous_run_metadata(layout->d3_previous_run_path,
+                                        previous_run_id,
+                                        sizeof(previous_run_id),
+                                        previous_build,
+                                        sizeof(previous_build));
+    previous_last_ticks = sorr_ios_file_last_tick_value(layout->d3_previous_run_path);
+    has_terminating = sorr_ios_file_contains_text(layout->d3_previous_run_path, "SDL_APP_TERMINATING");
+    previous_build_matches_current = !previous_build[0] || strcmp(previous_build, SORR_IOS_BUILD_LABEL) == 0;
+    previous_short_lifecycle = has_terminating && previous_last_ticks > 0 && previous_last_ticks < 10000u;
+    should_overwrite_latest = previous_build_matches_current && !previous_short_lifecycle;
+
+    if (!previous_run_id[0])
+    {
+        snprintf(previous_run_id, sizeof(previous_run_id), "unknown-%u", sorr_ios_d4a_run_number);
+    }
+
+    snprintf(archive_name,
+             sizeof(archive_name),
+             "ios_previous_run_fallback_%s.txt",
+             previous_run_id);
+    if (!sorr_ios_join_path(archive_path, sizeof(archive_path), layout->documents_diagnostics_dir, archive_name))
+    {
+        archive_path[0] = '\0';
+    }
+    if (!sorr_ios_join_path(private_archive_path, sizeof(private_archive_path), layout->logs_dir, archive_name))
+    {
+        private_archive_path[0] = '\0';
+    }
+
+    if (archive_path[0])
+    {
+        sorr_ios_write_previous_run_fallback_report(layout,
+                                                    archive_path,
+                                                    previous_last_marker,
+                                                    "previous current-run log rotated without clean_shutdown=1 or signal=",
+                                                    previous_run_id,
+                                                    previous_build,
+                                                    previous_last_ticks,
+                                                    has_terminating,
+                                                    previous_short_lifecycle,
+                                                    previous_build_matches_current,
+                                                    0);
+    }
+    if (private_archive_path[0])
+    {
+        sorr_ios_write_previous_run_fallback_report(layout,
+                                                    private_archive_path,
+                                                    previous_last_marker,
+                                                    "previous current-run log rotated without clean_shutdown=1 or signal=",
+                                                    previous_run_id,
+                                                    previous_build,
+                                                    previous_last_ticks,
+                                                    has_terminating,
+                                                    previous_short_lifecycle,
+                                                    previous_build_matches_current,
+                                                    0);
+    }
+
+    if (should_overwrite_latest)
+    {
+        sorr_ios_write_previous_run_fallback_report(layout,
+                                                    layout->d3_latest_crash_report_path,
+                                                    previous_last_marker,
+                                                    "previous current-run log rotated without clean_shutdown=1 or signal=",
+                                                    previous_run_id,
+                                                    previous_build,
+                                                    previous_last_ticks,
+                                                    has_terminating,
+                                                    previous_short_lifecycle,
+                                                    previous_build_matches_current,
+                                                    1);
+        sorr_ios_write_previous_run_fallback_report(layout,
+                                                    layout->d3_private_latest_crash_report_path,
+                                                    previous_last_marker,
+                                                    "previous current-run log rotated without clean_shutdown=1 or signal=",
+                                                    previous_run_id,
+                                                    previous_build,
+                                                    previous_last_ticks,
+                                                    has_terminating,
+                                                    previous_short_lifecycle,
+                                                    previous_build_matches_current,
+                                                    1);
+    }
+
+    snprintf(status_line,
+             sizeof(status_line),
+             "previous_run_fallback_crash_report=%s archive=%s previous_build=%s current_build=%s previous_last_ticks=%u has_terminating=%d short_lifecycle=%d build_matches_current=%d reason=no-clean-shutdown-no-signal",
+             should_overwrite_latest ? "ios_latest_crash_report.txt" : "archived-only",
+             archive_name,
+             previous_build[0] ? previous_build : "(unknown)",
+             SORR_IOS_BUILD_LABEL,
+             previous_last_ticks,
+             has_terminating ? 1 : 0,
+             previous_short_lifecycle ? 1 : 0,
+             previous_build_matches_current ? 1 : 0);
+    sorr_ios_d3_append_log_file(layout->d3_current_run_path, status_line);
+    sorr_ios_d3_append_log_file(layout->d3_private_current_run_path, status_line);
 }
 
 static unsigned long long sorr_ios_d3_resident_memory_bytes(void)
