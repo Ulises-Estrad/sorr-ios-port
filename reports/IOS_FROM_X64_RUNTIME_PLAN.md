@@ -1299,9 +1299,15 @@ Physical testing of the audio SFX diagnostic artifact suggests the wrong run SFX
 Current artifact target:
 
 ```text
+Actions run: 26675725620
+Commit: 555ba50
 Artifact: ios-shell-playtest-fallback-crash-report-device-arm64
 IPA: build-products/SorrIOSShell-playtest-fallback-crash-report-adhoc.ipa
 Build label: ios-playtest-fallback-crash-report
+Artifact size: 1963861 bytes
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
 ```
 
 Patch contents:

@@ -823,9 +823,14 @@ That file logs iOS WAV load/reuse/unload/play events with handle ids, sample pat
 The audio diagnostic artifact appears to have fixed the wrong run SFX, but a new abrupt scene-transition exit did not refresh `ios_latest_crash_report.txt`. The next Sideloadly artifact keeps audio diagnostics and adds fallback report generation on the next launch:
 
 ```text
+Actions run: 26675725620
+Commit: 555ba50
 ios-shell-playtest-fallback-crash-report-device-arm64
 build-products/SorrIOSShell-playtest-fallback-crash-report-adhoc.ipa
 Build label: ios-playtest-fallback-crash-report
+Artifact size: 1963861 bytes
+Device job result: success
+Simulator job result: success
 Game data/assets bundled in IPA: no
 ```
 

@@ -29,6 +29,8 @@ This guide rebuilds the current iPhone setup from zero.
 4. Download the latest successful device artifact. Current fallback crash-report diagnostic target:
 
    ```text
+   Actions run: 26675725620
+   Commit: 555ba50
    Artifact: ios-shell-playtest-fallback-crash-report-device-arm64
    ```
 

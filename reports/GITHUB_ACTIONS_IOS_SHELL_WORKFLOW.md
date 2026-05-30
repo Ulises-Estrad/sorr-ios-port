@@ -2492,9 +2492,14 @@ On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/ios_audio_sfx_diagnostics.txt
 Physical testing showed the audio issue no longer reproduced, but a new abrupt scene-transition exit did not refresh `ios_latest_crash_report.txt`. The next workflow target keeps the audio diagnostics and adds next-launch fallback crash-report synthesis:
 
 ```text
+Actions run: 26675725620
+Commit: 555ba50
 Device artifact: ios-shell-playtest-fallback-crash-report-device-arm64
 IPA: build-products/SorrIOSShell-playtest-fallback-crash-report-adhoc.ipa
 Build label: ios-playtest-fallback-crash-report
+Artifact size: 1963861 bytes
+Device job result: success
+Simulator job result: success
 Game data/assets bundled in IPA: no
 ```
 
