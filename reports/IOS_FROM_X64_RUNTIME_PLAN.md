@@ -1199,3 +1199,25 @@ Game data/assets bundled in IPA: no
 ```
 
 Physical playtest result: the GET_REAL_POINT guard fixed the observed gun-shot crash and Stage 6 beach/water startup crash. Continue with normal playtesting and major bug fixes as they appear.
+
+## Current Playtest Bug Follow-Up: Run SFX / Back Attack
+
+Physical playtesting later found that double-tapping forward/back to run can play the wrong enemy SFX after entering some screens. The issue disappears after restarting the app, which points toward stale or mis-sized audio handle state rather than a missing asset.
+
+Current artifact target:
+
+```text
+Artifact: ios-shell-playtest-run-sfx-back-attack-device-arm64
+IPA: build-products/SorrIOSShell-playtest-run-sfx-back-attack-adhoc.ipa
+Build label: ios-playtest-run-sfx-back-attack
+```
+
+Patch contents:
+
+- enables the existing `mod_sound` SDL_mixer handle table for iOS/64-bit host-pointer builds,
+- avoids passing `Mix_Chunk *` and `Mix_Music *` through truncated `int` values on iOS arm64,
+- keeps the existing real BGM/SFX backend enabled,
+- adds circular action-button visuals,
+- adds Back Attack above Attack, mapped to Bennu key `57` / Space.
+
+The playable baseline remains unchanged: real render, BGM/SFX, custom controls, icon/name, D2-staged data, visible diagnostics, and asset-free IPA packaging.

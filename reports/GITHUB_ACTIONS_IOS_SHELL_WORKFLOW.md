@@ -2394,3 +2394,24 @@ Game data/assets bundled in IPA: no
 Physical playtest result: guns now fire without crashing, and Stage 6 beach/water startup no longer crashes on the physical iPhone. A full SoR2 route clear with Axel also completed without clear bugs or random crashes.
 
 This artifact is now the paused/final-for-now baseline. There is no active feature roadmap at this point; future GitHub Actions/device work should be limited to major bug fixes found during normal playtesting. Known non-blocking issue: some no-input attract/demo scenes may ignore Start/Back presses even while showing a "press start" prompt. Leave that alone unless it becomes a practical playability blocker or produces a clearer bug report.
+
+## Playtest Run SFX / Back Attack Follow-Up
+
+A later playtest found that double-tapping forward/back to run can play an enemy sound effect instead of the short run sound after entering some screens. The workflow now targets a narrow audio-handle safety patch plus control UI additions:
+
+```text
+Device artifact: ios-shell-playtest-run-sfx-back-attack-device-arm64
+IPA: build-products/SorrIOSShell-playtest-run-sfx-back-attack-adhoc.ipa
+Build label: ios-playtest-run-sfx-back-attack
+```
+
+Patch contents:
+
+- enables the SDL_mixer sample/music handle table for iOS/64-bit host-pointer builds instead of casting `Mix_Chunk *` / `Mix_Music *` through `int`,
+- keeps BGM/SFX enabled,
+- keeps the joystick and current Bennu key injection path,
+- changes action-button visuals to circular controls,
+- adds Back Attack above Attack, mapped to Bennu key `57` / Space,
+- keeps the IPA asset-free.
+
+Manual test focus: visit multiple screens, double-tap forward/back to run, confirm the correct run sound plays, and verify Back Attack plus existing Attack/Jump/Special/Police/Start/Back controls.

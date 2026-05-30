@@ -24,11 +24,11 @@
 #include "SDL.h"
 
 #ifndef SORR_IOS_BUILD_LABEL
-#define SORR_IOS_BUILD_LABEL "ios-playtest-real-point-guard"
+#define SORR_IOS_BUILD_LABEL "ios-playtest-run-sfx-back-attack"
 #endif
 
 #ifndef SORR_IOS_ARTIFACT_LABEL
-#define SORR_IOS_ARTIFACT_LABEL "ios-shell-playtest-real-point-guard-device-arm64"
+#define SORR_IOS_ARTIFACT_LABEL "ios-shell-playtest-run-sfx-back-attack-device-arm64"
 #endif
 
 #ifdef SORR_IOS_D3_FIRST_RENDER
@@ -345,7 +345,7 @@ static void sorr_ios_touch_set_bennu_key(int code, int pressed)
 }
 #endif
 
-#define SORR_IOS_D4A_TOUCH_BUTTON_COUNT 6
+#define SORR_IOS_D4A_TOUCH_BUTTON_COUNT 7
 #define SORR_IOS_D4A_TOUCH_FINGER_COUNT 16
 
 #define SORR_IOS_D4A_DPAD_CENTER_X 0.18f
@@ -361,7 +361,7 @@ static void sorr_ios_touch_set_bennu_key(int code, int pressed)
 #define SORR_IOS_D4A_JOYSTICK_DIAGONAL_RATIO 0.58f
 #define SORR_IOS_D4A_CONFIG_HIT_SLOP 0.016f
 #define SORR_IOS_D4A_TOUCH_MOUSE_SUPPRESS_MS 450
-#define SORR_IOS_D4A_CONTROL_CONFIG_VERSION 4
+#define SORR_IOS_D4A_CONTROL_CONFIG_VERSION 5
 #define SORR_IOS_D4A_UTILITY_BUTTON_HIT_SLOP 0.012f
 #define SORR_IOS_D4A_EDIT_DRAG_THRESHOLD 0.018f
 
@@ -382,6 +382,7 @@ static void sorr_ios_touch_set_bennu_key(int code, int pressed)
 #define SORR_IOS_D4A_MAX_DPAD_RY 0.28f
 #define SORR_IOS_D4A_BUTTON_START 4
 #define SORR_IOS_D4A_BUTTON_BACK 5
+#define SORR_IOS_D4A_BUTTON_BACK_ATTACK 6
 
 typedef struct sorr_ios_d4a_touch_button
 {
@@ -434,12 +435,13 @@ typedef struct sorr_ios_d4a_control_layout
 } sorr_ios_d4a_control_layout;
 
 static const sorr_ios_d4a_touch_button sorr_ios_d4a_touch_buttons[SORR_IOS_D4A_TOUCH_BUTTON_COUNT] = {
-    {"Attack", "ATK", 46, -1, 0.74f, 0.64f, 0.11f, 0.13f},
-    {"Jump", "JUMP", 47, -1, 0.87f, 0.64f, 0.11f, 0.13f},
-    {"Special", "SPC", 45, -1, 0.74f, 0.80f, 0.11f, 0.13f},
-    {"Police", "POL", 48, -1, 0.87f, 0.80f, 0.11f, 0.13f},
+    {"Attack", "ATK", 46, -1, 0.760f, 0.620f, 0.065f, 0.140f},
+    {"Jump", "JUMP", 47, -1, 0.875f, 0.620f, 0.065f, 0.140f},
+    {"Special", "SPC", 45, -1, 0.760f, 0.790f, 0.065f, 0.140f},
+    {"Police", "POL", 48, -1, 0.875f, 0.790f, 0.065f, 0.140f},
     {"Start", "START", 28, -1, 0.921f, 0.095f, 0.055f, 0.052f},
-    {"Back", "BACK", 1, 14, 0.921f, 0.220f, 0.055f, 0.052f}
+    {"Back", "BACK", 1, 14, 0.921f, 0.220f, 0.055f, 0.052f},
+    {"Back Attack", "B-ATK", 57, -1, 0.760f, 0.440f, 0.065f, 0.140f}
 };
 
 static int sorr_ios_d4a_button_press_count[SORR_IOS_D4A_TOUCH_BUTTON_COUNT];
@@ -489,6 +491,56 @@ static void sorr_ios_d4a_touch_log(const char *format, ...)
     }
 }
 
+static int sorr_ios_d4a_button_is_utility(int index)
+{
+    return index == SORR_IOS_D4A_BUTTON_START || index == SORR_IOS_D4A_BUTTON_BACK;
+}
+
+static void sorr_ios_d4a_apply_button_default(int index)
+{
+    if (index < 0 || index >= SORR_IOS_D4A_TOUCH_BUTTON_COUNT)
+    {
+        return;
+    }
+
+    sorr_ios_d4a_controls.buttons[index].x = sorr_ios_d4a_touch_buttons[index].x;
+    sorr_ios_d4a_controls.buttons[index].y = sorr_ios_d4a_touch_buttons[index].y;
+    sorr_ios_d4a_controls.buttons[index].w = sorr_ios_d4a_touch_buttons[index].w;
+    sorr_ios_d4a_controls.buttons[index].h = sorr_ios_d4a_touch_buttons[index].h;
+}
+
+static void sorr_ios_d4a_apply_button_shape_preserve_center(int index)
+{
+    float center_x;
+    float center_y;
+
+    if (index < 0 || index >= SORR_IOS_D4A_TOUCH_BUTTON_COUNT)
+    {
+        return;
+    }
+
+    center_x = sorr_ios_d4a_controls.buttons[index].x + sorr_ios_d4a_controls.buttons[index].w * 0.5f;
+    center_y = sorr_ios_d4a_controls.buttons[index].y + sorr_ios_d4a_controls.buttons[index].h * 0.5f;
+    sorr_ios_d4a_controls.buttons[index].w = sorr_ios_d4a_touch_buttons[index].w;
+    sorr_ios_d4a_controls.buttons[index].h = sorr_ios_d4a_touch_buttons[index].h;
+    sorr_ios_d4a_controls.buttons[index].x = center_x - sorr_ios_d4a_controls.buttons[index].w * 0.5f;
+    sorr_ios_d4a_controls.buttons[index].y = center_y - sorr_ios_d4a_controls.buttons[index].h * 0.5f;
+}
+
+static void sorr_ios_d4a_apply_version5_button_defaults(void)
+{
+    int i;
+
+    for (i = 0; i < SORR_IOS_D4A_TOUCH_BUTTON_COUNT; i++)
+    {
+        if (!sorr_ios_d4a_button_is_utility(i) && i != SORR_IOS_D4A_BUTTON_BACK_ATTACK)
+        {
+            sorr_ios_d4a_apply_button_shape_preserve_center(i);
+        }
+    }
+    sorr_ios_d4a_apply_button_default(SORR_IOS_D4A_BUTTON_BACK_ATTACK);
+}
+
 static void sorr_ios_d4a_reset_control_defaults(void)
 {
     int i;
@@ -505,10 +557,7 @@ static void sorr_ios_d4a_reset_control_defaults(void)
     sorr_ios_d4a_controls.initialized = 1;
     for (i = 0; i < SORR_IOS_D4A_TOUCH_BUTTON_COUNT; i++)
     {
-        sorr_ios_d4a_controls.buttons[i].x = sorr_ios_d4a_touch_buttons[i].x;
-        sorr_ios_d4a_controls.buttons[i].y = sorr_ios_d4a_touch_buttons[i].y;
-        sorr_ios_d4a_controls.buttons[i].w = sorr_ios_d4a_touch_buttons[i].w;
-        sorr_ios_d4a_controls.buttons[i].h = sorr_ios_d4a_touch_buttons[i].h;
+        sorr_ios_d4a_apply_button_default(i);
     }
 }
 
@@ -539,15 +588,8 @@ static void sorr_ios_d4a_clamp_control_layout(void)
 
 static void sorr_ios_d4a_apply_utility_button_defaults(void)
 {
-    sorr_ios_d4a_controls.buttons[SORR_IOS_D4A_BUTTON_START].x = sorr_ios_d4a_touch_buttons[SORR_IOS_D4A_BUTTON_START].x;
-    sorr_ios_d4a_controls.buttons[SORR_IOS_D4A_BUTTON_START].y = sorr_ios_d4a_touch_buttons[SORR_IOS_D4A_BUTTON_START].y;
-    sorr_ios_d4a_controls.buttons[SORR_IOS_D4A_BUTTON_START].w = sorr_ios_d4a_touch_buttons[SORR_IOS_D4A_BUTTON_START].w;
-    sorr_ios_d4a_controls.buttons[SORR_IOS_D4A_BUTTON_START].h = sorr_ios_d4a_touch_buttons[SORR_IOS_D4A_BUTTON_START].h;
-
-    sorr_ios_d4a_controls.buttons[SORR_IOS_D4A_BUTTON_BACK].x = sorr_ios_d4a_touch_buttons[SORR_IOS_D4A_BUTTON_BACK].x;
-    sorr_ios_d4a_controls.buttons[SORR_IOS_D4A_BUTTON_BACK].y = sorr_ios_d4a_touch_buttons[SORR_IOS_D4A_BUTTON_BACK].y;
-    sorr_ios_d4a_controls.buttons[SORR_IOS_D4A_BUTTON_BACK].w = sorr_ios_d4a_touch_buttons[SORR_IOS_D4A_BUTTON_BACK].w;
-    sorr_ios_d4a_controls.buttons[SORR_IOS_D4A_BUTTON_BACK].h = sorr_ios_d4a_touch_buttons[SORR_IOS_D4A_BUTTON_BACK].h;
+    sorr_ios_d4a_apply_button_default(SORR_IOS_D4A_BUTTON_START);
+    sorr_ios_d4a_apply_button_default(SORR_IOS_D4A_BUTTON_BACK);
 }
 
 static void sorr_ios_d4a_save_control_config(void)
@@ -682,13 +724,19 @@ static void sorr_ios_d4a_load_control_config(void)
     fclose(fp);
     if (sorr_ios_d4a_controls.config_version < SORR_IOS_D4A_CONTROL_CONFIG_VERSION)
     {
+        int old_version = sorr_ios_d4a_controls.config_version;
         sorr_ios_d4a_controls.labels_visible = 0;
         if (sorr_ios_d4a_controls.config_version < 4)
         {
             sorr_ios_d4a_apply_utility_button_defaults();
         }
+        if (sorr_ios_d4a_controls.config_version < 5)
+        {
+            sorr_ios_d4a_apply_version5_button_defaults();
+        }
         sorr_ios_d4a_controls.config_version = SORR_IOS_D4A_CONTROL_CONFIG_VERSION;
-        sorr_ios_d4a_touch_log("control config migrated version=%d labels_visible=0 utility_buttons=default",
+        sorr_ios_d4a_touch_log("control config migrated old_version=%d version=%d labels_visible=0 circular_actions=1 back_attack=default",
+                               old_version,
                                SORR_IOS_D4A_CONTROL_CONFIG_VERSION);
     }
     sorr_ios_d4a_controls.loaded_from_disk = 1;
@@ -725,7 +773,7 @@ static int sorr_ios_d4a_button_for_point(float x, float y)
     {
         const sorr_ios_d4a_rectf *rect = &sorr_ios_d4a_controls.buttons[i];
         const sorr_ios_d4a_touch_button *button = &sorr_ios_d4a_touch_buttons[i];
-        float slop = (i == SORR_IOS_D4A_BUTTON_START || i == SORR_IOS_D4A_BUTTON_BACK) ? SORR_IOS_D4A_UTILITY_BUTTON_HIT_SLOP : 0.0f;
+        float slop = sorr_ios_d4a_button_is_utility(i) ? SORR_IOS_D4A_UTILITY_BUTTON_HIT_SLOP : 0.0f;
         (void)button;
         if (sorr_ios_d4a_point_in_rect_slop(x, y, rect, slop))
         {
@@ -1105,7 +1153,7 @@ static int sorr_ios_d4a_edit_target_for_point(float x, float y, float *drag_dx, 
 
     for (i = 0; i < SORR_IOS_D4A_TOUCH_BUTTON_COUNT; i++)
     {
-        float slop = (i == SORR_IOS_D4A_BUTTON_START || i == SORR_IOS_D4A_BUTTON_BACK) ? SORR_IOS_D4A_UTILITY_BUTTON_HIT_SLOP : 0.0f;
+        float slop = sorr_ios_d4a_button_is_utility(i) ? SORR_IOS_D4A_UTILITY_BUTTON_HIT_SLOP : 0.0f;
         if (sorr_ios_d4a_point_in_rect_slop(x, y, &sorr_ios_d4a_controls.buttons[i], slop))
         {
             if (drag_dx) *drag_dx = x - sorr_ios_d4a_controls.buttons[i].x;
@@ -1598,6 +1646,78 @@ static void sorr_ios_d4a_draw_ellipse_outline(SDL_Renderer *renderer,
     }
 }
 
+static void sorr_ios_d4a_draw_labeled_ellipse(SDL_Renderer *renderer,
+                                              const SDL_Rect *rect,
+                                              const char *label,
+                                              int label_scale,
+                                              int selected,
+                                              int pressed,
+                                              int use_config_alpha)
+{
+    int label_len;
+    int text_w;
+    int text_h;
+    int cx;
+    int cy;
+    int rx;
+    int ry;
+    Uint8 fill_alpha = use_config_alpha ? sorr_ios_d4a_alpha(pressed ? 215 : 150) : (Uint8)(pressed ? 255 : 235);
+    Uint8 line_alpha = use_config_alpha ? sorr_ios_d4a_alpha(250) : 250;
+
+    if (!renderer || !rect)
+    {
+        return;
+    }
+
+    cx = rect->x + rect->w / 2;
+    cy = rect->y + rect->h / 2;
+    rx = rect->w / 2;
+    ry = rect->h / 2;
+    if (rx < 1 || ry < 1)
+    {
+        return;
+    }
+
+    sorr_ios_d4a_draw_ellipse(renderer, cx, cy, rx, ry, 0, 0, 0, fill_alpha, 1);
+    sorr_ios_d4a_draw_ellipse_outline(renderer,
+                                      cx,
+                                      cy,
+                                      rx,
+                                      ry,
+                                      selected ? 4 : 3,
+                                      (pressed || selected) ? 84 : 255,
+                                      (pressed || selected) ? 190 : 255,
+                                      255,
+                                      line_alpha);
+    sorr_ios_d4a_draw_ellipse_outline(renderer,
+                                      cx,
+                                      cy,
+                                      rx - 5,
+                                      ry - 5,
+                                      1,
+                                      255,
+                                      255,
+                                      255,
+                                      use_config_alpha ? sorr_ios_d4a_alpha(110) : 110);
+
+    if (label && (sorr_ios_d4a_controls.labels_visible || !use_config_alpha || sorr_ios_d4a_edit_mode || selected))
+    {
+        label_len = (int)strlen(label);
+        text_w = label_len * 6 * label_scale;
+        while (label_scale > 1 && text_w > rect->w - 6)
+        {
+            label_scale--;
+            text_w = label_len * 6 * label_scale;
+        }
+        text_h = 7 * label_scale;
+        sorr_ios_draw_text(renderer,
+                           rect->x + (rect->w - text_w) / 2,
+                           rect->y + (rect->h - text_h) / 2,
+                           label_scale,
+                           label);
+    }
+}
+
 static void sorr_ios_d4a_draw_config_button(SDL_Renderer *renderer,
                                             int width,
                                             int height,
@@ -1732,7 +1852,7 @@ void sorr_ios_d4a_draw_touch_overlay(SDL_Renderer *renderer)
             const sorr_ios_d4a_touch_button *button = &sorr_ios_d4a_touch_buttons[i];
             int pressed = sorr_ios_d4a_button_press_count[i] > 0;
             int selected = sorr_ios_d4a_edit_mode && sorr_ios_d4a_selected_target == i;
-            int is_utility = i == SORR_IOS_D4A_BUTTON_START || i == SORR_IOS_D4A_BUTTON_BACK;
+            int is_utility = sorr_ios_d4a_button_is_utility(i);
             SDL_Rect rect;
 
             rect.x = (int)(sorr_ios_d4a_controls.buttons[i].x * (float)width);
@@ -1741,7 +1861,7 @@ void sorr_ios_d4a_draw_touch_overlay(SDL_Renderer *renderer)
             rect.h = (int)(sorr_ios_d4a_controls.buttons[i].h * (float)height);
 
             if (rect.w < (is_utility ? 52 : 58)) rect.w = is_utility ? 52 : 58;
-            if (rect.h < (is_utility ? 36 : 46)) rect.h = is_utility ? 36 : 46;
+            if (rect.h < (is_utility ? 36 : 58)) rect.h = is_utility ? 36 : 58;
             if (rect.x < margin) rect.x = margin;
             if (rect.y < margin) rect.y = margin;
             if (rect.x + rect.w > width - margin) rect.x = width - margin - rect.w;
@@ -1749,7 +1869,14 @@ void sorr_ios_d4a_draw_touch_overlay(SDL_Renderer *renderer)
             if (rect.x < 0) rect.x = 0;
             if (rect.y < 0) rect.y = 0;
 
-            sorr_ios_d4a_draw_labeled_rect(renderer, &rect, button->label, label_scale, selected, pressed, 1);
+            if (is_utility)
+            {
+                sorr_ios_d4a_draw_labeled_rect(renderer, &rect, button->label, label_scale, selected, pressed, 1);
+            }
+            else
+            {
+                sorr_ios_d4a_draw_labeled_ellipse(renderer, &rect, button->label, label_scale, selected, pressed, 1);
+            }
         }
     }
 

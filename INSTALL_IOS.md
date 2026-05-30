@@ -26,7 +26,7 @@ This guide rebuilds the current iPhone setup from zero.
 1. Open the GitHub repo.
 2. Go to `Actions`.
 3. Open the latest successful `iOS Shell` workflow run.
-4. Download the latest device artifact. Current workflow target:
+4. Download the latest successful device artifact. Current proven baseline:
 
    ```text
    Actions run: 26626858854
@@ -34,17 +34,17 @@ This guide rebuilds the current iPhone setup from zero.
    Artifact: ios-shell-playtest-real-point-guard-device-arm64
    ```
 
-   Device artifact target:
+   Current follow-up target:
 
    ```text
-   ios-shell-playtest-real-point-guard-device-arm64
+   ios-shell-playtest-run-sfx-back-attack-device-arm64
    ```
 
 5. Extract the downloaded artifact on Windows.
-6. Install the IPA with Sideloadly. Current baseline IPA target:
+6. Install the IPA with Sideloadly. Current follow-up IPA target:
 
    ```text
-   build-products/SorrIOSShell-playtest-real-point-guard-adhoc.ipa
+   build-products/SorrIOSShell-playtest-run-sfx-back-attack-adhoc.ipa
    ```
 
 7. If iOS asks, enable Developer Mode and trust the developer profile.
@@ -104,6 +104,7 @@ Controls are configurable in-app through `CFG`.
 - Use `RST` to reset the default layout.
 - Use `DONE` to save and exit.
 - `CFG` lives in the left pillar area. `START` is in the right pillar area, and `BACK` is directly below it.
+- Gameplay action buttons are circular. `Back Attack` sits above `Attack` and maps to the Space/back-attack binding.
 
 Settings persist here:
 

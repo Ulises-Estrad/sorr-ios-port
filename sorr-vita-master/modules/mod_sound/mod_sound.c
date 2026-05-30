@@ -32,6 +32,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
 
 #include "bgddl.h"
@@ -55,7 +56,7 @@
 
 static int audio_initialized = 0 ;
 
-#if defined(_WIN64)
+#if defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES) || (UINTPTR_MAX > UINT32_MAX)
 #define MODSOUND_X64_HANDLE_TABLE_SIZE 4096
 static Mix_Chunk * modsound_x64_chunks[MODSOUND_X64_HANDLE_TABLE_SIZE];
 static Mix_Music * modsound_x64_music[MODSOUND_X64_HANDLE_TABLE_SIZE];

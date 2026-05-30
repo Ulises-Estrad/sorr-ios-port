@@ -1,6 +1,6 @@
 # iOS Current Playtest Baseline
 
-Status: current playable iPhone baseline, paused/final for now.
+Status: current playable iPhone baseline, paused/final for now, with one active playtest follow-up patch target.
 
 This project is now a playable iPhone port baseline, not an early proof-only experiment. Historical milestone reports remain in `reports/` as evidence, but current work should use this playtest baseline framing. Active feature work is paused; future changes should be limited to major bug fixes found during normal playtesting.
 
@@ -17,6 +17,7 @@ This project is now a playable iPhone port baseline, not an early proof-only exp
 - The IPA remains asset-free; game data is imported locally through the iPhone Files route.
 - Latest physical playtest fix: gun firing works and Stage 6 beach/water startup no longer crashes after the GET_REAL_POINT guard.
 - Latest route playtest: the SoR2 path was cleared with Axel with no clear bugs or random crashes observed afterward.
+- Current follow-up target: fix a reported wrong run sound after some screen transitions, add circular action-button visuals, and add a Back Attack button above Attack.
 
 ## Current Workflow Target
 
@@ -32,13 +33,23 @@ Simulator job result: success
 Game data/assets bundled in IPA: no
 ```
 
+Follow-up target:
+
+```text
+Artifact: ios-shell-playtest-run-sfx-back-attack-device-arm64
+IPA: build-products/SorrIOSShell-playtest-run-sfx-back-attack-adhoc.ipa
+Build label: ios-playtest-run-sfx-back-attack
+Status: pending GitHub Actions proof
+```
+
 ## Control Layout
 
 - `CFG`: small opaque button in the left pillar-safe area.
 - `START`: small utility button in the right pillar-safe area.
 - `BACK`: small utility button below `START`, lowered enough that the visible rectangles do not overlap after renderer minimum sizing. Start/Back use the same `52x36` minimum visual size as the CFG utility button. On a 430-point-tall iPhone landscape drawable, `START` begins near `41px` and draws to `77px`; `BACK` now begins near `95px`, leaving about `18px` of visible space.
 - Virtual joystick: lower-left movement area, mapped to the same Bennu arrow keys.
-- Action buttons: right-side gameplay buttons mapped to the existing Bennu key defaults.
+- Action buttons: right-side circular gameplay buttons mapped to the existing Bennu key defaults.
+- Back Attack: circular button above Attack, mapped to Bennu key `57` / Space.
 
 In edit mode, tapping selects a control, but rearranging requires dragging. This prevents accidental layout moves from simple taps.
 
@@ -46,7 +57,7 @@ In edit mode, tapping selects a control, but rearranging requires dragging. This
 
 Current: final-for-now playable baseline. The latest IPA includes the GET_REAL_POINT pointer-output guard and crash-report version 3.
 
-Next: playtest the game in free time. Patch only major bugs one by one if they are found during real play.
+Next: test the run-sound/back-attack follow-up build. After that, return to free-time playtesting and patch only major bugs one by one if they are found during real play.
 
 ## Latest Physical Playtest Result
 

@@ -13,6 +13,8 @@ Remaining work is no longer planned as an active roadmap. Future changes should 
 
 Latest physical playtest result: the `ios-shell-playtest-real-point-guard-device-arm64` IPA fixed the reported gun-shot crash and the Stage 6 beach/water startup crash. A full SoR2 route clear with Axel completed without clear bugs or random crashes.
 
+Current follow-up target: `ios-shell-playtest-run-sfx-back-attack-device-arm64` keeps the same playable baseline, adds circular action-button visuals plus a Space-mapped Back Attack button above Attack, and fixes iOS/64-bit SDL_mixer handle storage for the reported wrong run sound after screen transitions.
+
 Known non-blocking issue: some no-input attract/demo scenes may ignore Start/Back presses even while showing a "press start" prompt. This does not block normal playability because the current build can be started, controlled, and played through; leave this alone unless it becomes a practical blocker or a clear crash/repro case appears.
 
 ## Install From Scratch
