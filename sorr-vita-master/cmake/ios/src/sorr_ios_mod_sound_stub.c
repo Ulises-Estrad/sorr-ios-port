@@ -110,6 +110,9 @@ volatile unsigned long long sorr_ios_audio_music_last_ptr = 0;
 volatile unsigned long long sorr_ios_audio_music_last_handle = 0;
 char sorr_ios_audio_last_music_path[SORR_IOS_AUDIO_PATH_MAX] = "";
 char sorr_ios_audio_last_music_status[64] = "none";
+char sorr_ios_audio_last_wav_path[SORR_IOS_AUDIO_PATH_MAX] = "";
+char sorr_ios_audio_last_wav_status[64] = "none";
+volatile unsigned long long sorr_ios_audio_last_wav_bytes = 0;
 
 static int sorr_ios_audio_initialized = 0;
 static int sorr_ios_audio_open_attempted = 0;
@@ -127,6 +130,8 @@ static const char *sorr_ios_audio_zero_category_names[SORR_IOS_AUDIO_ZERO_CATEGO
     "channel_effect",
     "play_wav_guard"
 };
+
+extern char sorr_ios_d3_visible_event_log_path[];
 
 #if (defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES))
 extern void *portable_x64_sysproc_pointer_param(int *cell);
@@ -214,6 +219,47 @@ static void sorr_ios_audio_diag_log(INSTANCE *my, const char *format, ...)
     va_end(args);
     fputc('\n', fp);
     fclose(fp);
+}
+
+static void sorr_ios_audio_runtime_log(INSTANCE *my, const char *format, ...)
+{
+    FILE *fp;
+    va_list args;
+
+    if (!format || !sorr_ios_d3_visible_event_log_path[0])
+    {
+        return;
+    }
+
+    fp = fopen(sorr_ios_d3_visible_event_log_path, "ab");
+    if (!fp)
+    {
+        return;
+    }
+
+    fprintf(fp,
+            "audio_runtime ticks=%u proc=%s#%d ",
+            SDL_GetTicks(),
+            sorr_ios_audio_instance_name(my),
+            sorr_ios_audio_instance_id(my));
+    va_start(args, format);
+    vfprintf(fp, format, args);
+    va_end(args);
+    fputc('\n', fp);
+    fclose(fp);
+}
+
+static void sorr_ios_audio_note_wav_path(const char *path, const char *status, size_t bytes)
+{
+    snprintf(sorr_ios_audio_last_wav_path,
+             sizeof(sorr_ios_audio_last_wav_path),
+             "%s",
+             path ? path : "");
+    snprintf(sorr_ios_audio_last_wav_status,
+             sizeof(sorr_ios_audio_last_wav_status),
+             "%s",
+             status ? status : "unknown");
+    sorr_ios_audio_last_wav_bytes = (unsigned long long)bytes;
 }
 
 static void sorr_ios_audio_update_max_live(void)
@@ -670,7 +716,11 @@ static int sorr_ios_audio_inert_handle(const char *path, int kind)
     return sorr_ios_audio_store_handle(kind, path, NULL, NULL, NULL, 0);
 }
 
-static int sorr_ios_audio_read_file_to_memory(const char *filename, void **out_data, size_t *out_size)
+static int sorr_ios_audio_read_file_to_memory_ex(const char *filename,
+                                                 void **out_data,
+                                                 size_t *out_size,
+                                                 const char *kind,
+                                                 int update_music_stats)
 {
     file *fp;
     int size;
@@ -688,14 +738,14 @@ static int sorr_ios_audio_read_file_to_memory(const char *filename, void **out_d
     fp = file_open(filename, "rb0");
     if (!fp)
     {
-        PORTABLE_DIAG_LOG("AUDIO", "iOS D3A music memory open failed path=%s", filename);
+        PORTABLE_DIAG_LOG("AUDIO", "iOS D3A %s memory open failed path=%s", kind ? kind : "audio", filename);
         return 0;
     }
 
     size = file_size(fp);
     if (size <= 0)
     {
-        PORTABLE_DIAG_LOG("AUDIO", "iOS D3A music memory size invalid path=%s size=%d", filename, size);
+        PORTABLE_DIAG_LOG("AUDIO", "iOS D3A %s memory size invalid path=%s size=%d", kind ? kind : "audio", filename, size);
         file_close(fp);
         return 0;
     }
@@ -703,7 +753,7 @@ static int sorr_ios_audio_read_file_to_memory(const char *filename, void **out_d
     data = (unsigned char *)malloc((size_t)size);
     if (!data)
     {
-        PORTABLE_DIAG_LOG("AUDIO", "iOS D3A music memory malloc failed path=%s size=%d", filename, size);
+        PORTABLE_DIAG_LOG("AUDIO", "iOS D3A %s memory malloc failed path=%s size=%d", kind ? kind : "audio", filename, size);
         file_close(fp);
         return 0;
     }
@@ -723,7 +773,8 @@ static int sorr_ios_audio_read_file_to_memory(const char *filename, void **out_d
     if (total != size)
     {
         PORTABLE_DIAG_LOG("AUDIO",
-                          "iOS D3A music memory read short path=%s expected=%d got=%d",
+                          "iOS D3A %s memory read short path=%s expected=%d got=%d",
+                          kind ? kind : "audio",
                           filename,
                           size,
                           total);
@@ -733,13 +784,22 @@ static int sorr_ios_audio_read_file_to_memory(const char *filename, void **out_d
 
     *out_data = data;
     *out_size = (size_t)size;
-    sorr_ios_audio_music_last_bytes = (unsigned long long)*out_size;
-    sorr_ios_audio_music_total_bytes += (unsigned long long)*out_size;
+    if (update_music_stats)
+    {
+        sorr_ios_audio_music_last_bytes = (unsigned long long)*out_size;
+        sorr_ios_audio_music_total_bytes += (unsigned long long)*out_size;
+    }
     PORTABLE_DIAG_LOG("AUDIO",
-                      "iOS D3A music memory read ok path=%s bytes=%llu",
+                      "iOS D3A %s memory read ok path=%s bytes=%llu",
+                      kind ? kind : "audio",
                       filename,
                       (unsigned long long)*out_size);
     return 1;
+}
+
+static int sorr_ios_audio_read_file_to_memory(const char *filename, void **out_data, size_t *out_size)
+{
+    return sorr_ios_audio_read_file_to_memory_ex(filename, out_data, out_size, "music", 1);
 }
 
 static int sorr_ios_audio_init_device(void)
@@ -894,14 +954,25 @@ static void sorr_ios_audio_close_device(void)
 static int sorr_ios_audio_load_wav_path(INSTANCE *my, const char *filename)
 {
     int existing;
-    file *fp;
+    void *wav_data = NULL;
+    size_t wav_data_size = 0;
     SDL_RWops *rwops;
     Mix_Chunk *chunk;
 
     if (!filename || !filename[0])
     {
+        sorr_ios_audio_note_wav_path(filename, "empty-path", 0);
         return 0;
     }
+
+    sorr_ios_audio_note_wav_path(filename, "enter", 0);
+    sorr_ios_audio_runtime_log(my,
+                               "event=LOAD_WAV_ENTER path=%s live_handles=%u live_wav=%u wav_ok=%u wav_fail=%u",
+                               filename,
+                               sorr_ios_audio_live_handle_count,
+                               sorr_ios_audio_live_wav_count,
+                               sorr_ios_audio_wav_load_ok_count,
+                               sorr_ios_audio_wav_load_fail_count);
 
     existing = sorr_ios_audio_find_path(filename, SORR_IOS_AUDIO_KIND_WAV);
     if (existing)
@@ -916,6 +987,11 @@ static int sorr_ios_audio_load_wav_path(INSTANCE *my, const char *filename)
                                 retired_before,
                                 sorr_ios_audio_wav_reuse_count,
                                 filename);
+        sorr_ios_audio_note_wav_path(filename, "reuse-wav", 0);
+        sorr_ios_audio_runtime_log(my,
+                                   "event=LOAD_WAV_REUSE handle=%d kind=wav path=%s",
+                                   existing,
+                                   filename);
         return existing;
     }
     existing = sorr_ios_audio_find_path(filename, SORR_IOS_AUDIO_KIND_INERT_WAV);
@@ -931,6 +1007,11 @@ static int sorr_ios_audio_load_wav_path(INSTANCE *my, const char *filename)
                                 retired_before,
                                 sorr_ios_audio_wav_reuse_count,
                                 filename);
+        sorr_ios_audio_note_wav_path(filename, "reuse-inert-wav", 0);
+        sorr_ios_audio_runtime_log(my,
+                                   "event=LOAD_WAV_REUSE handle=%d kind=inert-wav path=%s",
+                                   existing,
+                                   filename);
         return existing;
     }
 
@@ -940,29 +1021,55 @@ static int sorr_ios_audio_load_wav_path(INSTANCE *my, const char *filename)
         sorr_ios_audio_wav_load_fail_count++;
         PORTABLE_DIAG_LOG("AUDIO", "iOS D3A LOAD_WAV mixer unavailable path=%s", filename);
         sorr_ios_audio_diag_log(my, "event=LOAD_WAV_FAIL reason=mixer-unavailable path=%s", filename);
+        sorr_ios_audio_note_wav_path(filename, "fail-mixer-unavailable", 0);
+        sorr_ios_audio_runtime_log(my, "event=LOAD_WAV_FAIL reason=mixer-unavailable path=%s", filename);
         return sorr_ios_audio_inert_handle(filename, SORR_IOS_AUDIO_KIND_INERT_WAV);
     }
 
-    fp = file_open(filename, "rb0");
-    if (!fp)
+    if (!sorr_ios_audio_read_file_to_memory_ex(filename, &wav_data, &wav_data_size, "wav", 0))
     {
         sorr_ios_audio_wav_load_fail_count++;
-        PORTABLE_DIAG_LOG("AUDIO", "iOS D3A LOAD_WAV file open failed path=%s", filename);
-        sorr_ios_audio_diag_log(my, "event=LOAD_WAV_FAIL reason=file-open path=%s", filename);
+        PORTABLE_DIAG_LOG("AUDIO", "iOS D3A LOAD_WAV memory read failed path=%s", filename);
+        sorr_ios_audio_diag_log(my, "event=LOAD_WAV_FAIL reason=memory-read path=%s", filename);
+        sorr_ios_audio_note_wav_path(filename, "fail-memory-read", 0);
+        sorr_ios_audio_runtime_log(my, "event=LOAD_WAV_FAIL reason=memory-read path=%s", filename);
         return sorr_ios_audio_inert_handle(filename, SORR_IOS_AUDIO_KIND_INERT_WAV);
     }
 
-    rwops = sorr_ios_audio_rw_from_file(fp);
+    if (wav_data_size > (size_t)INT_MAX)
+    {
+        free(wav_data);
+        sorr_ios_audio_wav_load_fail_count++;
+        PORTABLE_DIAG_LOG("AUDIO", "iOS D3A LOAD_WAV too large path=%s bytes=%llu", filename, (unsigned long long)wav_data_size);
+        sorr_ios_audio_diag_log(my, "event=LOAD_WAV_FAIL reason=too-large bytes=%llu path=%s", (unsigned long long)wav_data_size, filename);
+        sorr_ios_audio_note_wav_path(filename, "fail-too-large", wav_data_size);
+        sorr_ios_audio_runtime_log(my, "event=LOAD_WAV_FAIL reason=too-large bytes=%llu path=%s", (unsigned long long)wav_data_size, filename);
+        return sorr_ios_audio_inert_handle(filename, SORR_IOS_AUDIO_KIND_INERT_WAV);
+    }
+
+    sorr_ios_audio_note_wav_path(filename, "memory-read-ok", wav_data_size);
+    sorr_ios_audio_runtime_log(my,
+                               "event=LOAD_WAV_MEMORY_OK bytes=%llu path=%s",
+                               (unsigned long long)wav_data_size,
+                               filename);
+
+    rwops = SDL_RWFromConstMem(wav_data, (int)wav_data_size);
     if (!rwops)
     {
-        file_close(fp);
+        free(wav_data);
         sorr_ios_audio_wav_load_fail_count++;
         PORTABLE_DIAG_LOG("AUDIO", "iOS D3A LOAD_WAV SDL_RWops failed path=%s", filename);
         sorr_ios_audio_diag_log(my, "event=LOAD_WAV_FAIL reason=rwops path=%s", filename);
+        sorr_ios_audio_note_wav_path(filename, "fail-rwops", wav_data_size);
+        sorr_ios_audio_runtime_log(my,
+                                   "event=LOAD_WAV_FAIL reason=rwops bytes=%llu path=%s",
+                                   (unsigned long long)wav_data_size,
+                                   filename);
         return sorr_ios_audio_inert_handle(filename, SORR_IOS_AUDIO_KIND_INERT_WAV);
     }
 
     chunk = Mix_LoadWAV_RW(rwops, 1);
+    free(wav_data);
     if (!chunk)
     {
         sorr_ios_audio_wav_load_fail_count++;
@@ -974,6 +1081,12 @@ static int sorr_ios_audio_load_wav_path(INSTANCE *my, const char *filename)
                                 "event=LOAD_WAV_FAIL reason=decode path=%s error=%s",
                                 filename,
                                 Mix_GetError());
+        sorr_ios_audio_note_wav_path(filename, "fail-decode", wav_data_size);
+        sorr_ios_audio_runtime_log(my,
+                                   "event=LOAD_WAV_FAIL reason=decode bytes=%llu path=%s error=%s",
+                                   (unsigned long long)wav_data_size,
+                                   filename,
+                                   Mix_GetError());
         return sorr_ios_audio_inert_handle(filename, SORR_IOS_AUDIO_KIND_INERT_WAV);
     }
 
@@ -989,6 +1102,26 @@ static int sorr_ios_audio_load_wav_path(INSTANCE *my, const char *filename)
                                 filename,
                                 sorr_ios_audio_live_wav_count,
                                 sorr_ios_audio_max_live_handle_count);
+        sorr_ios_audio_note_wav_path(filename, "ok", wav_data_size);
+        sorr_ios_audio_runtime_log(my,
+                                   "event=LOAD_WAV_OK handle=%d serial=%u bytes=%llu chunk=%p path=%s live_wav=%u max_live=%u",
+                                   existing,
+                                   sorr_ios_audio_handles[existing].serial,
+                                   (unsigned long long)wav_data_size,
+                                   (void *)sorr_ios_audio_handles[existing].chunk,
+                                   filename,
+                                   sorr_ios_audio_live_wav_count,
+                                   sorr_ios_audio_max_live_handle_count);
+    }
+    else
+    {
+        Mix_FreeChunk(chunk);
+        sorr_ios_audio_wav_load_fail_count++;
+        sorr_ios_audio_note_wav_path(filename, "fail-handle-table", wav_data_size);
+        sorr_ios_audio_runtime_log(my,
+                                   "event=LOAD_WAV_FAIL reason=handle-table bytes=%llu path=%s",
+                                   (unsigned long long)wav_data_size,
+                                   filename);
     }
     return existing;
 }

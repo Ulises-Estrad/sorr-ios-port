@@ -243,3 +243,36 @@ Patch contents:
 - keeps custom controls, BGM/SFX, icon/name, clear diagnostic filenames, stale process guards, runtime-exit guards, and asset-free IPA packaging.
 
 Manual test focus: install this IPA, replay the same scene transition that exits abruptly, reopen once if the app disappears, and send `LATEST_CRASH_OR_ABRUPT_EXIT_REPORT.txt` plus `PREVIOUS_SESSION_RUNTIME_LOG.txt`. The important lines to look for are `post_no_cargues_*`.
+
+## Playtest WAV Memory / Trace Throttle Follow-Up
+
+Physical testing of the post-`NO_CARGUES` trace artifact still reproduced the no-signal scene-transition exit, but it exposed two important details:
+
+```text
+PREVIOUS_SESSION_RUNTIME_LOG.txt size: about 489 MB
+previous_last_marker: post_no_cargues_native_call ... name=LOAD_WAV ... proc=FASE1 ...
+matching return for final LOAD_WAV: none
+signal: none
+SDL terminating event: none
+```
+
+The next artifact keeps the playable baseline and existing guards, but removes the new slowdown source and changes the suspected native load path:
+
+```text
+Artifact: ios-shell-playtest-wav-memory-trace-throttle-device-arm64
+IPA: build-products/SorrIOSShell-playtest-wav-memory-trace-throttle-adhoc.ipa
+Build label: ios-playtest-wav-memory-trace-throttle
+Game data/assets bundled in IPA: no
+```
+
+Patch contents:
+
+- caps post-`NO_CARGUES` visible native/frame logging so gameplay is not flooded by hundreds of MB of diagnostics,
+- filters post-`NO_CARGUES` native breadcrumbs to focused process/native names,
+- decodes string parameters in native-call breadcrumbs, so the next report should show the exact `LOAD_WAV` path,
+- changes iOS `LOAD_WAV` from a Bennu-file-backed `SDL_RWops` stream to an owned memory buffer passed to `SDL_RWFromConstMem` / `Mix_LoadWAV_RW`,
+- records `LOAD_WAV_ENTER`, `LOAD_WAV_MEMORY_OK`, `LOAD_WAV_OK`, and failure reasons in the Files-visible runtime log,
+- adds the last WAV status/path/byte count to signal-backed crash reports,
+- keeps custom controls, BGM/SFX, icon/name, clear diagnostic filenames, stale process guards, runtime-exit guards, and asset-free IPA packaging.
+
+Manual test focus: install this IPA, replay the same scene transition that exited abruptly, and watch whether the gameplay slowdown is gone. If it still exits, reopen once and send `LATEST_CRASH_OR_ABRUPT_EXIT_REPORT.txt` plus `PREVIOUS_SESSION_RUNTIME_LOG.txt`; the important lines are now `audio_runtime event=LOAD_WAV_*` and any focused `post_no_cargues_*` entries.

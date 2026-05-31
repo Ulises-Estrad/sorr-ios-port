@@ -2626,3 +2626,17 @@ Game data/assets bundled in IPA: no
 ```
 
 The artifact keeps custom controls, BGM/SFX, app icon/name, clear Files-visible diagnostics, stale process guards, stage-transition diagnostics, and runtime-exit guards. It adds `post_no_cargues_trace`, `post_no_cargues_native_call`, `post_no_cargues_native_return`, and `post_no_cargues_frame` breadcrumbs so the next no-signal exit can show whether the runtime reaches a native loader/control call or dies before the next frame boundary.
+
+## Playtest WAV Memory / Trace Throttle Target
+
+The latest physical report for the post-`NO_CARGUES` trace artifact showed that the visible runtime log grew to roughly 489 MB, causing gameplay slowdown, and the final actionable breadcrumb was a `LOAD_WAV` call after `NO_CARGUES` teardown with no matching return.
+
+The workflow now targets a follow-up device artifact:
+
+```text
+Device artifact: ios-shell-playtest-wav-memory-trace-throttle-device-arm64
+IPA: build-products/SorrIOSShell-playtest-wav-memory-trace-throttle-adhoc.ipa
+Build label: ios-playtest-wav-memory-trace-throttle
+```
+
+This target keeps the playable baseline, BGM/SFX, custom controls, app icon/name, and asset-free IPA packaging. It caps focused post-`NO_CARGUES` visible trace output and moves iOS `LOAD_WAV` to a memory-backed SDL_mixer load path. Crash reports include the last WAV status/path/byte count so any remaining scene-transition exit should be easier to diagnose without flooding Files-visible logs.

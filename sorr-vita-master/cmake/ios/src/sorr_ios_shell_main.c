@@ -24,11 +24,11 @@
 #include "SDL.h"
 
 #ifndef SORR_IOS_BUILD_LABEL
-#define SORR_IOS_BUILD_LABEL "ios-playtest-post-no-cargues-trace"
+#define SORR_IOS_BUILD_LABEL "ios-playtest-wav-memory-trace-throttle"
 #endif
 
 #ifndef SORR_IOS_ARTIFACT_LABEL
-#define SORR_IOS_ARTIFACT_LABEL "ios-shell-playtest-post-no-cargues-trace-device-arm64"
+#define SORR_IOS_ARTIFACT_LABEL "ios-shell-playtest-wav-memory-trace-throttle-device-arm64"
 #endif
 
 #ifdef SORR_IOS_D3_FIRST_RENDER
@@ -2410,6 +2410,9 @@ extern volatile unsigned long long sorr_ios_audio_music_last_ptr;
 extern volatile unsigned long long sorr_ios_audio_music_last_handle;
 extern char sorr_ios_audio_last_music_path[];
 extern char sorr_ios_audio_last_music_status[];
+extern volatile unsigned long long sorr_ios_audio_last_wav_bytes;
+extern char sorr_ios_audio_last_wav_path[];
+extern char sorr_ios_audio_last_wav_status[];
 
 #define SORR_IOS_D3_HEARTBEAT_NORMAL_MS 10000u
 #define SORR_IOS_D3_HEARTBEAT_DENSE_MS 1000u
@@ -2622,7 +2625,7 @@ static void sorr_ios_d4a_write_crash_report_fd(int fd, int sig)
                                  max_x_files,
                                  sorr_ios_d3_last_rss_bytes);
     sorr_ios_signal_write_format(fd,
-                                 "audio_counters=stub_zero:%u stub_minus_one:%u init:%u/%u/%u wav_load:%u/%u wav_play:%u music_load:%u open:%u/%u mem:%u/%u play:%u/%u/%u live_handles:%u live_wav:%u live_music:%u playing:%u last_status:%s last_path:%s\n",
+                                 "audio_counters=stub_zero:%u stub_minus_one:%u init:%u/%u/%u wav_load:%u/%u wav_play:%u last_wav_status:%s last_wav_bytes:%llu last_wav_path:%s music_load:%u open:%u/%u mem:%u/%u play:%u/%u/%u live_handles:%u live_wav:%u live_music:%u playing:%u last_status:%s last_path:%s\n",
                                  sorr_ios_sound_stub_zero_count,
                                  sorr_ios_sound_stub_minus_one_count,
                                  sorr_ios_audio_init_attempt_count,
@@ -2631,6 +2634,9 @@ static void sorr_ios_d4a_write_crash_report_fd(int fd, int sig)
                                  sorr_ios_audio_wav_load_ok_count,
                                  sorr_ios_audio_wav_load_fail_count,
                                  sorr_ios_audio_wav_play_count,
+                                 sorr_ios_audio_last_wav_status,
+                                 sorr_ios_audio_last_wav_bytes,
+                                 sorr_ios_audio_last_wav_path,
                                  sorr_ios_audio_music_load_attempt_count,
                                  sorr_ios_audio_music_open_ok_count,
                                  sorr_ios_audio_music_open_fail_count,

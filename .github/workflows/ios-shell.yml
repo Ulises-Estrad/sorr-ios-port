@@ -430,7 +430,7 @@ jobs:
       IOS_DEVICE_ARCH: "arm64"
       IOS_DEVICE_BUILD_DIR: "build-ios-shell-device"
       ARTIFACT_DIR: "ci-artifacts/ios-shell-device"
-      IPA_NAME: "SorrIOSShell-playtest-post-no-cargues-trace-adhoc.ipa"
+      IPA_NAME: "SorrIOSShell-playtest-wav-memory-trace-throttle-adhoc.ipa"
 
     steps:
       - name: Checkout
@@ -715,7 +715,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ios-shell-playtest-post-no-cargues-trace-device-arm64
+          name: ios-shell-playtest-wav-memory-trace-throttle-device-arm64
           path: ci-artifacts/ios-shell-device
           if-no-files-found: warn
           retention-days: 14

@@ -1,6 +1,6 @@
 # iOS Current Playtest Baseline
 
-Status: current playable iPhone baseline, paused/final for now, with a post-`NO_CARGUES` trace follow-up target ready for playtesting.
+Status: current playable iPhone baseline, paused/final for now, with a WAV-memory / trace-throttle follow-up target ready for playtesting.
 
 This project is now a playable iPhone port baseline, not an early proof-only experiment. Historical milestone reports remain in `reports/` as evidence, but current work should use this playtest baseline framing. Active feature work is paused; future changes should be limited to major bug fixes found during normal playtesting.
 
@@ -17,9 +17,22 @@ This project is now a playable iPhone port baseline, not an early proof-only exp
 - The IPA remains asset-free; game data is imported locally through the iPhone Files route.
 - Latest physical playtest fix: gun firing works and Stage 6 beach/water startup no longer crashes after the GET_REAL_POINT guard.
 - Latest route playtest: the SoR2 path was cleared with Axel with no clear bugs or random crashes observed afterward.
-- Current follow-up target: keep the stale remote process guard, clear diagnostic filenames, runtime-exit guard, and add direct post-`NO_CARGUES` native/frame tracing because the latest no-signal report stopped immediately after `destroy NO_CARGUES#70014` with `runtime_exit_guards=0`.
+- Current follow-up target: keep the stale remote process guard, clear diagnostic filenames, runtime-exit guard, and post-`NO_CARGUES` breadcrumbs, but throttle that tracing because the latest Files-visible runtime log reached hundreds of MB and caused gameplay slowdown. The newest no-signal report narrowed the scene-transition exit to a `LOAD_WAV` call after `NO_CARGUES` teardown, so iOS WAV loading now uses a memory-backed `SDL_RWops` path like the working OGG music loader.
 
 ## Current Workflow Target
+
+```text
+Actions run: 26702197600
+Commit: b0e3123
+Artifact: ios-shell-playtest-wav-memory-trace-throttle-device-arm64
+IPA: build-products/SorrIOSShell-playtest-wav-memory-trace-throttle-adhoc.ipa
+Build label: ios-playtest-wav-memory-trace-throttle
+Game data/assets bundled in IPA: no
+```
+
+This target keeps custom controls, BGM/SFX, the app icon/name, clear Files-visible diagnostics, stale process guards, stage-transition diagnostics, and runtime-exit guards. It limits `post_no_cargues_*` visible logging to focused native/process breadcrumbs, decodes string parameters for native calls, caps frame breadcrumbs, and records `LOAD_WAV` memory-read/decode status in the Files-visible runtime log and crash report.
+
+Previous follow-up target:
 
 ```text
 Actions run: 26702197600
@@ -33,7 +46,7 @@ Simulator job result: success
 Game data/assets bundled in IPA: no
 ```
 
-This target keeps custom controls, BGM/SFX, the app icon/name, clear Files-visible diagnostics, stale process guards, stage-transition diagnostics, and runtime-exit guards. It adds `post_no_cargues_trace`, `post_no_cargues_native_call`, `post_no_cargues_native_return`, and `post_no_cargues_frame` breadcrumbs directly to the Files-visible runtime log so a no-signal exit after `NO_CARGUES` has an actionable last native/frame marker.
+That target proved useful but was too verbose for active play: the uploaded `PREVIOUS_SESSION_RUNTIME_LOG.txt` reached roughly 489 MB, and the final durable trace was a `LOAD_WAV` native call from `FASE1` with no matching return.
 
 Previous follow-up target:
 
