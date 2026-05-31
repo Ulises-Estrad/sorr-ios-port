@@ -281,3 +281,23 @@ Patch contents:
 - keeps custom controls, BGM/SFX, icon/name, clear diagnostic filenames, stale process guards, runtime-exit guards, and asset-free IPA packaging.
 
 Manual test focus: install this IPA, replay the same scene transition that exited abruptly, and watch whether the gameplay slowdown is gone. If it still exits, reopen once and send `LATEST_CRASH_OR_ABRUPT_EXIT_REPORT.txt` plus `PREVIOUS_SESSION_RUNTIME_LOG.txt`; the important lines are now `audio_runtime event=LOAD_WAV_*` and any focused `post_no_cargues_*` entries.
+
+## Playtest ARGB Pixel Format Candidate
+
+After the WAV-memory / trace-throttle artifact fixed the scene-transition crash and removed the slowdown, physical playtesting exposed a new visual issue: Shiva's sprite appeared blue/miscolored. The next artifact keeps the same playable baseline and changes only the iOS 32-bit screen pixel format:
+
+```text
+Artifact: ios-shell-playtest-argb-pixel-format-device-arm64
+IPA: build-products/SorrIOSShell-playtest-argb-pixel-format-adhoc.ipa
+Build label: ios-playtest-argb-pixel-format
+Game data/assets bundled in IPA: no
+```
+
+Patch contents:
+
+- uses `SDL_PIXELFORMAT_ARGB8888` for the iOS 32-bit SDL texture/surface so it matches Bennu's internal `0xAARRGGBB` `gr_rgb` / `gr_rgba` layout,
+- leaves non-iOS builds on the existing texture format,
+- logs the selected SDL pixel masks for future color diagnostics,
+- keeps custom controls, BGM/SFX, icon/name, clear diagnostic filenames, stale process guards, runtime-exit guards, and asset-free IPA packaging.
+
+Manual test focus: install this IPA, load Shiva, and verify his sprite colors no longer have the blue/miscolored palette. Also spot-check that the previous scene-transition crash/slowdown fix, BGM/SFX, and controls still behave normally.

@@ -1,6 +1,6 @@
 # iOS Current Playtest Baseline
 
-Status: current playable iPhone baseline, paused/final for now, with a WAV-memory / trace-throttle follow-up target ready for playtesting.
+Status: current playable iPhone baseline, paused/final for now. The WAV-memory / trace-throttle artifact is the current fixed playtest baseline.
 
 This project is now a playable iPhone port baseline, not an early proof-only experiment. Historical milestone reports remain in `reports/` as evidence, but current work should use this playtest baseline framing. Active feature work is paused; future changes should be limited to major bug fixes found during normal playtesting.
 
@@ -15,9 +15,11 @@ This project is now a playable iPhone port baseline, not an early proof-only exp
 - Crash reporting and runtime guards remain active.
 - The app icon and `Streets of Rage` display name are wired into the iPhone build.
 - The IPA remains asset-free; game data is imported locally through the iPhone Files route.
-- Latest physical playtest fix: gun firing works and Stage 6 beach/water startup no longer crashes after the GET_REAL_POINT guard.
+- Latest physical playtest fix: the WAV-memory / trace-throttle artifact fixed the latest scene-transition crash and removed the logging-induced gameplay slowdown.
+- Earlier physical playtest fix: gun firing works and Stage 6 beach/water startup no longer crashes after the GET_REAL_POINT guard.
 - Latest route playtest: the SoR2 path was cleared with Axel with no clear bugs or random crashes observed afterward.
-- Current follow-up target: keep the stale remote process guard, clear diagnostic filenames, runtime-exit guard, and post-`NO_CARGUES` breadcrumbs, but throttle that tracing because the latest Files-visible runtime log reached hundreds of MB and caused gameplay slowdown. The newest no-signal report narrowed the scene-transition exit to a `LOAD_WAV` call after `NO_CARGUES` teardown, so iOS WAV loading now uses a memory-backed `SDL_RWops` path like the working OGG music loader.
+- Current fixed baseline: keep the stale remote process guard, clear diagnostic filenames, runtime-exit guard, and post-`NO_CARGUES` breadcrumbs, but throttle that tracing because the previous Files-visible runtime log reached hundreds of MB and caused gameplay slowdown. The no-signal report narrowed the scene-transition exit to a `LOAD_WAV` call after `NO_CARGUES` teardown, so iOS WAV loading now uses a memory-backed `SDL_RWops` path like the working OGG music loader.
+- Current color-fix candidate: `ios-shell-playtest-argb-pixel-format-device-arm64` targets the newly reported Shiva sprite blue/miscolored palette issue by aligning the iOS 32-bit SDL texture/surface format with Bennu's internal `0xAARRGGBB` pixel layout.
 
 ## Current Workflow Target
 
@@ -34,6 +36,20 @@ Game data/assets bundled in IPA: no
 ```
 
 This target keeps custom controls, BGM/SFX, the app icon/name, clear Files-visible diagnostics, stale process guards, stage-transition diagnostics, and runtime-exit guards. It limits `post_no_cargues_*` visible logging to focused native/process breadcrumbs, decodes string parameters for native calls, caps frame breadcrumbs, and records `LOAD_WAV` memory-read/decode status in the Files-visible runtime log and crash report.
+
+Physical result: this artifact fixed the scene-transition crash reported after the post-`NO_CARGUES` trace build, and gameplay no longer shows the slowdown caused by the overly large runtime log.
+
+## Current Color-Fix Candidate
+
+```text
+Artifact: ios-shell-playtest-argb-pixel-format-device-arm64
+IPA: build-products/SorrIOSShell-playtest-argb-pixel-format-adhoc.ipa
+Build label: ios-playtest-argb-pixel-format
+Target issue: Shiva sprite appears blue/miscolored on physical iPhone.
+Game data/assets bundled in IPA: no
+```
+
+Patch intent: keep the current playable baseline, BGM/SFX, custom controls, app icon/name, and crash reporting intact. The only runtime-render change is iOS-specific: the 32-bit SDL texture/surface format is `ARGB8888`, matching Bennu's internal `gr_rgb` / `gr_rgba` and bitmap format layout of `0xAARRGGBB`. The build also logs the SDL pixel masks used for future color diagnostics.
 
 Previous follow-up target:
 

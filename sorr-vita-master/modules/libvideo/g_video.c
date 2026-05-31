@@ -400,7 +400,12 @@ int gr_set_mode( int width, int height, int depth )
     if(enable_16bits) {
         format = SDL_PIXELFORMAT_RGB565;
     } else if (enable_32bits) {
+#ifdef TARGET_IOS
+        /* Bennu's 32-bit software pixels are 0xAARRGGBB; keep SDL masks aligned. */
+        format = SDL_PIXELFORMAT_ARGB8888;
+#else
         format = SDL_PIXELFORMAT_RGBA8888;
+#endif
     }
     PORTABLE_DIAG_LOG( "VIDEO", "SDL_CreateTexture begin format=%u size=%dx%d", format, width, height );
     texture = SDL_CreateTexture(renderer,
@@ -412,6 +417,10 @@ int gr_set_mode( int width, int height, int depth )
     // Create a SDL_Surface for the pixel data until the complete rendering pipeline
     // is handled by SDL_Render
     SDL_PixelFormatEnumToMasks(format, &texture_depth, &Rmask, &Gmask, &Bmask, &Amask);
+    PORTABLE_DIAG_LOG( "VIDEO", "SDL pixel masks format=%u depth=%d R=0x%08x G=0x%08x B=0x%08x A=0x%08x",
+                       format, texture_depth,
+                       (unsigned int)Rmask, (unsigned int)Gmask,
+                       (unsigned int)Bmask, (unsigned int)Amask );
     screen = SDL_CreateRGBSurface(0, width, height, texture_depth, Rmask, Gmask, Bmask, Amask);
     if (depth != texture_depth) {
         SDL_Log("You asked for %dbpp but got %d, bad luck :(", depth, texture_depth);

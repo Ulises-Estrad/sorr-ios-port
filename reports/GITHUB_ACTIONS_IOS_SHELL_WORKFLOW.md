@@ -2646,3 +2646,16 @@ Game data/assets bundled in IPA: no
 ```
 
 This target keeps the playable baseline, BGM/SFX, custom controls, app icon/name, and asset-free IPA packaging. It caps focused post-`NO_CARGUES` visible trace output and moves iOS `LOAD_WAV` to a memory-backed SDL_mixer load path. Crash reports include the last WAV status/path/byte count so any remaining scene-transition exit should be easier to diagnose without flooding Files-visible logs.
+
+## Playtest ARGB Pixel Format Candidate
+
+Physical playtesting of the WAV-memory / trace-throttle artifact fixed the latest crash and slowdown, but then exposed a color regression: Shiva's sprite appeared blue/miscolored. The next workflow target keeps the playable baseline and changes only the iOS 32-bit SDL texture/surface pixel format to match Bennu's internal `0xAARRGGBB` software pixel layout.
+
+```text
+Device artifact: ios-shell-playtest-argb-pixel-format-device-arm64
+IPA: build-products/SorrIOSShell-playtest-argb-pixel-format-adhoc.ipa
+Build label: ios-playtest-argb-pixel-format
+Game data/assets bundled in IPA: no
+```
+
+Patch intent: use `SDL_PIXELFORMAT_ARGB8888` on iOS when the runtime requests 32-bit video, leave non-iOS builds on their existing path, and log the SDL masks selected for the screen surface/texture. Manual test focus is Shiva's palette/sprite colors while confirming the previous crash/slowdown fixes, BGM/SFX, and custom controls still work.

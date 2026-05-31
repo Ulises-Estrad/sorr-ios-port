@@ -26,25 +26,23 @@ This guide rebuilds the current iPhone setup from zero.
 1. Open the GitHub repo.
 2. Go to `Actions`.
 3. Open the latest successful `iOS Shell` workflow run.
-4. Download the latest successful device artifact. Current WAV-memory / trace-throttle playtest target:
+4. Download the latest successful device artifact. Current Shiva color-fix candidate:
 
    ```text
-   Actions run: 26705635947
-   Commit: 4afd24d
-   Artifact: ios-shell-playtest-wav-memory-trace-throttle-device-arm64
+   Artifact: ios-shell-playtest-argb-pixel-format-device-arm64
    ```
 
-   Previous proven baseline:
+   Previous proven crash/slowdown baseline:
 
    ```text
-   ios-shell-playtest-remote-ref-guard-device-arm64
+   ios-shell-playtest-wav-memory-trace-throttle-device-arm64
    ```
 
 5. Extract the downloaded artifact on Windows.
-6. Install the IPA with Sideloadly. Current WAV-memory / trace-throttle IPA target:
+6. Install the IPA with Sideloadly. Current Shiva color-fix candidate IPA:
 
    ```text
-   build-products/SorrIOSShell-playtest-wav-memory-trace-throttle-adhoc.ipa
+   build-products/SorrIOSShell-playtest-argb-pixel-format-adhoc.ipa
    ```
 
 7. If iOS asks, enable Developer Mode and trust the developer profile.

@@ -24,11 +24,11 @@
 #include "SDL.h"
 
 #ifndef SORR_IOS_BUILD_LABEL
-#define SORR_IOS_BUILD_LABEL "ios-playtest-wav-memory-trace-throttle"
+#define SORR_IOS_BUILD_LABEL "ios-playtest-argb-pixel-format"
 #endif
 
 #ifndef SORR_IOS_ARTIFACT_LABEL
-#define SORR_IOS_ARTIFACT_LABEL "ios-shell-playtest-wav-memory-trace-throttle-device-arm64"
+#define SORR_IOS_ARTIFACT_LABEL "ios-shell-playtest-argb-pixel-format-device-arm64"
 #endif
 
 #ifdef SORR_IOS_D3_FIRST_RENDER
