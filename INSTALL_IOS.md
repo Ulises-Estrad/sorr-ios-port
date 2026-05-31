@@ -29,6 +29,8 @@ This guide rebuilds the current iPhone setup from zero.
 4. Download the latest successful device artifact. Current WAV-memory / trace-throttle playtest target:
 
    ```text
+   Actions run: 26705635947
+   Commit: 4afd24d
    Artifact: ios-shell-playtest-wav-memory-trace-throttle-device-arm64
    ```
 

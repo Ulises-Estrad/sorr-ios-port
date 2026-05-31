@@ -2634,9 +2634,15 @@ The latest physical report for the post-`NO_CARGUES` trace artifact showed that 
 The workflow now targets a follow-up device artifact:
 
 ```text
+Actions run: 26705635947
+Commit: 4afd24d
 Device artifact: ios-shell-playtest-wav-memory-trace-throttle-device-arm64
 IPA: build-products/SorrIOSShell-playtest-wav-memory-trace-throttle-adhoc.ipa
 Build label: ios-playtest-wav-memory-trace-throttle
+Artifact size: 1970563 bytes
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
 ```
 
 This target keeps the playable baseline, BGM/SFX, custom controls, app icon/name, and asset-free IPA packaging. It caps focused post-`NO_CARGUES` visible trace output and moves iOS `LOAD_WAV` to a memory-backed SDL_mixer load path. Crash reports include the last WAV status/path/byte count so any remaining scene-transition exit should be easier to diagnose without flooding Files-visible logs.

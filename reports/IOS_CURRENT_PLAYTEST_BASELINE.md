@@ -22,11 +22,14 @@ This project is now a playable iPhone port baseline, not an early proof-only exp
 ## Current Workflow Target
 
 ```text
-Actions run: 26702197600
-Commit: b0e3123
+Actions run: 26705635947
+Commit: 4afd24d
 Artifact: ios-shell-playtest-wav-memory-trace-throttle-device-arm64
 IPA: build-products/SorrIOSShell-playtest-wav-memory-trace-throttle-adhoc.ipa
 Build label: ios-playtest-wav-memory-trace-throttle
+Artifact size: 1970563 bytes
+Device job result: success
+Simulator job result: success
 Game data/assets bundled in IPA: no
 ```
 
