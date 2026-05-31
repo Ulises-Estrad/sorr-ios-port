@@ -2614,9 +2614,14 @@ The artifact keeps custom controls, BGM/SFX, app icon/name, clear Files-visible 
 The stage-transition diagnostic artifact narrowed the abrupt scene-transition exit to a same-build no-signal fallback whose last durable marker was `destroy NO_CARGUES#70014`. There was still no SDL terminating event and `runtime_exit_guards=0`, so this target traces the immediate post-`NO_CARGUES` native/runtime path directly in the Files-visible log.
 
 ```text
+Actions run: 26702197600
+Commit: b0e3123
 Device artifact: ios-shell-playtest-post-no-cargues-trace-device-arm64
 IPA: build-products/SorrIOSShell-playtest-post-no-cargues-trace-adhoc.ipa
 Build label: ios-playtest-post-no-cargues-trace
+Artifact size: 1969549 bytes
+Device job result: success
+Simulator job result: success
 Game data/assets bundled in IPA: no
 ```
 

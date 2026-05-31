@@ -22,14 +22,14 @@ This project is now a playable iPhone port baseline, not an early proof-only exp
 ## Current Workflow Target
 
 ```text
-Actions run: pending
-Commit: pending
+Actions run: 26702197600
+Commit: b0e3123
 Artifact: ios-shell-playtest-post-no-cargues-trace-device-arm64
 IPA: build-products/SorrIOSShell-playtest-post-no-cargues-trace-adhoc.ipa
 Build label: ios-playtest-post-no-cargues-trace
-Artifact size: pending
-Device job result: pending
-Simulator job result: pending
+Artifact size: 1969549 bytes
+Device job result: success
+Simulator job result: success
 Game data/assets bundled in IPA: no
 ```
 

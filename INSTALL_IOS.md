@@ -29,6 +29,8 @@ This guide rebuilds the current iPhone setup from zero.
 4. Download the latest successful device artifact. Current post-`NO_CARGUES` trace playtest target:
 
    ```text
+   Actions run: 26702197600
+   Commit: b0e3123
    Artifact: ios-shell-playtest-post-no-cargues-trace-device-arm64
    ```
 

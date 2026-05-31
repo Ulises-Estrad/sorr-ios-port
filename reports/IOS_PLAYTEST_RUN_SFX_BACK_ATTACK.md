@@ -222,9 +222,14 @@ previous_last_marker=runtime_lifecycle seq=13253 destroy NO_CARGUES#70014...
 The next artifact keeps the playable baseline and existing guards, but mirrors the immediate post-`NO_CARGUES` path to the Files-visible runtime log:
 
 ```text
+Actions run: 26702197600
+Commit: b0e3123
 Artifact: ios-shell-playtest-post-no-cargues-trace-device-arm64
 IPA: build-products/SorrIOSShell-playtest-post-no-cargues-trace-adhoc.ipa
 Build label: ios-playtest-post-no-cargues-trace
+Artifact size: 1969549 bytes
+Device job result: success
+Simulator job result: success
 Game data/assets bundled in IPA: no
 ```
 
