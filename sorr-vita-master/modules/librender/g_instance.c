@@ -169,6 +169,7 @@ void draw_instance_at( INSTANCE * i, REGION * region, int x, int y, GRAPH * dest
     int blendop;
     PALETTE * palette = NULL;
     int paletteid;
+    int palette_override = 0;
 
     map = instance_graph( i ) ;
     if ( !map ) return ;
@@ -194,8 +195,13 @@ void draw_instance_at( INSTANCE * i, REGION * region, int x, int y, GRAPH * dest
 
     if (( paletteid = LOCDWORD( librender, i, PALETTEID ) ) )
     {
-        palette = map->format->palette ;
-        map->format->palette = LIBRENDER_X64_PALETTE_FROM_HANDLE( paletteid, "PALETTEID" );
+        PALETTE * override_palette = LIBRENDER_X64_PALETTE_FROM_HANDLE( paletteid, "PALETTEID" );
+        if ( override_palette )
+        {
+            palette = map->format->palette ;
+            map->format->palette = override_palette;
+            palette_override = 1;
+        }
     }
 
     /* XGRAPH does not rotate destination graphic.
@@ -209,7 +215,7 @@ void draw_instance_at( INSTANCE * i, REGION * region, int x, int y, GRAPH * dest
         gr_blit( dest, region, x, y, flags, map ) ;
     }
 
-    if ( paletteid ) map->format->palette = palette;
+    if ( palette_override ) map->format->palette = palette;
     if ( blendop ) map->blend_table = blend_table;
 
 }
@@ -229,6 +235,7 @@ void draw_instance( void * what, REGION * clip )
     int blendop = 0 ;
     PALETTE * palette = NULL ;
     int paletteid;
+    int palette_override = 0;
 
     /* Difference with draw_instance_at from here */
     int x, y, r ;
@@ -271,8 +278,13 @@ void draw_instance( void * what, REGION * clip )
 
     if (( paletteid = LOCDWORD( librender, i, PALETTEID ) ) )
     {
-        palette = map->format->palette ;
-        map->format->palette = LIBRENDER_X64_PALETTE_FROM_HANDLE( paletteid, "PALETTEID" );
+        PALETTE * override_palette = LIBRENDER_X64_PALETTE_FROM_HANDLE( paletteid, "PALETTEID" );
+        if ( override_palette )
+        {
+            palette = map->format->palette ;
+            map->format->palette = override_palette;
+            palette_override = 1;
+        }
     }
 
     /* Difference with draw_instance_at from here */
@@ -298,7 +310,7 @@ void draw_instance( void * what, REGION * clip )
     else
         gr_blit( 0, &region, x, y, flags, map ) ;
 
-    if ( paletteid ) map->format->palette = palette;
+    if ( palette_override ) map->format->palette = palette;
     if ( blendop ) map->blend_table = blend_table;
 
     if ( map->modified ) map->modified = 0;

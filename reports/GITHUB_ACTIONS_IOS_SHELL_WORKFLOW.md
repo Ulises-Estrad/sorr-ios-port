@@ -2664,3 +2664,16 @@ Game data/assets bundled in IPA: no
 ```
 
 Patch intent: use `SDL_PIXELFORMAT_ARGB8888` on iOS when the runtime requests 32-bit video, leave non-iOS builds on their existing path, and log the SDL masks selected for the screen surface/texture. Manual test focus is Shiva's palette/sprite colors while confirming the previous crash/slowdown fixes, BGM/SFX, and custom controls still work.
+
+## Playtest Palette Handle Cleanup Candidate
+
+Physical testing showed the ARGB pixel-format candidate did not fully resolve the color issue. The important refinement is that the miscolor appears only after a transition, is fixed by restarting the app, and affects the player sprite/effects rather than the whole screen. That points at stale palette handles after FPG/map unload and scene reload.
+
+```text
+Device artifact: ios-shell-playtest-palette-handle-cleanup-device-arm64
+IPA: build-products/SorrIOSShell-playtest-palette-handle-cleanup-adhoc.ipa
+Build label: ios-playtest-palette-handle-cleanup
+Game data/assets bundled in IPA: no
+```
+
+Patch intent: keep the playable baseline, ARGB SDL pixel-format alignment, BGM/SFX, custom controls, app icon/name, and asset-free IPA packaging. The runtime now clears 64-bit palette handle-table entries when palettes are destroyed and ignores invalid instance palette overrides instead of temporarily replacing a sprite map's own palette with freed/reused palette memory. Manual test focus is reproducing the same transition that miscolored Shiva/player/effects, then confirming the player and effects keep their correct colors.

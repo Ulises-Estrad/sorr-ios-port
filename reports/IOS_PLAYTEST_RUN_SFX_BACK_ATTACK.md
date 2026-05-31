@@ -306,3 +306,23 @@ Patch contents:
 - keeps custom controls, BGM/SFX, icon/name, clear diagnostic filenames, stale process guards, runtime-exit guards, and asset-free IPA packaging.
 
 Manual test focus: install this IPA, load Shiva, and verify his sprite colors no longer have the blue/miscolored palette. Also spot-check that the previous scene-transition crash/slowdown fix, BGM/SFX, and controls still behave normally.
+
+## Playtest Palette Handle Cleanup Candidate
+
+The ARGB pixel-format candidate did not fully fix the color issue. The refined report says the miscolor appears only after a transition, is fixed by restarting the app, and affects player sprites/effects rather than the whole screen. The next artifact therefore targets stale palette handles after FPG/map unload:
+
+```text
+Artifact: ios-shell-playtest-palette-handle-cleanup-device-arm64
+IPA: build-products/SorrIOSShell-playtest-palette-handle-cleanup-adhoc.ipa
+Build label: ios-playtest-palette-handle-cleanup
+Game data/assets bundled in IPA: no
+```
+
+Patch contents:
+
+- clears 64-bit/iOS palette handle-table entries when palettes are destroyed,
+- skips invalid/stale instance `PALETTEID` overrides instead of drawing player/effect maps with freed or reused palette memory,
+- keeps the ARGB SDL pixel-format alignment from the previous color candidate,
+- keeps custom controls, BGM/SFX, icon/name, clear diagnostic filenames, stale process guards, runtime-exit guards, and asset-free IPA packaging.
+
+Manual test focus: install this IPA, reproduce the transition that made Shiva/player/effects blue, and verify player/effect colors stay correct without needing to restart the app.

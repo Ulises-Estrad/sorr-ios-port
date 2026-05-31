@@ -35,6 +35,10 @@
 #include "libgrbase.h"
 #include "g_video.h"
 
+#if ( defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES) ) && ( defined(__GNUC__) || defined(__clang__) )
+extern void modmap_x64_palette_forget( PALETTE * pal ) __attribute__((weak));
+#endif
+
 /* --------------------------------------------------------------------------- */
 
 PALETTE * first_palette = NULL ;
@@ -513,6 +517,10 @@ void pal_destroy( PALETTE * pal )
     if ( !pal ) return ;
 
     if ( pal_discard( pal ) > 0 ) return ;
+
+#if ( defined(_WIN64) || defined(SORR_HOST_POINTER_TABLES) ) && ( defined(__GNUC__) || defined(__clang__) )
+    if ( modmap_x64_palette_forget ) modmap_x64_palette_forget( pal );
+#endif
 
     if ( pal->next ) pal->next->prev = pal->prev ;
     if ( pal->prev ) pal->prev->next = pal->next ;

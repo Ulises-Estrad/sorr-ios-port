@@ -15,7 +15,7 @@ Latest physical playtest result: the `ios-shell-playtest-wav-memory-trace-thrott
 
 Current stable artifact: `ios-shell-playtest-wav-memory-trace-throttle-device-arm64` from Actions run `26705635947`. It keeps the same playable baseline, throttles post-`NO_CARGUES` tracing, and moves iOS `LOAD_WAV` onto a memory-backed path like the working OGG music loader. Crash reports include the last WAV path/status.
 
-Current color-fix candidate: `ios-shell-playtest-argb-pixel-format-device-arm64` from Actions run `26720654116`. This keeps the playable baseline and changes only the iOS 32-bit SDL texture/surface format to match Bennu's internal `0xAARRGGBB` pixel layout, targeting the newly reported Shiva sprite blue/miscolored palette issue.
+Current color-fix candidate: `ios-shell-playtest-palette-handle-cleanup-device-arm64`. This keeps the playable baseline and targets the transition-only Shiva/player/effect miscolor by clearing stale 64-bit palette handles when palettes are destroyed and ignoring invalid instance palette overrides.
 
 Known non-blocking issue: some no-input attract/demo scenes may ignore Start/Back presses even while showing a "press start" prompt. This does not block normal playability because the current build can be started, controlled, and played through; leave this alone unless it becomes a practical blocker or a clear crash/repro case appears.
 

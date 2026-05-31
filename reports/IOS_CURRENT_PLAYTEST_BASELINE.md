@@ -19,7 +19,7 @@ This project is now a playable iPhone port baseline, not an early proof-only exp
 - Earlier physical playtest fix: gun firing works and Stage 6 beach/water startup no longer crashes after the GET_REAL_POINT guard.
 - Latest route playtest: the SoR2 path was cleared with Axel with no clear bugs or random crashes observed afterward.
 - Current fixed baseline: keep the stale remote process guard, clear diagnostic filenames, runtime-exit guard, and post-`NO_CARGUES` breadcrumbs, but throttle that tracing because the previous Files-visible runtime log reached hundreds of MB and caused gameplay slowdown. The no-signal report narrowed the scene-transition exit to a `LOAD_WAV` call after `NO_CARGUES` teardown, so iOS WAV loading now uses a memory-backed `SDL_RWops` path like the working OGG music loader.
-- Current color-fix candidate: `ios-shell-playtest-argb-pixel-format-device-arm64` targets the newly reported Shiva sprite blue/miscolored palette issue by aligning the iOS 32-bit SDL texture/surface format with Bennu's internal `0xAARRGGBB` pixel layout.
+- Current color-fix candidate: `ios-shell-playtest-palette-handle-cleanup-device-arm64` targets the transition-only Shiva/player/effect miscolor. The ARGB pixel-format candidate did not fully fix it; the remaining pattern points at stale palette handles after FPG/map unload and scene reload.
 
 ## Current Workflow Target
 
@@ -42,19 +42,28 @@ Physical result: this artifact fixed the scene-transition crash reported after t
 ## Current Color-Fix Candidate
 
 ```text
+Artifact: ios-shell-playtest-palette-handle-cleanup-device-arm64
+IPA: build-products/SorrIOSShell-playtest-palette-handle-cleanup-adhoc.ipa
+Build label: ios-playtest-palette-handle-cleanup
+Target issue: after a scene transition, player sprites and effects can become blue/miscolored until app restart.
+Game data/assets bundled in IPA: no
+```
+
+Patch intent: keep the current playable baseline, BGM/SFX, custom controls, app icon/name, crash reporting, and ARGB SDL pixel-format alignment intact. The new fix clears 64-bit palette handle-table entries when palettes are destroyed during FPG/map unload and skips invalid instance palette overrides, so stale player/effect `PALETTEID` values cannot force sprites onto freed/reused palette memory after transitions.
+
+Previous color-fix candidate:
+
+```text
 Actions run: 26720654116
 Commit: df8bca7
 Artifact: ios-shell-playtest-argb-pixel-format-device-arm64
 IPA: build-products/SorrIOSShell-playtest-argb-pixel-format-adhoc.ipa
 Build label: ios-playtest-argb-pixel-format
-Target issue: Shiva sprite appears blue/miscolored on physical iPhone.
 Artifact size: 1970719 bytes
 Device job result: success
 Simulator job result: success
 Game data/assets bundled in IPA: no
 ```
-
-Patch intent: keep the current playable baseline, BGM/SFX, custom controls, app icon/name, and crash reporting intact. The only runtime-render change is iOS-specific: the 32-bit SDL texture/surface format is `ARGB8888`, matching Bennu's internal `gr_rgb` / `gr_rgba` and bitmap format layout of `0xAARRGGBB`. The build also logs the SDL pixel masks used for future color diagnostics.
 
 Previous follow-up target:
 

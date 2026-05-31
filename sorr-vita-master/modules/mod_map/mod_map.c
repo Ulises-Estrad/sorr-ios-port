@@ -119,6 +119,30 @@ static PALETTE * modmap_x64_palette_release( int handle, const char * op )
 
     return pal;
 }
+
+void modmap_x64_palette_forget( PALETTE * pal )
+{
+    int i;
+    int cleared = 0;
+
+    if ( !pal ) return;
+
+    for ( i = 1; i < MODMAP_X64_PALETTE_TABLE_SIZE; i++ )
+    {
+        if ( modmap_x64_palettes[i] == pal )
+        {
+            modmap_x64_palettes[i] = NULL;
+            cleared++;
+        }
+    }
+
+#ifdef PORTABLE_RUNTIME_DIAG
+    if ( cleared )
+    {
+        PORTABLE_DIAG_LOG( "PALETTE", "x64 palette handle forget pal=%p cleared=%d", ( void * )pal, cleared );
+    }
+#endif
+}
 #else
 #define modmap_x64_palette_handle(pal,op) (( int )( pal ))
 #define modmap_x64_palette_ptr(handle,op) (( PALETTE * )( handle ))
