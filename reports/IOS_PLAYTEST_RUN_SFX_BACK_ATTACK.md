@@ -312,9 +312,14 @@ Manual test focus: install this IPA, load Shiva, and verify his sprite colors no
 The ARGB pixel-format candidate did not fully fix the color issue. The refined report says the miscolor appears only after a transition, is fixed by restarting the app, and affects player sprites/effects rather than the whole screen. The next artifact therefore targets stale palette handles after FPG/map unload:
 
 ```text
+Actions run: 26721338436
+Commit: e525143
 Artifact: ios-shell-playtest-palette-handle-cleanup-device-arm64
 IPA: build-products/SorrIOSShell-playtest-palette-handle-cleanup-adhoc.ipa
 Build label: ios-playtest-palette-handle-cleanup
+Artifact size: 1970301 bytes
+Device job result: success
+Simulator job result: success
 Game data/assets bundled in IPA: no
 ```
 

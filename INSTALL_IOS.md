@@ -29,6 +29,8 @@ This guide rebuilds the current iPhone setup from zero.
 4. Download the latest successful device artifact. Current Shiva/player/effect transition color-fix candidate:
 
    ```text
+   Actions run: 26721338436
+   Commit: e525143
    Artifact: ios-shell-playtest-palette-handle-cleanup-device-arm64
    ```
 

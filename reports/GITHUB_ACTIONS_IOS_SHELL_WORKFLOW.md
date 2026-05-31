@@ -2670,9 +2670,14 @@ Patch intent: use `SDL_PIXELFORMAT_ARGB8888` on iOS when the runtime requests 32
 Physical testing showed the ARGB pixel-format candidate did not fully resolve the color issue. The important refinement is that the miscolor appears only after a transition, is fixed by restarting the app, and affects the player sprite/effects rather than the whole screen. That points at stale palette handles after FPG/map unload and scene reload.
 
 ```text
+Actions run: 26721338436
+Commit: e525143
 Device artifact: ios-shell-playtest-palette-handle-cleanup-device-arm64
 IPA: build-products/SorrIOSShell-playtest-palette-handle-cleanup-adhoc.ipa
 Build label: ios-playtest-palette-handle-cleanup
+Artifact size: 1970301 bytes
+Device job result: success
+Simulator job result: success
 Game data/assets bundled in IPA: no
 ```
 

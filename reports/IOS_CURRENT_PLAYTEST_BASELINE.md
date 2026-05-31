@@ -42,10 +42,15 @@ Physical result: this artifact fixed the scene-transition crash reported after t
 ## Current Color-Fix Candidate
 
 ```text
+Actions run: 26721338436
+Commit: e525143
 Artifact: ios-shell-playtest-palette-handle-cleanup-device-arm64
 IPA: build-products/SorrIOSShell-playtest-palette-handle-cleanup-adhoc.ipa
 Build label: ios-playtest-palette-handle-cleanup
 Target issue: after a scene transition, player sprites and effects can become blue/miscolored until app restart.
+Artifact size: 1970301 bytes
+Device job result: success
+Simulator job result: success
 Game data/assets bundled in IPA: no
 ```
 
