@@ -2652,9 +2652,14 @@ This target keeps the playable baseline, BGM/SFX, custom controls, app icon/name
 Physical playtesting of the WAV-memory / trace-throttle artifact fixed the latest crash and slowdown, but then exposed a color regression: Shiva's sprite appeared blue/miscolored. The next workflow target keeps the playable baseline and changes only the iOS 32-bit SDL texture/surface pixel format to match Bennu's internal `0xAARRGGBB` software pixel layout.
 
 ```text
+Actions run: 26720654116
+Commit: df8bca7
 Device artifact: ios-shell-playtest-argb-pixel-format-device-arm64
 IPA: build-products/SorrIOSShell-playtest-argb-pixel-format-adhoc.ipa
 Build label: ios-playtest-argb-pixel-format
+Artifact size: 1970719 bytes
+Device job result: success
+Simulator job result: success
 Game data/assets bundled in IPA: no
 ```
 

@@ -29,6 +29,8 @@ This guide rebuilds the current iPhone setup from zero.
 4. Download the latest successful device artifact. Current Shiva color-fix candidate:
 
    ```text
+   Actions run: 26720654116
+   Commit: df8bca7
    Artifact: ios-shell-playtest-argb-pixel-format-device-arm64
    ```
 

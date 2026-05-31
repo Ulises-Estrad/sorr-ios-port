@@ -287,9 +287,14 @@ Manual test focus: install this IPA, replay the same scene transition that exite
 After the WAV-memory / trace-throttle artifact fixed the scene-transition crash and removed the slowdown, physical playtesting exposed a new visual issue: Shiva's sprite appeared blue/miscolored. The next artifact keeps the same playable baseline and changes only the iOS 32-bit screen pixel format:
 
 ```text
+Actions run: 26720654116
+Commit: df8bca7
 Artifact: ios-shell-playtest-argb-pixel-format-device-arm64
 IPA: build-products/SorrIOSShell-playtest-argb-pixel-format-adhoc.ipa
 Build label: ios-playtest-argb-pixel-format
+Artifact size: 1970719 bytes
+Device job result: success
+Simulator job result: success
 Game data/assets bundled in IPA: no
 ```
 

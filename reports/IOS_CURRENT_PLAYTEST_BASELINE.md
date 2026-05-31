@@ -42,10 +42,15 @@ Physical result: this artifact fixed the scene-transition crash reported after t
 ## Current Color-Fix Candidate
 
 ```text
+Actions run: 26720654116
+Commit: df8bca7
 Artifact: ios-shell-playtest-argb-pixel-format-device-arm64
 IPA: build-products/SorrIOSShell-playtest-argb-pixel-format-adhoc.ipa
 Build label: ios-playtest-argb-pixel-format
 Target issue: Shiva sprite appears blue/miscolored on physical iPhone.
+Artifact size: 1970719 bytes
+Device job result: success
+Simulator job result: success
 Game data/assets bundled in IPA: no
 ```
 
