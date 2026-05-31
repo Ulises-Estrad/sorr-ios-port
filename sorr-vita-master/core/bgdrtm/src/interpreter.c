@@ -553,6 +553,10 @@ char sorr_ios_d3_destroyed_ring_snapshot[2048] = "destroyed=none";
 char sorr_ios_d3_family_events[3072] = "family_events=none";
 char sorr_ios_d3_render_events[3072] = "render_events=none";
 char sorr_ios_d3_visible_event_log_path[1024] = "";
+volatile unsigned int sorr_ios_d3_post_no_cargues_trace_seq = 0;
+volatile unsigned int sorr_ios_d3_post_no_cargues_trace_until_run = 0;
+volatile unsigned int sorr_ios_d3_post_no_cargues_frame_log_count = 0;
+char sorr_ios_d3_last_post_no_cargues_event[1024] = "post_no_cargues=none";
 
 static const char * const sorr_ios_d3_watch_proc_names[] = {
     "CONTROLADOR",
@@ -862,6 +866,56 @@ static void sorr_ios_d3_append_visible_event_line( const char * line )
     fclose( fp );
 }
 
+static int sorr_ios_d3_post_no_cargues_trace_active( void )
+{
+    return sorr_ios_d3_post_no_cargues_trace_until_run &&
+           sorr_ios_d3_instance_run_count <= sorr_ios_d3_post_no_cargues_trace_until_run;
+}
+
+static void sorr_ios_d3_note_post_no_cargues_marker( const char * action, const INSTANCE * r )
+{
+    char line[1024];
+    unsigned int seq;
+
+    if ( !r || !r->proc || !sorr_ios_d3_name_equal_fold( r->proc->name, "NO_CARGUES" ) ) return;
+    if ( !action || ( strcmp( action, "create" ) != 0 &&
+                      strcmp( action, "destroy_begin" ) != 0 &&
+                      strcmp( action, "destroy" ) != 0 ) ) return;
+
+    seq = ++sorr_ios_d3_post_no_cargues_trace_seq;
+    sorr_ios_d3_post_no_cargues_trace_until_run = sorr_ios_d3_instance_run_count + 5000;
+    snprintf(
+        line,
+        sizeof( line ),
+        "post_no_cargues_trace marker=%s seq=%u pid=%u status=%d frame=%d offset=%d run=%u until_run=%u proc_ptr=%p fam=%u/%u/%u/%u last_proc=%s#%u last_native=%s last_return=%s last_lifecycle=%s last_family=%s last_render=%s",
+        action,
+        seq,
+        LOCDWORD( r, PROCESS_ID ),
+        LOCDWORD( r, STATUS ),
+        LOCINT32( r, FRAME_PERCENT ),
+        ( r->code && r->codeptr ) ? ( int )( r->codeptr - r->code ) : -1,
+        sorr_ios_d3_instance_run_count,
+        sorr_ios_d3_post_no_cargues_trace_until_run,
+        ( const void * )r,
+        LOCDWORD( r, FATHER ),
+        LOCDWORD( r, SON ),
+        LOCDWORD( r, SMALLBRO ),
+        LOCDWORD( r, BIGBRO ),
+        sorr_ios_d3_last_proc_name,
+        sorr_ios_d3_last_proc_id,
+        sorr_ios_d3_last_native_call_event,
+        sorr_ios_d3_last_native_return_event,
+        sorr_ios_d3_last_lifecycle_event,
+        sorr_ios_d3_last_family_unlink,
+        sorr_ios_d3_last_render_event
+    );
+    snprintf( sorr_ios_d3_last_post_no_cargues_event,
+              sizeof( sorr_ios_d3_last_post_no_cargues_event ),
+              "%s",
+              line );
+    sorr_ios_d3_append_visible_event_line( line );
+}
+
 void sorr_ios_d3_note_runtime_exit_request( const char * source, const void * process_ptr, int requested_exit_value, const char * detail )
 {
     const INSTANCE * r = ( const INSTANCE * )process_ptr;
@@ -985,6 +1039,8 @@ static void sorr_ios_d3_note_lifecycle_event( const char * action, const INSTANC
         snprintf( line, sizeof( line ), "runtime_lifecycle %s", sorr_ios_d3_event_slots[slot] );
         sorr_ios_d3_append_visible_event_line( line );
     }
+
+    sorr_ios_d3_note_post_no_cargues_marker( action, r );
 }
 
 static void sorr_ios_d3_copy_proc_name( char * dst, size_t dst_size, const INSTANCE * r )
@@ -1431,6 +1487,26 @@ static void sorr_ios_d3_note_native_call( const char * kind, const SYSPROC * p, 
                                          sorr_ios_d3_native_call_events,
                                          sizeof( sorr_ios_d3_native_call_events ),
                                          "native_events=none" );
+
+    if ( sorr_ios_d3_post_no_cargues_trace_active() )
+    {
+        char line[2304];
+        snprintf( line,
+                  sizeof( line ),
+                  "post_no_cargues_native_call seq=%u run=%u until_run=%u %s last_lifecycle=%s last_family=%s last_render=%s",
+                  sorr_ios_d3_post_no_cargues_trace_seq,
+                  sorr_ios_d3_instance_run_count,
+                  sorr_ios_d3_post_no_cargues_trace_until_run,
+                  sorr_ios_d3_last_native_call_event,
+                  sorr_ios_d3_last_lifecycle_event,
+                  sorr_ios_d3_last_family_unlink,
+                  sorr_ios_d3_last_render_event );
+        snprintf( sorr_ios_d3_last_post_no_cargues_event,
+                  sizeof( sorr_ios_d3_last_post_no_cargues_event ),
+                  "%s",
+                  line );
+        sorr_ios_d3_append_visible_event_line( line );
+    }
 }
 
 static void sorr_ios_d3_note_native_return( const char * kind, const SYSPROC * p, const INSTANCE * r, int result, int has_result )
@@ -1467,6 +1543,26 @@ static void sorr_ios_d3_note_native_return( const char * kind, const SYSPROC * p
                                          sorr_ios_d3_native_call_events,
                                          sizeof( sorr_ios_d3_native_call_events ),
                                          "native_events=none" );
+
+    if ( sorr_ios_d3_post_no_cargues_trace_active() )
+    {
+        char line[1792];
+        snprintf( line,
+                  sizeof( line ),
+                  "post_no_cargues_native_return seq=%u run=%u until_run=%u %s last_lifecycle=%s last_family=%s last_render=%s",
+                  sorr_ios_d3_post_no_cargues_trace_seq,
+                  sorr_ios_d3_instance_run_count,
+                  sorr_ios_d3_post_no_cargues_trace_until_run,
+                  sorr_ios_d3_last_native_return_event,
+                  sorr_ios_d3_last_lifecycle_event,
+                  sorr_ios_d3_last_family_unlink,
+                  sorr_ios_d3_last_render_event );
+        snprintf( sorr_ios_d3_last_post_no_cargues_event,
+                  sizeof( sorr_ios_d3_last_post_no_cargues_event ),
+                  "%s",
+                  line );
+        sorr_ios_d3_append_visible_event_line( line );
+    }
 }
 
 static void sorr_ios_d3_append_sample( char * dst, size_t dst_size, size_t * used, const INSTANCE * r, unsigned int index )
@@ -1634,6 +1730,42 @@ static void sorr_ios_d3_update_runtime_snapshot( const char * reason, int loop_c
     );
     snprintf( sorr_ios_d3_runtime_snapshot, sizeof( sorr_ios_d3_runtime_snapshot ), "%s", next_snapshot );
 }
+
+static void sorr_ios_d3_note_post_no_cargues_frame( int loop_count )
+{
+    char line[1792];
+
+    if ( !sorr_ios_d3_post_no_cargues_trace_active() ) return;
+
+    sorr_ios_d3_post_no_cargues_frame_log_count++;
+    snprintf( line,
+              sizeof( line ),
+              "post_no_cargues_frame seq=%u frame_log=%u loop=%d run=%u until_run=%u first_instance=%p last_instance_run=%p current_ptr=0x%llx last_proc=%s#%u:s%d:f%d:o%d snapshot=%s last_native=%s last_return=%s last_lifecycle=%s last_family=%s last_render=%s",
+              sorr_ios_d3_post_no_cargues_trace_seq,
+              sorr_ios_d3_post_no_cargues_frame_log_count,
+              loop_count,
+              sorr_ios_d3_instance_run_count,
+              sorr_ios_d3_post_no_cargues_trace_until_run,
+              ( void * )first_instance,
+              ( void * )last_instance_run,
+              sorr_ios_d3_current_proc_ptr,
+              sorr_ios_d3_last_proc_name,
+              sorr_ios_d3_last_proc_id,
+              sorr_ios_d3_last_proc_status,
+              sorr_ios_d3_last_proc_frame_percent,
+              sorr_ios_d3_last_proc_code_offset,
+              sorr_ios_d3_runtime_snapshot,
+              sorr_ios_d3_last_native_call_event,
+              sorr_ios_d3_last_native_return_event,
+              sorr_ios_d3_last_lifecycle_event,
+              sorr_ios_d3_last_family_unlink,
+              sorr_ios_d3_last_render_event );
+    snprintf( sorr_ios_d3_last_post_no_cargues_event,
+              sizeof( sorr_ios_d3_last_post_no_cargues_event ),
+              "%s",
+              line );
+    sorr_ios_d3_append_visible_event_line( line );
+}
 #endif
 
 /* ---------------------------------------------------------------------- */
@@ -1774,6 +1906,11 @@ int instance_go_all()
                 if ( sorr_ios_d3_frame_complete_count <= 20 || ( sorr_ios_d3_frame_complete_count % 30 ) == 0 )
                 {
                     sorr_ios_d3_update_runtime_snapshot( "frame", loop_count );
+                }
+                if ( sorr_ios_d3_post_no_cargues_trace_active() )
+                {
+                    sorr_ios_d3_update_runtime_snapshot( "post_no_cargues_frame", loop_count );
+                    sorr_ios_d3_note_post_no_cargues_frame( loop_count );
                 }
 #endif
                 /* Honors the signal-changed status of the process and

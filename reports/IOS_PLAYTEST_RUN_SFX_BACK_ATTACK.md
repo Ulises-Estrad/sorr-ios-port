@@ -206,3 +206,35 @@ Patch contents:
 - keeps custom controls, BGM/SFX, icon/name, clear diagnostic filenames, stale process guards, runtime-exit guards, and asset-free IPA packaging.
 
 Manual test focus: install this IPA, replay the same scene transition that exits abruptly, reopen once if the app disappears, and send `LATEST_CRASH_OR_ABRUPT_EXIT_REPORT.txt` plus `PREVIOUS_SESSION_RUNTIME_LOG.txt`.
+
+## Playtest Post-NO_CARGUES Trace Follow-Up
+
+The stage-transition diagnostic artifact narrowed the no-signal abrupt exit further:
+
+```text
+build=ios-playtest-stage-transition-diagnostics
+signal=none
+previous_has_sdl_terminating=0
+runtime_exit_guards=0
+previous_last_marker=runtime_lifecycle seq=13253 destroy NO_CARGUES#70014...
+```
+
+The next artifact keeps the playable baseline and existing guards, but mirrors the immediate post-`NO_CARGUES` path to the Files-visible runtime log:
+
+```text
+Artifact: ios-shell-playtest-post-no-cargues-trace-device-arm64
+IPA: build-products/SorrIOSShell-playtest-post-no-cargues-trace-adhoc.ipa
+Build label: ios-playtest-post-no-cargues-trace
+Game data/assets bundled in IPA: no
+```
+
+Patch contents:
+
+- starts a short trace window when `NO_CARGUES` is created, begins destruction, or is destroyed,
+- writes `post_no_cargues_trace` markers with process/family/native context,
+- writes `post_no_cargues_native_call` and `post_no_cargues_native_return` lines during that trace window,
+- writes `post_no_cargues_frame` lines at frame boundaries if the runtime survives past the teardown,
+- adds the last post-`NO_CARGUES` marker to signal-backed crash reports,
+- keeps custom controls, BGM/SFX, icon/name, clear diagnostic filenames, stale process guards, runtime-exit guards, and asset-free IPA packaging.
+
+Manual test focus: install this IPA, replay the same scene transition that exits abruptly, reopen once if the app disappears, and send `LATEST_CRASH_OR_ABRUPT_EXIT_REPORT.txt` plus `PREVIOUS_SESSION_RUNTIME_LOG.txt`. The important lines to look for are `post_no_cargues_*`.

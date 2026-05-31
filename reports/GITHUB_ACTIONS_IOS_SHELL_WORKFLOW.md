@@ -2608,3 +2608,16 @@ Game data/assets bundled in IPA: no
 ```
 
 The artifact keeps custom controls, BGM/SFX, app icon/name, clear Files-visible diagnostics, stale process guards, and runtime-exit guards. It adds stage startup/load process names such as `NO_CARGUES`, `DISTRIBUCION`, `RESET_HQ`, `TELON`, `LAYER`, and `LAYOUT_CONTROL` to the iOS watchlist, and starts one-second transition heartbeats when those markers appear. Crash reports now include `stage_transition_dense` context.
+
+## Playtest Post-NO_CARGUES Trace Artifact
+
+The stage-transition diagnostic artifact narrowed the abrupt scene-transition exit to a same-build no-signal fallback whose last durable marker was `destroy NO_CARGUES#70014`. There was still no SDL terminating event and `runtime_exit_guards=0`, so this target traces the immediate post-`NO_CARGUES` native/runtime path directly in the Files-visible log.
+
+```text
+Device artifact: ios-shell-playtest-post-no-cargues-trace-device-arm64
+IPA: build-products/SorrIOSShell-playtest-post-no-cargues-trace-adhoc.ipa
+Build label: ios-playtest-post-no-cargues-trace
+Game data/assets bundled in IPA: no
+```
+
+The artifact keeps custom controls, BGM/SFX, app icon/name, clear Files-visible diagnostics, stale process guards, stage-transition diagnostics, and runtime-exit guards. It adds `post_no_cargues_trace`, `post_no_cargues_native_call`, `post_no_cargues_native_return`, and `post_no_cargues_frame` breadcrumbs so the next no-signal exit can show whether the runtime reaches a native loader/control call or dies before the next frame boundary.

@@ -24,11 +24,11 @@
 #include "SDL.h"
 
 #ifndef SORR_IOS_BUILD_LABEL
-#define SORR_IOS_BUILD_LABEL "ios-playtest-stage-transition-diagnostics"
+#define SORR_IOS_BUILD_LABEL "ios-playtest-post-no-cargues-trace"
 #endif
 
 #ifndef SORR_IOS_ARTIFACT_LABEL
-#define SORR_IOS_ARTIFACT_LABEL "ios-shell-playtest-stage-transition-diagnostics-device-arm64"
+#define SORR_IOS_ARTIFACT_LABEL "ios-shell-playtest-post-no-cargues-trace-device-arm64"
 #endif
 
 #ifdef SORR_IOS_D3_FIRST_RENDER
@@ -2356,6 +2356,10 @@ extern char sorr_ios_d3_last_native_call_event[];
 extern char sorr_ios_d3_last_native_return_event[];
 extern char sorr_ios_d3_native_call_events[];
 extern char sorr_ios_d3_last_effect_water_event[];
+extern char sorr_ios_d3_last_post_no_cargues_event[];
+extern volatile unsigned int sorr_ios_d3_post_no_cargues_trace_seq;
+extern volatile unsigned int sorr_ios_d3_post_no_cargues_trace_until_run;
+extern volatile unsigned int sorr_ios_d3_post_no_cargues_frame_log_count;
 extern volatile unsigned int sorr_ios_d3_runtime_exit_guard_count;
 extern char sorr_ios_d3_last_exit_event[];
 extern char sorr_ios_d3_runtime_snapshot[];
@@ -2595,6 +2599,12 @@ static void sorr_ios_d4a_write_crash_report_fd(int fd, int sig)
     sorr_ios_signal_write_format(fd, "last_native_call=%s\n", sorr_ios_d3_last_native_call_event);
     sorr_ios_signal_write_format(fd, "last_native_return=%s\n", sorr_ios_d3_last_native_return_event);
     sorr_ios_signal_write_format(fd, "recent_native_call_ring=%s\n", sorr_ios_d3_native_call_events);
+    sorr_ios_signal_write_format(fd,
+                                 "post_no_cargues_trace=seq:%u until_run:%u frame_logs:%u last:%s\n",
+                                 sorr_ios_d3_post_no_cargues_trace_seq,
+                                 sorr_ios_d3_post_no_cargues_trace_until_run,
+                                 sorr_ios_d3_post_no_cargues_frame_log_count,
+                                 sorr_ios_d3_last_post_no_cargues_event);
     sorr_ios_signal_write_format(fd, "last_effect_water=%s\n", sorr_ios_d3_last_effect_water_event);
     sorr_ios_signal_write_format(fd,
                                  "runtime_counters=heartbeats:%u loops:%u frames:%u runs:%u instances:%d render_objects:%d render_create:%u render_destroy:%u render_invalid:%u opened_files:%d x_files:%d max_x_files:%d rss_bytes:%llu\n",

@@ -1,6 +1,6 @@
 # iOS Current Playtest Baseline
 
-Status: current playable iPhone baseline, paused/final for now, with a stage-transition diagnostics follow-up target ready for playtesting.
+Status: current playable iPhone baseline, paused/final for now, with a post-`NO_CARGUES` trace follow-up target ready for playtesting.
 
 This project is now a playable iPhone port baseline, not an early proof-only experiment. Historical milestone reports remain in `reports/` as evidence, but current work should use this playtest baseline framing. Active feature work is paused; future changes should be limited to major bug fixes found during normal playtesting.
 
@@ -17,9 +17,25 @@ This project is now a playable iPhone port baseline, not an early proof-only exp
 - The IPA remains asset-free; game data is imported locally through the iPhone Files route.
 - Latest physical playtest fix: gun firing works and Stage 6 beach/water startup no longer crashes after the GET_REAL_POINT guard.
 - Latest route playtest: the SoR2 path was cleared with Axel with no clear bugs or random crashes observed afterward.
-- Current follow-up target: keep the stale remote process guard, clear diagnostic filenames, runtime-exit guard, and add focused stage-transition diagnostics because the latest no-signal report stopped after `NO_CARGUES` with `runtime_exit_guards=0`.
+- Current follow-up target: keep the stale remote process guard, clear diagnostic filenames, runtime-exit guard, and add direct post-`NO_CARGUES` native/frame tracing because the latest no-signal report stopped immediately after `destroy NO_CARGUES#70014` with `runtime_exit_guards=0`.
 
 ## Current Workflow Target
+
+```text
+Actions run: pending
+Commit: pending
+Artifact: ios-shell-playtest-post-no-cargues-trace-device-arm64
+IPA: build-products/SorrIOSShell-playtest-post-no-cargues-trace-adhoc.ipa
+Build label: ios-playtest-post-no-cargues-trace
+Artifact size: pending
+Device job result: pending
+Simulator job result: pending
+Game data/assets bundled in IPA: no
+```
+
+This target keeps custom controls, BGM/SFX, the app icon/name, clear Files-visible diagnostics, stale process guards, stage-transition diagnostics, and runtime-exit guards. It adds `post_no_cargues_trace`, `post_no_cargues_native_call`, `post_no_cargues_native_return`, and `post_no_cargues_frame` breadcrumbs directly to the Files-visible runtime log so a no-signal exit after `NO_CARGUES` has an actionable last native/frame marker.
+
+Previous follow-up target:
 
 ```text
 Actions run: 26691684119
@@ -32,8 +48,6 @@ Device job result: success
 Simulator job result: success
 Game data/assets bundled in IPA: no
 ```
-
-This target keeps custom controls, BGM/SFX, the app icon/name, clear Files-visible diagnostics, stale process guards, and runtime-exit guards. It adds `NO_CARGUES` and other stage startup/load processes to the explicit watchlist, starts one-second transition heartbeats when those markers appear, and records `stage_transition_dense` context in crash reports.
 
 Previous follow-up target:
 

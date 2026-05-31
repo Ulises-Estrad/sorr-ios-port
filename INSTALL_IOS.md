@@ -26,12 +26,10 @@ This guide rebuilds the current iPhone setup from zero.
 1. Open the GitHub repo.
 2. Go to `Actions`.
 3. Open the latest successful `iOS Shell` workflow run.
-4. Download the latest successful device artifact. Current stage-transition diagnostic playtest target:
+4. Download the latest successful device artifact. Current post-`NO_CARGUES` trace playtest target:
 
    ```text
-   Actions run: 26691684119
-   Commit: 2774d57
-   Artifact: ios-shell-playtest-stage-transition-diagnostics-device-arm64
+   Artifact: ios-shell-playtest-post-no-cargues-trace-device-arm64
    ```
 
    Previous proven baseline:
@@ -41,10 +39,10 @@ This guide rebuilds the current iPhone setup from zero.
    ```
 
 5. Extract the downloaded artifact on Windows.
-6. Install the IPA with Sideloadly. Current stage-transition diagnostic IPA target:
+6. Install the IPA with Sideloadly. Current post-`NO_CARGUES` trace IPA target:
 
    ```text
-   build-products/SorrIOSShell-playtest-stage-transition-diagnostics-adhoc.ipa
+   build-products/SorrIOSShell-playtest-post-no-cargues-trace-adhoc.ipa
    ```
 
 7. If iOS asks, enable Developer Mode and trust the developer profile.
