@@ -211,7 +211,7 @@ Keep crash reporting and runtime guards
 No game data/assets bundled in IPA
 ```
 
-The project is paused/final for now. Future work should patch only major bugs found during normal playtesting. A known non-blocking issue remains where some no-input attract/demo scenes may ignore Start/Back presses even when the game shows a "press start" prompt; this is not worth pursuing unless it becomes a practical playability blocker.
+The project is paused/final for now. All four main-game routes have been completed with SoR2 Axel and SoR2 Shiva without clear route-blocking bugs or random crashes. About 15% of scenes still need spot-checking through normal play time, so future work should patch only major bugs found during that remaining playtesting. A known non-blocking issue remains where some no-input attract/demo scenes may ignore Start/Back presses even when the game shows a "press start" prompt; this is not worth pursuing unless it becomes a practical playability blocker.
 
 Historical notes follow.
 

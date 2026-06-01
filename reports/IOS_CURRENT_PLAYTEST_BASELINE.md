@@ -18,7 +18,8 @@ This project is now a playable iPhone port baseline, not an early proof-only exp
 - Latest physical playtest fix: the palette-handle cleanup artifact fixed the transition-only Shiva/player/effect miscolor that appeared after a scene transition and cleared only after app restart.
 - Earlier physical playtest fix: the WAV-memory / trace-throttle artifact fixed the latest scene-transition crash and removed the logging-induced gameplay slowdown.
 - Earlier physical playtest fix: gun firing works and Stage 6 beach/water startup no longer crashes after the GET_REAL_POINT guard.
-- Latest route playtest: the SoR2 path was cleared with Axel with no clear bugs or random crashes observed afterward.
+- Latest route playtest: all four main-game routes have been completed with SoR2 Axel and SoR2 Shiva with no clear route-blocking bugs or random crashes observed afterward.
+- Remaining coverage: about 15% of scenes still need spot-checking through normal play time. This is coverage debt, not an active roadmap item; future work should patch only major bugs found during that remaining playtesting.
 - Current fixed baseline: keep the stale remote process guard, clear diagnostic filenames, runtime-exit guard, and post-`NO_CARGUES` breadcrumbs, but throttle that tracing because the previous Files-visible runtime log reached hundreds of MB and caused gameplay slowdown. The no-signal report narrowed the scene-transition exit to a `LOAD_WAV` call after `NO_CARGUES` teardown, so iOS WAV loading now uses a memory-backed `SDL_RWops` path like the working OGG music loader.
 - Current color fix: `ios-shell-playtest-palette-handle-cleanup-device-arm64` targets and physically fixes the transition-only Shiva/player/effect miscolor. The ARGB pixel-format candidate did not fully fix it; the remaining pattern was stale palette handles after FPG/map unload and scene reload.
 

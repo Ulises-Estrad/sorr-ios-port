@@ -2684,3 +2684,7 @@ Game data/assets bundled in IPA: no
 Patch intent: keep the playable baseline, ARGB SDL pixel-format alignment, BGM/SFX, custom controls, app icon/name, and asset-free IPA packaging. The runtime now clears 64-bit palette handle-table entries when palettes are destroyed and ignores invalid instance palette overrides instead of temporarily replacing a sprite map's own palette with freed/reused palette memory. Manual test focus is reproducing the same transition that miscolored Shiva/player/effects, then confirming the player and effects keep their correct colors.
 
 Physical result: confirmed fixed. The transition-only Shiva/player/effect miscolor no longer reproduces with this artifact, and the player/effect colors remain correct without restarting the app.
+
+## Current Playtest Coverage Status
+
+The current playable baseline remains paused/final for now. All four main-game routes have now been completed with SoR2 Axel and SoR2 Shiva without clear route-blocking bugs or random crashes. About 15% of scenes still need spot-checking through normal play time; that remaining work should be treated as playtest coverage debt, not a new feature roadmap. Future workflow/device changes should be limited to major bugs discovered during that remaining playtesting.

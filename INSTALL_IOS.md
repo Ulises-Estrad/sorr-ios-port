@@ -174,3 +174,5 @@ The diagnostics folder is refreshed on every app launch. `CURRENT_SESSION_RUNTIM
 - The current build is the paused/final-for-now baseline.
 - Future updates should be limited to major bug fixes discovered during real play.
 - Known non-blocking issue: some no-input attract/demo scenes may ignore Start/Back while showing a "press start" prompt. This does not block normal playability.
+- Main-game playtest coverage: all four main routes have been completed with SoR2 Axel and SoR2 Shiva on the current playable baseline.
+- Remaining coverage: about 15% of scenes still need spot-checking through normal play time, so future reports should focus on major bugs found during that remaining playtesting.

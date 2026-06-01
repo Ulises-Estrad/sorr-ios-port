@@ -11,7 +11,9 @@ This repo is now the source of truth for the iOS shell/runtime build. It is no l
 
 Remaining work is no longer planned as an active roadmap. Future changes should be limited to major bug fixes found during normal gameplay. Minor polish/control tuning can wait unless it blocks play.
 
-Latest physical playtest result: the `ios-shell-playtest-palette-handle-cleanup-device-arm64` IPA fixed the transition-only Shiva/player/effect miscolor. Earlier fixes in the current baseline also fixed the latest scene-transition crash, removed the logging-induced gameplay slowdown, fixed the reported gun-shot crash, and fixed the Stage 6 beach/water startup crash. A full SoR2 route clear with Axel completed without clear bugs or random crashes.
+Latest physical playtest result: the `ios-shell-playtest-palette-handle-cleanup-device-arm64` IPA fixed the transition-only Shiva/player/effect miscolor. Earlier fixes in the current baseline also fixed the latest scene-transition crash, removed the logging-induced gameplay slowdown, fixed the reported gun-shot crash, and fixed the Stage 6 beach/water startup crash. All four main-game routes have now been completed with SoR2 Axel and SoR2 Shiva without clear route-blocking bugs or random crashes.
+
+Playtest coverage note: the main-game route clears cover the core playability target, but roughly 15% of scenes still need spot-checking simply because they require more normal play time. Future work remains limited to major bugs found while playing.
 
 Current stable artifact: `ios-shell-playtest-palette-handle-cleanup-device-arm64` from Actions run `26721338436`. It keeps the playable baseline, preserves the WAV-memory / trace-throttle fix, and clears stale 64-bit palette handles when palettes are destroyed so player/effect sprites keep correct colors across transitions.
 
