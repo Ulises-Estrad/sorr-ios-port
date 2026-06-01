@@ -331,3 +331,5 @@ Patch contents:
 - keeps custom controls, BGM/SFX, icon/name, clear diagnostic filenames, stale process guards, runtime-exit guards, and asset-free IPA packaging.
 
 Manual test focus: install this IPA, reproduce the transition that made Shiva/player/effects blue, and verify player/effect colors stay correct without needing to restart the app.
+
+Physical result: confirmed fixed. The transition-only Shiva/player/effect miscolor no longer reproduces with this artifact.

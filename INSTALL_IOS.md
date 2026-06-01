@@ -26,7 +26,7 @@ This guide rebuilds the current iPhone setup from zero.
 1. Open the GitHub repo.
 2. Go to `Actions`.
 3. Open the latest successful `iOS Shell` workflow run.
-4. Download the latest successful device artifact. Current Shiva/player/effect transition color-fix candidate:
+4. Download the latest successful device artifact. Current fixed playtest baseline:
 
    ```text
    Actions run: 26721338436
@@ -41,7 +41,7 @@ This guide rebuilds the current iPhone setup from zero.
    ```
 
 5. Extract the downloaded artifact on Windows.
-6. Install the IPA with Sideloadly. Current Shiva/player/effect transition color-fix candidate IPA:
+6. Install the IPA with Sideloadly. Current fixed playtest baseline IPA:
 
    ```text
    build-products/SorrIOSShell-playtest-palette-handle-cleanup-adhoc.ipa

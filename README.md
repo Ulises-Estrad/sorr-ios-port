@@ -11,11 +11,9 @@ This repo is now the source of truth for the iOS shell/runtime build. It is no l
 
 Remaining work is no longer planned as an active roadmap. Future changes should be limited to major bug fixes found during normal gameplay. Minor polish/control tuning can wait unless it blocks play.
 
-Latest physical playtest result: the `ios-shell-playtest-wav-memory-trace-throttle-device-arm64` IPA fixed the latest scene-transition crash and removed the logging-induced gameplay slowdown. Earlier fixes in the current baseline also fixed the reported gun-shot crash and the Stage 6 beach/water startup crash. A full SoR2 route clear with Axel completed without clear bugs or random crashes.
+Latest physical playtest result: the `ios-shell-playtest-palette-handle-cleanup-device-arm64` IPA fixed the transition-only Shiva/player/effect miscolor. Earlier fixes in the current baseline also fixed the latest scene-transition crash, removed the logging-induced gameplay slowdown, fixed the reported gun-shot crash, and fixed the Stage 6 beach/water startup crash. A full SoR2 route clear with Axel completed without clear bugs or random crashes.
 
-Current stable artifact: `ios-shell-playtest-wav-memory-trace-throttle-device-arm64` from Actions run `26705635947`. It keeps the same playable baseline, throttles post-`NO_CARGUES` tracing, and moves iOS `LOAD_WAV` onto a memory-backed path like the working OGG music loader. Crash reports include the last WAV path/status.
-
-Current color-fix candidate: `ios-shell-playtest-palette-handle-cleanup-device-arm64` from Actions run `26721338436`. This keeps the playable baseline and targets the transition-only Shiva/player/effect miscolor by clearing stale 64-bit palette handles when palettes are destroyed and ignoring invalid instance palette overrides.
+Current stable artifact: `ios-shell-playtest-palette-handle-cleanup-device-arm64` from Actions run `26721338436`. It keeps the playable baseline, preserves the WAV-memory / trace-throttle fix, and clears stale 64-bit palette handles when palettes are destroyed so player/effect sprites keep correct colors across transitions.
 
 Known non-blocking issue: some no-input attract/demo scenes may ignore Start/Back presses even while showing a "press start" prompt. This does not block normal playability because the current build can be started, controlled, and played through; leave this alone unless it becomes a practical blocker or a clear crash/repro case appears.
 

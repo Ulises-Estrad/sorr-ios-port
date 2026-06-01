@@ -1,6 +1,6 @@
 # iOS Current Playtest Baseline
 
-Status: current playable iPhone baseline, paused/final for now. The WAV-memory / trace-throttle artifact is the current fixed playtest baseline.
+Status: current playable iPhone baseline, paused/final for now. The palette-handle cleanup artifact is the current fixed playtest baseline.
 
 This project is now a playable iPhone port baseline, not an early proof-only experiment. Historical milestone reports remain in `reports/` as evidence, but current work should use this playtest baseline framing. Active feature work is paused; future changes should be limited to major bug fixes found during normal playtesting.
 
@@ -15,31 +15,14 @@ This project is now a playable iPhone port baseline, not an early proof-only exp
 - Crash reporting and runtime guards remain active.
 - The app icon and `Streets of Rage` display name are wired into the iPhone build.
 - The IPA remains asset-free; game data is imported locally through the iPhone Files route.
-- Latest physical playtest fix: the WAV-memory / trace-throttle artifact fixed the latest scene-transition crash and removed the logging-induced gameplay slowdown.
+- Latest physical playtest fix: the palette-handle cleanup artifact fixed the transition-only Shiva/player/effect miscolor that appeared after a scene transition and cleared only after app restart.
+- Earlier physical playtest fix: the WAV-memory / trace-throttle artifact fixed the latest scene-transition crash and removed the logging-induced gameplay slowdown.
 - Earlier physical playtest fix: gun firing works and Stage 6 beach/water startup no longer crashes after the GET_REAL_POINT guard.
 - Latest route playtest: the SoR2 path was cleared with Axel with no clear bugs or random crashes observed afterward.
 - Current fixed baseline: keep the stale remote process guard, clear diagnostic filenames, runtime-exit guard, and post-`NO_CARGUES` breadcrumbs, but throttle that tracing because the previous Files-visible runtime log reached hundreds of MB and caused gameplay slowdown. The no-signal report narrowed the scene-transition exit to a `LOAD_WAV` call after `NO_CARGUES` teardown, so iOS WAV loading now uses a memory-backed `SDL_RWops` path like the working OGG music loader.
-- Current color-fix candidate: `ios-shell-playtest-palette-handle-cleanup-device-arm64` targets the transition-only Shiva/player/effect miscolor. The ARGB pixel-format candidate did not fully fix it; the remaining pattern points at stale palette handles after FPG/map unload and scene reload.
+- Current color fix: `ios-shell-playtest-palette-handle-cleanup-device-arm64` targets and physically fixes the transition-only Shiva/player/effect miscolor. The ARGB pixel-format candidate did not fully fix it; the remaining pattern was stale palette handles after FPG/map unload and scene reload.
 
 ## Current Workflow Target
-
-```text
-Actions run: 26705635947
-Commit: 4afd24d
-Artifact: ios-shell-playtest-wav-memory-trace-throttle-device-arm64
-IPA: build-products/SorrIOSShell-playtest-wav-memory-trace-throttle-adhoc.ipa
-Build label: ios-playtest-wav-memory-trace-throttle
-Artifact size: 1970563 bytes
-Device job result: success
-Simulator job result: success
-Game data/assets bundled in IPA: no
-```
-
-This target keeps custom controls, BGM/SFX, the app icon/name, clear Files-visible diagnostics, stale process guards, stage-transition diagnostics, and runtime-exit guards. It limits `post_no_cargues_*` visible logging to focused native/process breadcrumbs, decodes string parameters for native calls, caps frame breadcrumbs, and records `LOAD_WAV` memory-read/decode status in the Files-visible runtime log and crash report.
-
-Physical result: this artifact fixed the scene-transition crash reported after the post-`NO_CARGUES` trace build, and gameplay no longer shows the slowdown caused by the overly large runtime log.
-
-## Current Color-Fix Candidate
 
 ```text
 Actions run: 26721338436
@@ -54,7 +37,23 @@ Simulator job result: success
 Game data/assets bundled in IPA: no
 ```
 
-Patch intent: keep the current playable baseline, BGM/SFX, custom controls, app icon/name, crash reporting, and ARGB SDL pixel-format alignment intact. The new fix clears 64-bit palette handle-table entries when palettes are destroyed during FPG/map unload and skips invalid instance palette overrides, so stale player/effect `PALETTEID` values cannot force sprites onto freed/reused palette memory after transitions.
+Physical result: this artifact fixed the transition-only Shiva/player/effect miscolor. Player and effect colors stay correct after the affected transition without restarting the app.
+
+Patch intent: keep the current playable baseline, BGM/SFX, custom controls, app icon/name, crash reporting, and ARGB SDL pixel-format alignment intact. The fix clears 64-bit palette handle-table entries when palettes are destroyed during FPG/map unload and skips invalid instance palette overrides, so stale player/effect `PALETTEID` values cannot force sprites onto freed/reused palette memory after transitions.
+
+Previous fixed baseline:
+
+```text
+Actions run: 26705635947
+Commit: 4afd24d
+Artifact: ios-shell-playtest-wav-memory-trace-throttle-device-arm64
+IPA: build-products/SorrIOSShell-playtest-wav-memory-trace-throttle-adhoc.ipa
+Build label: ios-playtest-wav-memory-trace-throttle
+Artifact size: 1970563 bytes
+Device job result: success
+Simulator job result: success
+Game data/assets bundled in IPA: no
+```
 
 Previous color-fix candidate:
 

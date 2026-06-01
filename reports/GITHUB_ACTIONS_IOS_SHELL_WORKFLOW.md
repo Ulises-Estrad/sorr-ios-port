@@ -2682,3 +2682,5 @@ Game data/assets bundled in IPA: no
 ```
 
 Patch intent: keep the playable baseline, ARGB SDL pixel-format alignment, BGM/SFX, custom controls, app icon/name, and asset-free IPA packaging. The runtime now clears 64-bit palette handle-table entries when palettes are destroyed and ignores invalid instance palette overrides instead of temporarily replacing a sprite map's own palette with freed/reused palette memory. Manual test focus is reproducing the same transition that miscolored Shiva/player/effects, then confirming the player and effects keep their correct colors.
+
+Physical result: confirmed fixed. The transition-only Shiva/player/effect miscolor no longer reproduces with this artifact, and the player/effect colors remain correct without restarting the app.
