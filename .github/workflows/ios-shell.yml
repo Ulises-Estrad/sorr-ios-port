@@ -317,6 +317,7 @@ jobs:
             done
             sleep 20
 
+            xcrun simctl io "$DEVICE_UDID" screenshot "$ARTIFACT_DIR/logs/simulator/touch-controls.png"
             xcrun simctl terminate "$DEVICE_UDID" "$BUNDLE_ID" || true
             sleep 2
             cleanup
@@ -413,7 +414,6 @@ jobs:
               fi
             done
 
-            xcrun simctl io "$DEVICE_UDID" screenshot "$ARTIFACT_DIR/logs/simulator/touch-controls.png"
             echo "iOS shell simulator launch proof passed."
           } 2>&1 | tee "$ARTIFACT_DIR/logs/ios-shell-simulator-launch.log"
 
