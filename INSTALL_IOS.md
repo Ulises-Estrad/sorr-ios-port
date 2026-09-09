@@ -32,4 +32,4 @@ The old CFG editor and `ios_touch_controls.ini` settings are no longer used.
 
 If the game crashes, reopen it once and retrieve the latest report from **Files → On My iPhone → Streets of Rage → SORR_DIAGNOSTICS**. Include the release tag, iPhone model, iOS version, character, stage, and whether you were using touch or DualSense.
 
-For this release, physical checks should cover a fresh install without imports, an update retaining saves, each action button, connecting a pre-paired DualSense during play, disconnecting while holding a direction/button, reconnecting, and background/resume.
+**Release ios-88 has owner-confirmed iPhone playtesting:** the owner reported that all requested changes work. For future regression testing, check a fresh install without imports, save retention during updates, each action button, DualSense connection/disconnection during play, and background/resume. This checklist does not imply that every individual scenario was separately documented in the owner's confirmation.

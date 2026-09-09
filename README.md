@@ -49,7 +49,9 @@ When updating the same installed app, existing saves from the older import-based
 
 Successful `main` builds publish the IPA to **GitHub Releases**, which supplies the download link at the top of this page. The workflow builds device and simulator apps, tests touch/controller handoff and save migration, and verifies every bundled game file against a SHA-256 manifest.
 
-The prior runtime baseline completed all four main-game routes with SoR2 Axel and SoR2 Shiva. The new touch layout, physical Bluetooth disconnect/reconnect, and bundled-data startup still need an iPhone playtest; automated tests do not establish physical-device gameplay coverage.
+**Physical iPhone playtest confirmed for [release ios-88](https://github.com/Ulises-Estrad/streets-of-rage-remake-ios/releases/tag/ios-88).** The owner tested all requested changes on their iPhone and confirmed they work: the updated touch controls and layout, removal of CFG, DualSense mapping and automatic touch-control switching, and the IPA with bundled game assets.
+
+The prior runtime baseline completed all four main-game routes with SoR2 Axel and SoR2 Shiva. That earlier route coverage is separate from this confirmation of the new features. See the [current playtest baseline](reports/IOS_CURRENT_PLAYTEST_BASELINE.md).
 
 ## Credits
 
