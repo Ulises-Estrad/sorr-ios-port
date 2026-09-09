@@ -226,6 +226,9 @@ void sorr_ios_d4a_process_sdl_event(const SDL_Event *event)
         case SDL_WINDOWEVENT:
             if (event->window.event == SDL_WINDOWEVENT_FOCUS_LOST) touch_release_all();
             return;
+        case SDL_RENDER_DEVICE_RESET:
+            touch_art_renderer = NULL;
+            return;
         default: break;
     }
     if (touch_controller || touch_background) return;

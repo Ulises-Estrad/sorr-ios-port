@@ -413,6 +413,7 @@ jobs:
               fi
             done
 
+            xcrun simctl io "$DEVICE_UDID" screenshot "$ARTIFACT_DIR/logs/simulator/touch-controls.png"
             echo "iOS shell simulator launch proof passed."
           } 2>&1 | tee "$ARTIFACT_DIR/logs/ios-shell-simulator-launch.log"
 
@@ -761,7 +762,7 @@ jobs:
           set -euo pipefail
           IPA=artifact/build-products/Streets-of-Rage-Remake-iOS.ipa
           test -s "$IPA"
-          sha256sum "$IPA" > "$IPA.sha256"
+          (cd artifact/build-products && sha256sum Streets-of-Rage-Remake-iOS.ipa > Streets-of-Rage-Remake-iOS.ipa.sha256)
           cat > release-notes.md <<'NOTES'
           Download **Streets-of-Rage-Remake-iOS.ipa** below. All game assets are included; no separate Files import is needed.
 
