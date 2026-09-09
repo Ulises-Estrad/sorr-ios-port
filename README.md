@@ -1,30 +1,56 @@
 # Streets of Rage Remake iOS
 
-Current baseline: the real SoRR runtime runs on a physical iPhone from SoRR data staged on the device. The game renders, BGM works, SFX works, the virtual joystick/action controls work, custom controls persist, and crash reporting/guards remain active.
+## [⬇ Download IPA — all game assets included](https://github.com/Ulises-Estrad/streets-of-rage-remake-ios/releases/latest/download/Streets-of-Rage-Remake-iOS.ipa)
 
-This repo is now the source of truth for the iOS shell/runtime build. It is no longer just an early proof-only experiment.
+**Click the download link above to get `Streets-of-Rage-Remake-iOS.ipa`.** No separate game-data download or Files import is needed.
 
-## Current Roadmap
+[Release page and download details](https://github.com/Ulises-Estrad/streets-of-rage-remake-ios/releases/latest) · [Installation instructions](INSTALL_IOS.md)
 
-- Current: paused/final-for-now playable baseline. The app has the `Streets of Rage` display name, app icon, virtual joystick, pillar-safe CFG button, right-side Start/Back buttons, persistent custom layout settings, and Files-visible crash reports.
-- Next: no active feature work. Patch only major bugs if they show up during real playtesting.
+Install the IPA with **Sideloadly** or another IPA signing tool. The downloadable IPA needs signing for your iPhone; opening the download in Safari does not install it. Keep the same bundle identifier when updating to retain your existing saves.
 
-Remaining work is no longer planned as an active roadmap. Future changes should be limited to major bug fixes found during normal gameplay. Minor polish/control tuning can wait unless it blocks play.
+## Touch controls
 
-Latest physical playtest result: the `ios-shell-playtest-palette-handle-cleanup-device-arm64` IPA fixed the transition-only Shiva/player/effect miscolor. Earlier fixes in the current baseline also fixed the latest scene-transition crash, removed the logging-induced gameplay slowdown, fixed the reported gun-shot crash, and fixed the Stage 6 beach/water startup crash. All four main-game routes have now been completed with SoR2 Axel and SoR2 Shiva without clear route-blocking bugs or random crashes.
+The left side has a joystick. The right side has these rows:
 
-Playtest coverage note: the main-game route clears cover the core playability target, but roughly 15% of scenes still need spot-checking simply because they require more normal play time. Future work remains limited to major bugs found while playing.
+| | | |
+| --- | --- | --- |
+| Police | | |
+| Attack | Jump | Special |
+| Back Attack | Series | Combo |
 
-Current stable artifact: `ios-shell-playtest-palette-handle-cleanup-device-arm64` from Actions run `26721338436`. It keeps the playable baseline, preserves the WAV-memory / trace-throttle fix, and clears stale 64-bit palette handles when palettes are destroyed so player/effect sprites keep correct colors across transitions.
+**Start** is in the top-right corner. Buttons and joystick use the matching [Kenney Mobile Controls](https://kenney.nl/assets/mobile-controls) artwork, with pressed feedback and multi-touch support. The old CFG button and layout editor have been removed; old layout files are ignored.
 
-Known non-blocking issue: some no-input attract/demo scenes may ignore Start/Back presses even while showing a "press start" prompt. This does not block normal playability because the current build can be started, controlled, and played through; leave this alone unless it becomes a practical blocker or a clear crash/repro case appears.
+## PS5 DualSense
 
-## Install From Scratch
+Pair your DualSense in **iPhone Settings → Bluetooth**. Touch controls disappear while a DualSense is connected and return automatically if it disconnects, including during gameplay.
 
-Use [INSTALL_IOS.md](INSTALL_IOS.md) to recover from zero, download the latest IPA, regenerate the SoRR import package from Git LFS data, reset custom controls, and collect crash reports.
+| DualSense input | Action |
+| --- | --- |
+| Left stick / D-pad | Move |
+| Cross (×) | Jump |
+| Square (□) | Attack |
+| Triangle (△) | Special |
+| L1 | Police |
+| R1 | Back Attack |
+| Circle (○) | Series |
+| R2 | Combo |
+| Options | Start / Pause |
+| Create | Menu Back |
 
-The current playtest baseline is tracked in [reports/IOS_CURRENT_PLAYTEST_BASELINE.md](reports/IOS_CURRENT_PLAYTEST_BASELINE.md).
+The bridge uses the prepared game's keyboard bindings. Keep the game's P1 input set to keyboard with its default bindings.
 
-## Data And IPA Rule
+## Game data and saves
 
-The repo now keeps the prepared SoRR data under Git LFS so a fresh clone can regenerate the iPhone import package. The GitHub Actions IPA still does not bundle `SorR.dat`, `data/`, FPG/WAV/OGG/SMK/PNG game assets, prepared data, logs, zips, or generated IPAs. The app continues to use the Files import/staging route on the iPhone.
+All prepared game assets, music, and `SorR.dat` ship inside the IPA. The app reads them from its bundle; it does not extract another full copy into Files. Only saves and small configuration files need writable private storage.
+
+When updating the same installed app, existing saves from the older import-based build are migrated without overwriting progress. Old imported folders are left untouched. There is no need to create `SORR_IMPORT` for this version.
+
+## Builds and validation
+
+Successful `main` builds publish the IPA to **GitHub Releases**, which supplies the download link at the top of this page. The workflow builds device and simulator apps, tests touch/controller handoff and save migration, and verifies every bundled game file against a SHA-256 manifest.
+
+The prior runtime baseline completed all four main-game routes with SoR2 Axel and SoR2 Shiva. The new touch layout, physical Bluetooth disconnect/reconnect, and bundled-data startup still need an iPhone playtest; automated tests do not establish physical-device gameplay coverage.
+
+## Credits
+
+Touch artwork: Kenney, **Mobile Controls 1.0**, CC0. Original selected PNGs, license, and reproducible embedding script are included in the repository. Runtime history and earlier playtest evidence remain in [`reports/`](reports/).

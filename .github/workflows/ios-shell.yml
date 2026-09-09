@@ -6,6 +6,9 @@ on:
     paths:
       - ".github/workflows/ios-shell.yml"
       - "sorr-vita-master/cmake/ios/**"
+      - "sorr-vita-master/data/**"
+      - "tools/bundle_game_data.py"
+      - "tests/**"
       - "sorr-vita-master/core/common/**"
       - "sorr-vita-master/core/bgdrtm/src/**"
       - "sorr-vita-master/core/bgdrtm/src/fmath.c"
@@ -18,6 +21,9 @@ on:
     paths:
       - ".github/workflows/ios-shell.yml"
       - "sorr-vita-master/cmake/ios/**"
+      - "sorr-vita-master/data/**"
+      - "tools/bundle_game_data.py"
+      - "tests/**"
       - "sorr-vita-master/core/common/**"
       - "sorr-vita-master/core/bgdrtm/src/**"
       - "sorr-vita-master/core/bgdrtm/src/fmath.c"
@@ -32,6 +38,24 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  controls-tests:
+    name: Test input handoff and bundled storage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install SDL test dependencies
+        run: sudo apt-get update && sudo apt-get install -y libsdl2-dev zlib1g-dev
+      - name: Test controls and storage
+        env:
+          SDL_VIDEODRIVER: dummy
+        run: |
+          set -euo pipefail
+          cc -Wall -Wextra tests/test_ios_controls.c $(sdl2-config --cflags --libs) -lz -lm -o /tmp/test-controls
+          /tmp/test-controls
+          cc -Wall -Wextra tests/test_ios_bundled_data.c -o /tmp/test-bundled-data
+          /tmp/test-bundled-data
+          python3 -m unittest discover -s tests -p 'test_*.py' -v
+
   ios-shell-simulator:
     name: Build iOS shell for simulator arm64
     runs-on: macos-15
@@ -54,7 +78,7 @@ jobs:
           mkdir -p "$ARTIFACT_DIR/logs"
           {
             echo "Repository checkout may contain LFS-managed SoRR data for recovery."
-            echo "The IPA packaging step remains the enforcement point and fails if game data/assets are bundled into SorrIOSShell.app."
+            echo "Device IPAs bundle all resolved game assets; packaging verifies every file against a SHA-256 manifest."
           } 2>&1 | tee "$ARTIFACT_DIR/logs/data-policy.log"
 
       - name: Print tool versions
@@ -430,11 +454,13 @@ jobs:
       IOS_DEVICE_ARCH: "arm64"
       IOS_DEVICE_BUILD_DIR: "build-ios-shell-device"
       ARTIFACT_DIR: "ci-artifacts/ios-shell-device"
-      IPA_NAME: "SorrIOSShell-playtest-palette-handle-cleanup-adhoc.ipa"
+      IPA_NAME: "Streets-of-Rage-Remake-iOS.ipa"
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          lfs: true
 
       - name: Report repository data policy
         shell: bash
@@ -443,7 +469,7 @@ jobs:
           mkdir -p "$ARTIFACT_DIR/logs"
           {
             echo "Repository checkout may contain LFS-managed SoRR data for recovery."
-            echo "The IPA packaging step remains the enforcement point and fails if game data/assets are bundled into SorrIOSShell.app."
+            echo "Device IPAs bundle all resolved game assets; packaging verifies every file against a SHA-256 manifest."
           } 2>&1 | tee "$ARTIFACT_DIR/logs/data-policy.log"
 
       - name: Print device build tool versions
@@ -661,6 +687,7 @@ jobs:
             lipo -info "$APP_PATH/SorrIOSShell"
             echo "Code signature display before ad-hoc signing:"
             codesign --display --verbose=4 "$APP_PATH" 2>&1 || true
+            python3 tools/bundle_game_data.py --source sorr-vita-master/data --app "$APP_PATH"
             echo "Applying ad-hoc signature for Sideloadly-friendly IPA packaging"
             codesign --force --sign - --timestamp=none "$APP_PATH"
             codesign --verify --deep --strict --verbose=2 "$APP_PATH"
@@ -688,16 +715,7 @@ jobs:
             echo "Inspected IPA code signature:"
             codesign -dv "$IPA_INSPECT/Payload/SorrIOSShell.app" 2>&1 || true
 
-            forbidden="$(unzip -l "$ARTIFACT_DIR/build-products/$IPA_NAME" | awk '{print $4}' \
-              | grep -E '(^|/)SorR\.dat$|(^|/)data/|\.fpg$|\.wav$|\.ogg$|\.smk$|\.png$' \
-              | grep -Ev '^Payload/SorrIOSShell\.app/(AppIcon|Icon-App-).*\.png$' \
-              | grep -Ev '^Payload/SorrIOSShell\.app/Assets\.xcassets/AppIcon\.appiconset/[^/]+\.png$' || true)"
-            if [[ -n "$forbidden" ]]; then
-              echo "::error::Forbidden game data/assets were packaged into the IPA."
-              echo "$forbidden"
-              exit 1
-            fi
-            echo "IPA inspection passed: no SorR.dat, data/, FPG, WAV, OGG, SMK, or non-icon raw PNG content."
+            python3 tools/bundle_game_data.py --verify-ipa "$ARTIFACT_DIR/build-products/$IPA_NAME"
             test -d "$IPA_INSPECT/Payload/SorrIOSShell.app"
             test -x "$IPA_INSPECT/Payload/SorrIOSShell.app/SorrIOSShell"
             /usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$IPA_INSPECT/Payload/SorrIOSShell.app/Info.plist" | grep -Fx 'SorrIOSShell'
@@ -715,7 +733,42 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ios-shell-playtest-palette-handle-cleanup-device-arm64
+          name: ios-touch-dualsense-bundled-device-arm64
           path: ci-artifacts/ios-shell-device
           if-no-files-found: warn
           retention-days: 14
+
+  publish-release:
+    name: Publish downloadable IPA
+    needs: [ios-shell-device-unsigned, ios-shell-simulator, controls-tests]
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: ios-touch-dualsense-bundled-device-arm64
+          path: artifact
+      - name: Publish GitHub Release with bundled IPA
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ios-${{ github.run_number }}
+          COMMIT_SHA: ${{ github.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          IPA=artifact/build-products/Streets-of-Rage-Remake-iOS.ipa
+          test -s "$IPA"
+          sha256sum "$IPA" > "$IPA.sha256"
+          cat > release-notes.md <<'NOTES'
+          Download **Streets-of-Rage-Remake-iOS.ipa** below. All game assets are included; no separate Files import is needed.
+
+          Install using Sideloadly or your preferred IPA signing tool. This IPA needs signing for your device; tapping it in Safari does not install it.
+
+          Includes Kenney touch controls, the three-row action layout, no CFG button, and automatic DualSense/touch switching. Options is Start; Create is menu Back.
+
+          Automated build and input/storage tests passed. Bluetooth controller behavior and full gameplay still need physical iPhone playtesting.
+          NOTES
+          gh release create "$RELEASE_TAG" "$IPA" "$IPA.sha256" --target "$COMMIT_SHA" --title "Streets of Rage Remake iOS" --notes-file release-notes.md --latest

@@ -1,178 +1,35 @@
-# iOS Install From Scratch
+# Install Streets of Rage Remake on iPhone
 
-This guide rebuilds the current iPhone setup from zero.
+## 1. Download the IPA
 
-## What This Repo Provides
+**[⬇ Download Streets-of-Rage-Remake-iOS.ipa](https://github.com/Ulises-Estrad/streets-of-rage-remake-ios/releases/latest/download/Streets-of-Rage-Remake-iOS.ipa)**
 
-- GitHub Actions builds a Sideloadly-ready iPhone `arm64` IPA.
-- The IPA contains the iOS shell/runtime, visible crash reporting, BGM/SFX support, custom touch controls, virtual joystick movement, and the app icon.
-- The repo keeps the prepared SoRR data under Git LFS so a fresh clone can recreate the import package.
-- The IPA does not bundle SoRR game data or assets.
-- Game data is imported through the user's iPhone Files inbox. Fresh installs may show the folder as `Streets of Rage`; older installs may still show `SorrIOSShell`.
-- The install path is Windows + Sideloadly + a physical iPhone.
+Or open [the latest release](https://github.com/Ulises-Estrad/streets-of-rage-remake-ios/releases/latest), expand **Assets**, and select **Streets-of-Rage-Remake-iOS.ipa**. Do not select the automatically generated Source code ZIP.
 
-## Requirements
+The IPA includes the complete prepared game data and music. You do not need another ZIP, an import folder, or a separate game-data transfer.
 
-- Windows PC.
-- Access to this GitHub repo.
-- Sideloadly.
-- Apple ID for Sideloadly signing.
-- Physical iPhone with Developer Mode enabled.
-- USB cable.
-- Local checkout of this repo with Git LFS files pulled if regenerating the import package.
+## 2. Sign and install
 
-## Download And Install The Latest IPA
+Use your existing Sideloadly setup or another IPA signing tool to sign and install the downloaded IPA on your iPhone. It is ad-hoc packaged, not App Store or device-provisioned software; downloading it in Safari alone does not install it.
 
-1. Open the GitHub repo.
-2. Go to `Actions`.
-3. Open the latest successful `iOS Shell` workflow run.
-4. Download the latest successful device artifact. Current fixed playtest baseline:
+For an update, retain the same bundle identifier and signing identity and install over the existing app. Do not uninstall first if you want to retain its saves. Certificate renewal requirements depend on your signing method.
 
-   ```text
-   Actions run: 26721338436
-   Commit: e525143
-   Artifact: ios-shell-playtest-palette-handle-cleanup-device-arm64
-   ```
+## 3. Play
 
-   Previous proven crash/slowdown baseline:
+Open **Streets of Rage**. Game data is available immediately. The joystick is on the left; action buttons are on the right and Start is at the top right.
 
-   ```text
-   ios-shell-playtest-wav-memory-trace-throttle-device-arm64
-   ```
+Pair a PS5 DualSense through iPhone Bluetooth settings to use a controller. The touch overlay disappears when connected and returns after disconnection. See the [button map](README.md#ps5-dualsense).
 
-5. Extract the downloaded artifact on Windows.
-6. Install the IPA with Sideloadly. Current fixed playtest baseline IPA:
+## Existing saves and old imports
 
-   ```text
-   build-products/SorrIOSShell-playtest-palette-handle-cleanup-adhoc.ipa
-   ```
+On its first bundled-data launch, the app copies existing private saves from the old import-based installation into its new writable save directory. It does not overwrite saves on later launches. This migration requires retaining the same installed app container.
 
-7. If iOS asks, enable Developer Mode and trust the developer profile.
-8. Launch `Streets of Rage` once to create the Files folders.
+Game assets stay in the app bundle. Private links point to them so the runtime can load files without creating another asset copy. Old `SORR_IMPORT` folders and older private data are left untouched; this build does not require them and does not delete them.
 
-## Prepare And Import Game Data Locally
+The old CFG editor and `ios_touch_controls.ini` settings are no longer used.
 
-From a local checkout of this repo on Windows, make sure Git LFS has downloaded the data:
+## Report a problem
 
-```powershell
-git lfs install
-git lfs pull
-```
+If the game crashes, reopen it once and retrieve the latest report from **Files → On My iPhone → Streets of Rage → SORR_DIAGNOSTICS**. Include the release tag, iPhone model, iOS version, character, stage, and whether you were using touch or DualSense.
 
-Then run:
-
-```powershell
-.\tools\create_d2_import_package.ps1
-```
-
-The helper uses the repo's `sorr-vita-master/data` folder by default and creates:
-
-```text
-out/local-only/SORR_IMPORT.zip
-```
-
-Transfer and extract it on the iPhone so Files contains:
-
-```text
-On My iPhone/
-  Streets of Rage/   (or SorrIOSShell on older installs)
-    SORR_IMPORT/
-      SorR.dat
-      mod/
-        system.txt
-        music/
-          ...
-```
-
-Relaunch `Streets of Rage`. The app will stage the imported data into:
-
-```text
-Library/Application Support/SORR
-```
-
-The game should then render and run using the staged data.
-
-## Custom Controls
-
-Controls are configurable in-app through `CFG`.
-
-- Tap `CFG` to enter edit mode.
-- Drag the joystick or a button to reposition it. A tap selects; controls only move after a real drag.
-- Use `BIG` / `SML` to resize the selected control.
-- Use `OPAC` to cycle opacity.
-- Use `TXT+` / `TXT-` to show or hide gameplay button text.
-- Use `RST` to reset the default layout.
-- Use `DONE` to save and exit.
-- `CFG` lives in the left pillar area. `START` is in the right pillar area, and `BACK` is directly below it.
-- Gameplay action buttons are circular. `Back Attack` sits above `Attack` and maps to the `D` / back-attack binding.
-
-Settings persist here:
-
-```text
-On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/ios_touch_controls.ini
-```
-
-Older installs may still show the Files folder as `SorrIOSShell`.
-
-To reset manually, either use `CFG` -> `RST` -> `DONE`, or delete `ios_touch_controls.ini` and relaunch.
-
-## Crash Reports And Bug Reports
-
-After a crash:
-
-1. Reopen `Streets of Rage` once.
-2. In Files, send:
-
-   ```text
-   On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/LATEST_CRASH_OR_ABRUPT_EXIT_REPORT.txt
-   ```
-
-3. If more context is needed, also send:
-
-   ```text
-   On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/CURRENT_SESSION_RUNTIME_LOG.txt
-   On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/PREVIOUS_SESSION_RUNTIME_LOG.txt
-   ```
-
-For wrong dash/run SFX after scene transitions, also send:
-
-```text
-On My iPhone/Streets of Rage/SORR_DIAGNOSTICS/CURRENT_SESSION_AUDIO_SFX_LOG.txt
-```
-
-That file is reset on each launch and logs the actual iOS audio backend's WAV load/reuse/unload/play events, including the handle id, sample path, current process, and whether an unloaded handle was later reused.
-
-The diagnostics folder is refreshed on every app launch. `CURRENT_SESSION_RUNTIME_LOG.txt` starts fresh, the prior launch is rotated to `PREVIOUS_SESSION_RUNTIME_LOG.txt`, and old legacy `ios_*` diagnostic files are removed. If the app exits abruptly without a normal signal crash report, the next launch synthesizes `PREVIOUS_SESSION_ABRUPT_EXIT_REPORT.txt`; same-build, non-trivial exits also replace `LATEST_CRASH_OR_ABRUPT_EXIT_REPORT.txt`.
-
-## Updating Later
-
-1. Download a newer successful device artifact from GitHub Actions.
-2. Install the new IPA over the old app with Sideloadly if possible.
-3. Keep the existing staged data and `SORR_IMPORT` files on the phone.
-4. If the data disappears, re-import `SORR_IMPORT.zip`.
-5. If controls feel wrong after an update, reset or restore `ios_touch_controls.ini`.
-
-## Recovery From Zero
-
-1. Install the latest IPA from GitHub Actions with Sideloadly.
-2. Recreate `out/local-only/SORR_IMPORT.zip` using `tools/create_d2_import_package.ps1`.
-3. Copy/extract the `SORR_IMPORT` folder under `On My iPhone/Streets of Rage` (or `SorrIOSShell` on older installs).
-4. Launch the app and wait for staging.
-5. Reconfigure controls, or restore a saved `ios_touch_controls.ini`.
-6. If a crash happens, reopen once and retrieve `LATEST_CRASH_OR_ABRUPT_EXIT_REPORT.txt`.
-
-## Current Known Status
-
-- Real SoRR renders and runs on iPhone.
-- BGM works.
-- SFX works.
-- Virtual joystick/action touch controls work.
-- Custom controls exist and persist.
-- Crash reporting exists.
-- Custom touch with virtual joystick movement is the current control baseline.
-- The IPA remains asset-free.
-- The current build is the paused/final-for-now baseline.
-- Future updates should be limited to major bug fixes discovered during real play.
-- Known non-blocking issue: some no-input attract/demo scenes may ignore Start/Back while showing a "press start" prompt. This does not block normal playability.
-- Main-game playtest coverage: all four main routes have been completed with SoR2 Axel and SoR2 Shiva on the current playable baseline.
-- Remaining coverage: about 15% of scenes still need spot-checking through normal play time, so future reports should focus on major bugs found during that remaining playtesting.
+For this release, physical checks should cover a fresh install without imports, an update retaining saves, each action button, connecting a pre-paired DualSense during play, disconnecting while holding a direction/button, reconnecting, and background/resume.
